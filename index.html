@@ -31,11 +31,16 @@
         body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: var(--v-text-dark); margin: 0; padding: 0; }
         .tech-font { font-family: 'Space Mono', monospace; }
         
+        /* STARTUP DRAG & DROP SCREEN */
+        #startup-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--v-deep-blue); color: white; position: fixed; width: 100%; top: 0; left: 0; z-index: 99999999; }
+        #drop-zone { border: 2px dashed rgba(255,255,255,0.4); padding: 60px 120px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02); margin-top: 20px;}
+        #drop-zone:hover, #drop-zone.dragover { border-color: var(--v-yellow); background: rgba(250,167,74,0.1); transform: translateY(-5px);}
+        
         /* FULL SCREEN CONTAINER APP */
         .container { width: 100%; max-width: 100%; margin: 0; padding: 0; background: #ffffff; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         
         /* HEADER & BRANDING */
-        .header-section { background: var(--v-deep-blue); padding: 40px 60px; color: #ffffff; }
+        .header-section { background: var(--v-deep-blue); padding: 40px 60px; color: #ffffff; display: flex; justify-content: space-between; align-items: flex-end;}
         .logo { max-width: 180px; margin-bottom: 25px; display: block; }
         h1 { font-size: 32px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: -0.5px;}
         .brand-dash { color: var(--v-yellow); font-weight: 800; margin-bottom: 5px; font-size: 24px;}
@@ -52,15 +57,18 @@
         .action-bar label { font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--v-text-mutated); display: block; margin-bottom: 5px; }
         select, .global-input { padding: 8px 12px; font-family: 'Space Mono', monospace; font-size: 12px; border: 1px solid var(--v-border); border-radius: 4px; background: #fff; cursor: pointer;}
         .global-input { font-size: 16px; font-weight: 800; color: var(--v-deep-blue); border-color: var(--v-blue); width: 110px; text-align: right;}
+        
         .upload-btn { background: var(--v-blue); color: #fff; padding: 10px 18px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 13px; display: inline-flex; align-items: center; gap: 8px;}
         .upload-btn:hover { background: var(--v-deep-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .export-btn { background: #059669; }
+        .export-btn:hover { background: #047857; }
 
         .target-wrap { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
         .unlock-btn { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; display: none; transition: 0.2s; }
         .unlock-btn:hover { background: #fca5a5; }
 
         /* YEAR PILLS */
-        .year-pill { display: inline-flex; align-items: center; justify-content: center; padding: 6px 18px; border-radius: 20px; border: 2px solid var(--v-blue); background: transparent; color: var(--v-blue); font-weight: 800; font-size: 14px; cursor: pointer; transition: all 0.2s ease; font-family: 'Space Mono', monospace; margin-right: 8px; }
+        .year-pill { display: inline-flex; align-items: center; justify-content: center; padding: 6px 18px; border-radius: 20px; border: 2px solid var(--v-blue); background: transparent; color: var(--v-blue); font-weight: 800; font-size: 14px; cursor: pointer; transition: all 0.2s ease; font-family: 'Space Mono', monospace; margin-right: 8px; margin-bottom: 8px; }
         .year-pill.active { background: var(--v-blue); color: #fff; box-shadow: 0 4px 10px rgba(48, 43, 106, 0.2); }
         .year-pill:hover:not(.active) { background: rgba(48, 43, 106, 0.05); }
 
@@ -74,9 +82,12 @@
         .section-dash { color: var(--v-yellow); font-size: 22px; font-weight: bold; margin-bottom: 15px; line-height: 0.5;}
         
         /* LAYOUT GRIDS & FLEX */
-        .grid-2 { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .grid-2-finance { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; }
         .flex-center-cards { display: flex; justify-content: center; align-items: stretch; gap: 20px; margin-bottom: 40px; width: 100%; flex-wrap: wrap;}
+        
+        /* S&OP CART CSS GRID FOR SYMMETRY */
+        .sop-cart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; width: 100%; justify-items: center; align-items: start;}
         
         /* COUNTRY CARDS */
         .country-cards-wrapper { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; justify-content: center; } 
@@ -97,13 +108,14 @@
         th, td { padding: 22px 15px; text-align: left; border-bottom: 1px solid var(--v-border); font-size: 14px; vertical-align: middle;} 
         th { font-weight: 800; color: var(--v-text-mutated); text-transform: uppercase; font-size: 11px; background: #f8fafc; padding: 15px; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--v-border); }
         .table-input { width: 80px; padding: 4px 8px; border: 1px solid var(--v-border); border-radius: 4px; font-weight: bold; color: var(--v-blue);}
+        .stock-input { width: 50px; padding: 4px; text-align: center; border: 1px solid var(--v-yellow); border-radius: 4px; font-weight: bold; font-family: 'Space Mono', monospace; background: #fffdf5; color: var(--v-deep-blue);}
 
         .dist-row { transition: all 0.2s ease; cursor: pointer; }
         .dist-row:hover { background-color: #f8fafc; }
         .dist-row.active-row { background-color: #f1f5f9; }
         .dist-row.active-row td:nth-child(2) { box-shadow: inset 5px 0 0 var(--v-yellow); color: var(--v-blue); }
 
-        .share-bar-container { width: 100px; background: #E2E8F0; height: 10px; border-radius: 6px; margin-top: 4px; overflow: hidden; }
+        .share-bar-container { width: 100%; background: #E2E8F0; height: 10px; border-radius: 6px; margin-top: 4px; overflow: hidden; }
         .share-bar-fill { height: 100%; background: var(--v-blue); transition: width 0.8s ease; }
 
         /* HERO BANNER & TARGET STACK */
@@ -144,20 +156,17 @@
         .leaflet-tooltip-left::before, .leaflet-tooltip-right::before, .leaflet-tooltip-top::before, .leaflet-tooltip-bottom::before { display: none !important; }
         
         /* SCROLLABLE RANKING BARS */
-        .scroll-list { max-height: 250px; overflow-y: auto; padding-right: 10px; }
+        .scroll-list { max-height: 450px; overflow-y: auto; padding-right: 15px; background: #fff; border: 1px solid var(--v-border); border-radius: 8px; padding: 15px;}
         .scroll-list::-webkit-scrollbar { width: 6px; }
         .scroll-list::-webkit-scrollbar-track { background: transparent; }
         .scroll-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .ranking-row { margin-bottom: 12px; padding: 6px; border-radius: 6px; transition: 0.2s; cursor: pointer; border: 1px solid transparent; }
-        .ranking-row:hover { background: #f8fafc; border-color: var(--v-yellow); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05);}
-        .ranking-labels { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--v-deep-blue);}
-        .ranking-track { width: 100%; background: #E2E8F0; border-radius: 4px; height: 6px; overflow: hidden; }
+        .ranking-row { margin-bottom: 20px; padding: 15px 15px; border-radius: 8px; transition: 0.2s; cursor: pointer; border: 1px solid var(--v-border); background: #f8fafc;}
+        .ranking-row:hover { background: #fff; border-color: var(--v-yellow); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.05);}
+        .ranking-labels { display: flex; justify-content: space-between; align-items: flex-start; font-size: 16px; font-weight: 800; margin-bottom: 12px; color: var(--v-deep-blue);}
+        .ranking-track { width: 100%; background: #E2E8F0; border-radius: 4px; height: 8px; overflow: hidden; margin-top: 15px;}
         .ranking-fill { height: 100%; transition: width 0.8s ease; }
-        .flag-icon { font-size: 14px; margin-right: 6px; }
-
-        /* S&OP LOGISTICS CART CARDS */
-        .logistics-family-card { width: 100%; max-width: 600px; flex: 1 1 500px; background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.2s;}
-        .logistics-family-card:hover { border-color: var(--v-blue); box-shadow: 0 15px 40px rgba(0,0,0,0.08); transform: translateY(-2px); }
+        .flag-icon { font-size: 20px; margin-right: 8px; }
+        .valve-mini-row { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 8px; }
 
         /* CHART CONTAINER */
         #trend-chart-container { height: 500px; width: 100%; background: #fff; border: 1px solid var(--v-border); border-radius: 12px; padding: 15px; box-sizing: border-box; margin-bottom: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
@@ -195,16 +204,50 @@
 
         .active-accordion > .acc-body-1, .active-accordion > .acc-body-2, .active-accordion > .acc-body-3 { display: block; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; background: #E2E8F0; color: #475569;}
+        
+        /* S&OP Table */
+        .sop-table-container { margin-top: 20px; border-radius: 12px; overflow: hidden; border: 1px solid var(--v-border); }
+        .sop-table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 13px; }
+        .sop-table th { background: var(--v-deep-blue); color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; text-transform: uppercase; padding: 12px 10px; text-align: center; }
+        .sop-table th:first-child { text-align: left; padding-left: 20px; }
+        .sop-table td { padding: 12px 10px; text-align: center; border-bottom: 1px solid var(--v-border); background: #fff; color: var(--v-deep-blue); font-weight: bold;}
+        .sop-table td:first-child { text-align: left; padding-left: 20px; font-family: 'Inter', sans-serif; font-weight: 800; color: var(--v-blue); }
+        .sop-table tr:hover td { background: #f8fafc; }
+        .sop-table .total-col { background: #fffdf5; color: var(--v-yellow); font-weight: bold; border-left: 2px solid var(--v-border); }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- TELA DE BOAS VINDAS (DRAG & DROP) -->
+<div id="startup-screen">
+    <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech" style="max-width: 250px; margin-bottom: 20px;">
+    <h1 style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 38px; margin-bottom: 5px;">LATAM Intelligence OS</h1>
+    <p style="opacity: 0.7; margin-bottom: 40px; font-size: 18px;">Client-side Secure Analytics Engine</p>
+    
+    <div id="drop-zone">
+        <div style="font-size: 50px; margin-bottom: 15px;">📥</div>
+        <div style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">Drag & Drop LATAM Database</div>
+        <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv)</div>
+        <input type="file" id="startup-file-input" accept=".xlsx, .xls, .csv" multiple style="display: none;" />
+    </div>
+</div>
+
+<div class="container" id="main-app" style="display: none;">
     <div class="header-section">
-        <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech" class="logo">
-        <h1>LATAM Intelligence OS</h1>
-        <div class="brand-dash">—</div>
-        <p class="subtitle">Operational distribution, proctor financial tracking, and dynamic demand forecasting.</p>
+        <div>
+            <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech" class="logo">
+            <h1>LATAM Intelligence OS</h1>
+            <div class="brand-dash">—</div>
+            <p class="subtitle">Operational distribution, proctor financial tracking, and dynamic demand forecasting.</p>
+        </div>
+        
+        <!-- EXPORT TO EXCEL BUTTON -->
+        <div>
+            <button class="upload-btn export-btn" onclick="exportCurrentTab()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 5px;"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                EXPORT REPORT
+            </button>
+        </div>
     </div>
 
     <div id="error-alert"></div>
@@ -221,11 +264,10 @@
         <div>
             <label style="color: var(--v-blue);">1. Database Builder</label>
             <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
-                <button class="upload-btn" onclick="document.getElementById('excel-file').click()">
+                <button class="upload-btn" onclick="document.getElementById('startup-file-input').click()">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 5px;"><path d="M12 4v16m8-8H4"></path></svg>
-                    ADD DATASET TO MEMORY
+                    ADD MORE DATA
                 </button>
-                <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" multiple style="display: none;" />
             </div>
             <div style="font-size: 9px; color: var(--v-text-mutated); margin-top: 5px; font-family: 'Inter', sans-serif;">Select multiple files. Data will be aggregated automatically.</div>
         </div>
@@ -286,7 +328,7 @@
         <div class="flex-center-cards" id="ops-valve-cards"></div>
 
         <!-- TOP TERRITORIES (GRID CARDS) -->
-        <h2 style="margin-top: 40px;">Top Territories <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Country to filter entire Dashboard)</span></h2>
+        <h2 style="margin-top: 40px;">Countries Overview <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Country to filter entire Dashboard)</span></h2>
         <div class="section-dash">—</div>
         <div class="country-cards-wrapper" id="country-cards-container"></div>
 
@@ -297,15 +339,31 @@
         </div>
         <div class="section-dash" style="margin-top:5px;">—</div>
         
-        <div id="trend-chart-container"><div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Aguardando upload de dados...</div></div>
+        <div id="trend-chart-container"><div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div></div>
 
         <h2 style="margin-top: 40px;">Key Players Ranking <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Scroll for more / Click to view Dashboard)</span></h2>
         <div class="section-dash">—</div>
-        <div class="grid-4">
-            <div><p style="font-size: 11px; font-weight: bold;">TOP HOSPITALS</p><div id="rank-hospitals" class="scroll-list"></div></div>
-            <div><p style="font-size: 11px; font-weight: bold;">TOP IMPLANTERS</p><div id="rank-implanters" class="scroll-list"></div></div>
-            <div><p style="font-size: 11px; font-weight: bold;">SPECIALISTS</p><div id="rank-specialists" class="scroll-list"></div></div>
-            <div><p style="font-size: 11px; font-weight: bold;">PROCTORS</p><div id="rank-proctors" class="scroll-list"></div></div>
+        
+        <!-- GRID 2x2 FOR RANKINGS -->
+        <div class="grid-2" style="margin-bottom: 25px;">
+            <div>
+                <p style="font-size: 13px; font-weight: 800; color: var(--v-blue); text-transform: uppercase;">TOP HOSPITALS</p>
+                <div id="rank-hospitals" class="scroll-list"></div>
+            </div>
+            <div>
+                <p style="font-size: 13px; font-weight: 800; color: var(--v-blue); text-transform: uppercase;">TOP IMPLANTERS</p>
+                <div id="rank-implanters" class="scroll-list"></div>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div>
+                <p style="font-size: 13px; font-weight: 800; color: var(--v-blue); text-transform: uppercase;">SPECIALISTS</p>
+                <div id="rank-specialists" class="scroll-list"></div>
+            </div>
+            <div>
+                <p style="font-size: 13px; font-weight: 800; color: var(--v-blue); text-transform: uppercase;">PROCTORS</p>
+                <div id="rank-proctors" class="scroll-list"></div>
+            </div>
         </div>
     </div>
 
@@ -325,9 +383,9 @@
     <div id="tab-finance" class="tab-content">
         <h2>Proctor Financial Management</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Calculates cross-border travel fees for <strong>OFFICIAL VENUS PROCTORS ONLY</strong>. <br><em>*Acompanhamento clínico e proctoring no Brasil são gerenciados e custeados diretamente pelos distribuidores locais (refletido no menor preço da Venus A), sem repasse corporativo pela Venus Medtech.</em></p>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Calculates cross-border travel fees for <strong>OFFICIAL VENUS PROCTORS ONLY</strong>. <br><em>*Clinical support and proctoring inside Brazil are managed and funded directly by local distributors, without corporate transfer from Venus Medtech.</em></p>
         
-        <div class="grid-2" style="margin-bottom: 20px;">
+        <div class="grid-2-finance" style="margin-bottom: 20px;">
             <div class="metric-card">
                 <div style="font-size: 11px; font-weight: bold; color: var(--v-text-mutated);">OFFICIAL PROCTOR ACTIVITY (FILTERED)</div>
                 <div class="metric-value tech-font" id="total-proc-cases" style="font-size: 32px; font-weight: 800; color: var(--v-deep-blue);">0</div>
@@ -352,7 +410,7 @@
     <div id="tab-sop" class="tab-content">
         <h2>S&OP / Dynamic Demand Planning</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Set target in Total Revenue (USD). Targets are allocated dynamically across territories and valve sizes based on historical mix.</p>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Set target in Total Revenue (USD). Targets are allocated dynamically across territories and valve sizes based on historical mix. Integrates current stock on hand to calculate Net Ordering Demand.</p>
 
         <!-- S&OP FINANCIAL TARGET TOP BAR -->
         <div class="action-bar" style="background: var(--v-deep-blue); color: white; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; padding: 25px 40px;">
@@ -403,9 +461,36 @@
         <div class="country-cards-wrapper" id="sop-country-cards" style="max-height: none; overflow: visible;"></div>
 
         <!-- 3. S&OP CART -->
-        <h2 style="margin-top: 40px;" id="sop-cart-title">Logistics Cart & Delivery Systems Forecast</h2>
+        <h2 style="margin-top: 40px;" id="sop-cart-title">Logistics Cart & 12-Month S&OP Forecast</h2>
         <div class="section-dash">—</div>
-        <div id="sop-logistics-cart-container" style="display:flex; flex-wrap:wrap; gap:30px; margin-bottom: 50px; justify-content:center;"></div>
+        
+        <!-- EXPLAINABLE AI RATIONALE BOX -->
+        <div id="sop-rationale-container" style="background:#fffdf5; border: 1px solid var(--v-yellow); border-radius: 8px; padding: 20px; margin-bottom: 30px; display: none;">
+            <div style="display:flex; align-items:flex-start; gap: 15px;">
+                <div style="font-size: 24px;">💡</div>
+                <div>
+                    <h4 style="margin: 0 0 5px 0; color: var(--v-deep-blue); font-weight: 800;">Forecast Rationale & Logic</h4>
+                    <p id="sop-rationale-text" style="margin: 0; font-size: 14px; color: var(--v-text-mutated); line-height: 1.5;"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="sop-logistics-cart-container" class="sop-cart-grid"></div>
+        
+        <!-- 12 MONTH FORECAST TABLE -->
+        <div id="sop-12month-container" style="display:none; margin-top: 30px;">
+            <h3 style="color:var(--v-deep-blue); font-size:18px; margin-bottom:5px;">12-Month "To-Order" Schedule</h3>
+            <p style="font-size:12px; color:var(--v-text-mutated); margin-top:0;">Net Demand distributed according to historical seasonality curve.</p>
+            <div class="sop-table-container">
+                <table class="sop-table" id="sop-12month-table">
+                    <thead>
+                        <tr><th>Valve Size</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th class="total-col">Net To-Order</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -414,9 +499,16 @@
     <div class="modal-content" onclick="event.stopPropagation()">
         <span class="modal-close" onclick="closeModal('drilldown-modal')">&times;</span>
         
-        <h2 id="modal-person-name" style="font-size: 28px; color: var(--v-deep-blue); margin-bottom: 5px;"></h2>
-        <div class="section-dash">—</div>
-        <p id="modal-person-role" class="tech-font" style="font-size: 11px; text-transform: uppercase; color: var(--v-text-mutated); margin-top: -10px;"></p>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+                <h2 id="modal-person-name" style="font-size: 28px; color: var(--v-deep-blue); margin-bottom: 5px;"></h2>
+                <div class="section-dash">—</div>
+                <p id="modal-person-role" class="tech-font" style="font-size: 11px; text-transform: uppercase; color: var(--v-text-mutated); margin-top: -10px;"></p>
+                <div id="modal-yoy-stats"></div>
+            </div>
+            <!-- PORTFOLIO MIX IN HEADER -->
+            <div id="modal-portfolio-mix" style="display:flex; gap:15px; text-align:center; background:#f8fafc; padding:10px 15px; border-radius:8px; border:1px solid var(--v-border);"></div>
+        </div>
         
         <div class="modal-scroll-area">
             <div id="modal-summary-kpis"></div>
@@ -448,64 +540,121 @@
         "Sellmed": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Logo%20Sellmed.jpg" class="dist-logo-img" style="transform: scale(1.3);">`
     };
 
-    const FLAGS = { "Brazil": "🇧🇷", "Argentina": "🇦🇷", "Chile": "🇨🇱", "Colombia": "🇨🇴", "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "Peru": "🇵🇪", "Uruguay": "🇺🇾", "Paraguay": "🇵🇾", "Panama": "🇵🇦", "Dominican Republic": "🇩🇴", "Unknown": "🌍", "Venezuela": "🇻🇪", "Bolivia": "🇧🇴" };
-    const COUNTRY_ISO = { "Brazil": "br", "Argentina": "ar", "Chile": "cl", "Colombia": "co", "Mexico": "mx", "Ecuador": "ec", "Peru": "pe", "Uruguay": "uy", "Paraguay": "py", "Panama": "pa", "Bolivia": "bo", "Venezuela": "ve", "Dominican Republic": "do" };
-    const NATIONALITIES = { "Stephanie Bugeño Apablaza": "Chile", "Fabio Silva": "Brazil", "Ariane Sanchez": "Brazil", "Edgard Quintella": "Brazil", "Alice Moraes": "Brazil", "Marcio Montenegro": "Brazil", "Henrique Ribeiro": "Brazil", "Alexis Vasiluk Knebel": "Brazil", "Ricardo Lisboa Cardozo": "Brazil", "Cesar Roberto Pintos": "Brazil", "Francisco": "Brazil", "Igor Salles": "Brazil", "Carlos Magno": "Brazil", "Eudes Figueredo": "Brazil", "Jarede Pereira": "Brazil", "Andreia Vasconcellos": "Brazil", "Jorge Baccaro": "Argentina", "Marcelo Rivarola": "Argentina", "Laura Zemp": "Argentina", "Fernando Pineda": "Chile", "Daniel Springmuller": "Chile", "Francisco Garay": "Chile", "Juan Pablo de Brahi": "Argentina", "Jorge Sandoval": "Chile", "Pablo Spaletra": "Argentina", "Luis Cressa": "Venezuela", "Lucini Victorio": "Argentina" };
+    const FLAGS = { "Brazil": "🇧🇷", "Argentina": "🇦🇷", "Chile": "🇨🇱", "Colombia": "🇨🇴", "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "Peru": "🇵🇪", "Uruguay": "🇺🇾", "Paraguay": "🇵🇾", "Panama": "🇵🇦", "Dominican Republic": "🇩🇴", "China": "🇨🇳", "Unknown": "🌍", "Venezuela": "🇻🇪", "Bolivia": "🇧🇴" };
+    const COUNTRY_ISO = { "Brazil": "br", "Argentina": "ar", "Chile": "cl", "Colombia": "co", "Mexico": "mx", "Ecuador": "ec", "Peru": "pe", "Uruguay": "uy", "Paraguay": "py", "Panama": "pa", "Bolivia": "bo", "Venezuela": "ve", "Dominican Republic": "do", "China": "cn" };
+    const NATIONALITIES = { "Stephanie Bugeño Apablaza": "Chile", "Fabio Silva": "Brazil", "Ariane Sanchez": "Brazil", "Edgard Quintella": "Brazil", "Alice Moraes": "Brazil", "Marcio Montenegro": "Brazil", "Henrique Ribeiro": "Brazil", "Alexis Vasiluk Knebel": "Brazil", "Ricardo Lisboa Cardozo": "Brazil", "Cesar Roberto Pintos": "Brazil", "Francisco": "Brazil", "Igor Salles": "Brazil", "Carlos Magno": "Brazil", "Eudes Figueredo": "Brazil", "Jarede Pereira": "Brazil", "Andreia Vasconcellos": "Brazil", "Jorge Baccaro": "Argentina", "Marcelo Rivarola": "Argentina", "Laura Zemp": "Argentina", "Fernando Pineda": "Chile", "Daniel Springmuller": "Chile", "Francisco Garay": "Chile", "Juan Pablo De Brahi": "Argentina", "Jorge Sandoval": "Chile", "Pablo Spaletra": "Argentina", "Luis Cressa": "Venezuela", "Victorio Lucini": "Argentina", "Jian Wang": "China", "Jesus María Damsky Barbosa": "Argentina", "Gian Manuel Jimenez": "Mexico" };
     
-    // Proctors Auditados
-    const OFFICIAL_PROCTORS = ["Marcio Montenegro", "Edgard Quintella", "Pablo Lamelas", "Fernando Pineda", "Daniel Springmuller", "Marcelo Rivarola", "Lucini Victorio", "Pablo Spaletra", "Juan Pablo de Brahi", "Jorge Sandoval", "Gian Jimenez", "Luis Cressa", "Francisco Garay", "Jorge Baccaro"];
-    const BLOCKED_SPECIALISTS = ["edgard quintella", "marcio montenegro", "marcio montegro", "henrique ribeiro", "alexis vasiluk knebel", "alexis knebel", "alexandre magno", "francisco", "igor salles", "antônio carlos neves ferreira", "eduardo kei", "andre valentim", "paulo caramori", "everton", "cassiano ferri", "andre dei ricardi", "paulo moreno", "cristiano barcelos", "joão slaviero", "luiz kohn", "thiago", "dinaldo", "stenfan negrão", "fabiano cantarelli", "maria julia", "giovane", "geovane", "moises camargos", "felipe dolzan", "felipe kessler", "márcio macri", "wersley araújo", "andré bastos paixão", "andré milanez", "lucas estevão", "joão paulo", "leon macedo", "abdalla hamid", "nelson thomás junior", "anderson terrazas", "felipe fuchs", "leonardo dragone", "gustavo"]; 
+    // Official Proctors (Shielded in Finance Module)
+    const OFFICIAL_PROCTORS = ["Marcio Montenegro", "Edgard Quintella", "Pablo Lamelas", "Fernando Pineda", "Daniel Springmuller", "Marcelo Rivarola", "Victorio Lucini", "Pablo Spaletra", "Juan Pablo De Brahi", "Jorge Sandoval", "Gian Manuel Jimenez", "Luis Cressa", "Francisco Garay", "Jorge Baccaro"];
     
+    // Name Cleansing (Hidden Master Normalization)
     const PERSON_ALIASES = {
-        "jessica picanco": "Jessica Picanço", "jessica picanço": "Jessica Picanço", "jessica": "Jessica Picanço",
-        "leonardo andrade de godoy": "Leonardo Godoy", "leonardo godoy": "Leonardo Godoy",
-        "lucas esteves": "Lucas Estevão", "lucas estevao": "Lucas Estevão",
-        "edgar quintela": "Edgard Quintella", "edgard quintela": "Edgard Quintella", "edgar": "Edgard Quintella", "edgard": "Edgard Quintella", "edgard quintella": "Edgard Quintella",
-        "fabio silva": "Fabio Silva", "fabio": "Fabio Silva", 
-        "ariane sanchez": "Ariane Sanchez", "ariane": "Ariane Sanchez", 
+        "stephanie bugueño": "Stephanie Bugeño Apablaza", "stephanie bugeno": "Stephanie Bugeño Apablaza", "stephanie bugeño": "Stephanie Bugeño Apablaza", "stephie": "Stephanie Bugeño Apablaza", "stephanie": "Stephanie Bugeño Apablaza",
+        "laura zemp": "Laura Zemp", "zemp laura": "Laura Zemp", "laura": "Laura Zemp",
+        "sonia grosso": "Sonia Grosso", "grosso sonia": "Sonia Grosso", "sonia groso": "Sonia Grosso", "sonia": "Sonia Grosso",
+        "mariana martinez": "Mariana Martinez", "mariana martínez": "Mariana Martinez", "martinez mariana": "Mariana Martinez", "mariana": "Mariana Martinez",
+        "francisco navarro": "Francisco Navarro", "francisco": "Francisco Navarro",
+        "michelle altamirano": "Michelle Altamirano", "michelle": "Michelle Altamirano",
         "alice moraes": "Alice Moraes", "alice maciel": "Alice Moraes", "alice": "Alice Moraes",
+        "ariane sanchez": "Ariane Sanchez", "ariane": "Ariane Sanchez",
+        "ricardo lisboa cardozo": "Ricardo Lisboa Cardozo", "ricardo lisboa": "Ricardo Lisboa Cardozo", "ricardo": "Ricardo Lisboa Cardozo",
+        "carlos magno": "Carlos Magno",
+        "leonardo andrade de godoy": "Leonardo Godoy", "leonardo godoy": "Leonardo Godoy",
+        "cesar roberto pintos": "Cesar Roberto Pintos", "cesar pintos": "Cesar Roberto Pintos", "césar pintos": "Cesar Roberto Pintos", "cesar a": "Cesar Roberto Pintos", "cesar": "Cesar Roberto Pintos",
+        "jessica picanco": "Jessica Picanço", "jessica picanço": "Jessica Picanço", "jessica": "Jessica Picanço",
+        "adeyanira hernandez": "Adeyanira Hernandez", "adeyanira hernández": "Adeyanira Hernandez", "ing. adeyanira hernández": "Adeyanira Hernandez", "adeyanira hernandez carrillo": "Adeyanira Hernandez", "adeyanira": "Adeyanira Hernandez",
+        "fernanda cisneros": "Fernanda Cisneros", "fernanda": "Fernanda Cisneros",
+        "luis gabriel loaiza": "Luis Gabriel Loaiza", "guillermo aristizabal": "Guillermo Aristizabal",
+        "marcelo rivarola": "Marcelo Rivarola", "rivarola marcelo": "Marcelo Rivarola", "rivarola": "Marcelo Rivarola",
+        "jorge baccaro": "Jorge Baccaro", "baccaro jorge": "Jorge Baccaro", "baccaro": "Jorge Baccaro",
+        "ignacio paganini": "Ignacio Paganini", "paganini ignacio": "Ignacio Paganini",
+        "juan pablo de brahi": "Juan Pablo De Brahi", "juan pablo de barhi": "Juan Pablo De Brahi",
+        "pablo spaletra": "Pablo Spaletra", "spaletra pablo": "Pablo Spaletra",
+        "martin hermida": "Martín Hermida", "martín hermida": "Martín Hermida", "hermida martín": "Martín Hermida",
+        "victorio lucini": "Victorio Lucini", "luccini victorio": "Victorio Lucini",
+        "cesar lopardo": "Cesar Lopardo", "lopardo cesar": "Cesar Lopardo", "lopardo césar": "Cesar Lopardo",
+        "facundo peñaloza": "Facundo Peñaloza", "facundo peñolazo": "Facundo Peñaloza", "peñaloza facundo": "Facundo Peñaloza",
+        "edgard quintella": "Edgard Quintella", "edgard quintela": "Edgard Quintella", "edgar quintela": "Edgard Quintella", "edgar quintella": "Edgard Quintella", "edigar quitela": "Edgard Quintella",
+        "adriano augusto truffa": "Adriano Truffa", "adriano truffa": "Adriano Truffa", "adriano": "Adriano Truffa",
+        "marcio montenegro": "Marcio Montenegro", "márcio montenegro": "Marcio Montenegro", "márcio montegro": "Marcio Montenegro",
+        "andres g. sanchez": "Andres G. Sanchez", "andres sanchez": "Andres G. Sanchez",
+        "igor salles": "Igor Salles",
+        "glaucio werneck mozer": "Glaucio Werneck Mozer",
+        "leon macedo": "Leon Macedo",
+        "alexis vasiluk knebel": "Alexis Vasiluk Knebel", "alexis knebel": "Alexis Vasiluk Knebel", "alexia knebel": "Alexis Vasiluk Knebel", "alexis": "Alexis Vasiluk Knebel",
+        "gian manuel jimenez rodriguez": "Gian Manuel Jimenez", "gian manuel jimenez": "Gian Manuel Jimenez", "gian manuel jiménez rodríguez": "Gian Manuel Jimenez",
+        "jose antonio garcía montes": "Jose Antonio García Montes", "jose antonio garcia montes": "Jose Antonio García Montes", "garcia montes": "Jose Antonio García Montes", "garcía montes": "Jose Antonio García Montes", "gm": "Jose Antonio García Montes",
+        "armando juarez": "Armando Juarez",
+        "jose luis colin ortiz": "Jose Luis Colin Ortiz", "jose luis colin": "Jose Luis Colin Ortiz",
+        "carlos zabal": "Carlos Zabal", "zabal": "Carlos Zabal",
+        "fabio silva": "Fabio Silva", "fábio silva": "Fabio Silva", "da silva fabio": "Fabio Silva", "fabio": "Fabio Silva", "fábio": "Fabio Silva",
+        "jian wang": "Jian Wang", "jian": "Jian Wang",
         "jose kleberth tenorio": "José Kleberth Tenório", "kleberth": "José Kleberth Tenório", 
-        "gabriella duarte": "Gabriella Duarte", "gabriella": "Gabriella Duarte",
-        "stephanie bugeno apablaza": "Stephanie Bugeño Apablaza", "stephanie bugeno": "Stephanie Bugeño Apablaza", "stephanie apablaza": "Stephanie Bugeño Apablaza", "stephie": "Stephanie Bugeño Apablaza",
-        "marcio montenegro": "Marcio Montenegro", "marcio montegro": "Marcio Montenegro", "montenegro": "Marcio Montenegro",
-        "adriano truffa": "Adriano Truffa", "marcio truffa": "Marcio Truffa", "rodrigo truffa": "Rodrigo Truffa",
-        "henrique ribeiro": "Henrique Ribeiro", "alexis vasiluk knebel": "Alexis Vasiluk Knebel", "alexis": "Alexis Vasiluk Knebel",
-        "ricardo lisboa cardozo": "Ricardo Lisboa Cardozo", "ricardo lisboa": "Ricardo Lisboa Cardozo", "ricardo": "Ricardo Lisboa Cardozo", 
-        "cesar roberto pintos": "Cesar Roberto Pintos", "cesar pintos": "Cesar Roberto Pintos", "cesar": "Cesar Roberto Pintos", "pintos": "Cesar Roberto Pintos",
+        "lucas esteves": "Lucas Estevão", "lucas estevao": "Lucas Estevão",
         "andreia vasconcellos": "Andreia Vasconcellos", "andreia": "Andreia Vasconcellos",
         "eudes figueredo": "Eudes Figueredo", "eudes": "Eudes Figueredo",
         "jarede pereira": "Jarede Pereira", "jarede": "Jarede Pereira", "járede": "Jarede Pereira",
-        "baccaro jorge": "Jorge Baccaro", "jorge baccaro": "Jorge Baccaro",
-        "rivarola marcelo": "Marcelo Rivarola", "marcelo rivarola": "Marcelo Rivarola",
-        "laura zemp": "Laura Zemp"
+        "gabriella duarte": "Gabriella Duarte", "gabriella": "Gabriella Duarte",
+        "henrique ribeiro": "Henrique Ribeiro",
+        "damsky barbosa": "Jesus María Damsky Barbosa", "damsky jesus": "Jesus María Damsky Barbosa", "damsky jesús": "Jesus María Damsky Barbosa", "dr. damsky": "Jesus María Damsky Barbosa", "damsky": "Jesus María Damsky Barbosa",
+        "frederico": "Frederico", "frederico": "Frederico"
     };
     const PERSON_ALIASES_KEYS = Object.keys(PERSON_ALIASES).sort((a, b) => b.length - a.length);
 
     const HOSPITAL_ALIASES = {
+        // CHILE
+        "instituto nacional del torax": "Instituto Nacional del Tórax", "hospital del torax": "Instituto Nacional del Tórax", "hospital el torax": "Instituto Nacional del Tórax", "hospital el troax": "Instituto Nacional del Tórax", "el torax": "Instituto Nacional del Tórax", "del torax": "Instituto Nacional del Tórax",
+        "clinica santa maria": "Clínica Santa María",
+        "clinica isamedica": "Clínica Isamédica", "isamedica": "Clínica Isamédica",
+        "clinica alemana": "Clínica Alemana",
+        "universidad catolica de chile": "Hospital Clínico Universidad Católica",
+        
+        // ARGENTINA
+        "funcacorr": "Instituto Cardiológico de Corrientes (FUNCACORR)", "funcacoor": "Instituto Cardiológico de Corrientes (FUNCACORR)", "instituto cardiologico de corrientes": "Instituto Cardiológico de Corrientes (FUNCACORR)", "instituto de cardiologia de corrientes": "Instituto Cardiológico de Corrientes (FUNCACORR)",
+        "hospital garraham": "Hospital de Pediatría Garrahan", "hospital garrahan": "Hospital de Pediatría Garrahan",
+        "hospital gutierrez": "Hospital de Niños Ricardo Gutiérrez", "hospital de ninos ricardo gutierrez": "Hospital de Niños Ricardo Gutiérrez", "hospital ricardo gutierrez": "Hospital de Niños Ricardo Gutiérrez",
+        "sanatorio san geronimo": "Sanatorio San Gerónimo",
+        "fundacion favaloro": "Hospital Universitario Fundación Favaloro",
+        "sanatorio la entrerriana": "Sanatorio La Entrerriana", "la entrerriana": "Sanatorio La Entrerriana", "la entreriana": "Sanatorio La Entrerriana",
+        "sanatorio guemes": "Sanatorio Güemes",
+        "icba": "ICBA Instituto Cardiovascular",
+        "icr": "Instituto Cardiovascular de Rosario (ICR)",
+        "austral": "Hospital Universitario Austral", "hospital austral": "Hospital Universitario Austral", "hospital universitario austral": "Hospital Universitario Austral",
+        "sanatorio mit": "Sanatorio MIT",
+        "ipensa": "Sanatorio IPENSA La Plata",
+        "clinica suizo argentina": "Clínica Suizo Argentina", "clinica swizo": "Clínica Suizo Argentina",
+        "sanatorio mendez": "Sanatorio Julio Méndez",
+        
+        // BRAZIL
         "sao bernardo": "Hospital Hapvida São Bernardo", "hapvida sao bernardo": "Hospital Hapvida São Bernardo",
         "sao francisco de paula": "Hospital São Francisco de Paula", "sao francisco": "Hospital São Francisco",
-        "ic-fuc": "ICFUC", "ic fuc": "ICFUC", "ic- fuc": "ICFUC", "icfuc": "ICFUC",
-        "incor sp": "InCor SP", "incor sao paulo": "InCor SP", "incor natal": "InCor Natal", "incor": "InCor SP",
+        "ic-fuc": "ICFUC", "ic fuc": "ICFUC", "icfuc": "ICFUC",
         "dante pazzanese": "Instituto Dante Pazzanese", "pazzanese": "Instituto Dante Pazzanese",
         "albert einstein": "Hospital Albert Einstein", "einstein": "Hospital Albert Einstein",
         "sirio": "Hospital Sírio-Libanês", "sírio": "Hospital Sírio-Libanês",
         "badim": "Hospital Badim", "memorial": "Hospital Memorial",
         "paulo sacramento": "Hospital Paulo Sacramento", "ilha do leite": "Hospital Hapvida Ilha do Leite",
         "antonio prudente": "Hospital Hapvida Antonio Prudente", "agamenom magalhaes": "Hospital Agamenom Magalhães",
-        "agamenom magalhães": "Hospital Agamenom Magalhães", "belo horizonte": "Hospital Belo Horizonte",
-        "maceio": "Hospital Hapvida Maceió", "maceió": "Hospital Hapvida Maceió", "rio negro": "Hospital Hapvida Rio Negro",
-        "santa cruz": "Hospital Santa Cruz", "santa tereza": "Santa Tereza", "santa teresa": "Santa Tereza", "hci": "HCI", "sao jose": "Hospital São José",
+        "belo horizonte": "Hospital Belo Horizonte",
+        "maceio": "Hospital Hapvida Maceió", "rio negro": "Hospital Hapvida Rio Negro",
+        "santa cruz": "Hospital Santa Cruz", "santa tereza": "Santa Tereza", "hci": "HCI", "sao jose": "Hospital São José",
         "onco center": "Hospital Onco Center", "iecac": "IECAC",
-        "smh": "SMH Petrópolis", "petropolis": "SMH Petrópolis", "petrópolis": "SMH Petrópolis", "angio": "Hospital Angiocor",
-        "salvalus": "Salvalus", "socor": "Socor", "prontocor": "Prontocor", "cinecors": "Cinecors", "huse": "HUSE"
+        "smh": "SMH Petrópolis", "petropolis": "SMH Petrópolis", "angio": "Hospital Angiocor",
+        "salvalus": "Hospital Salvalus", "socor": "Hospital Socor", "prontocor": "Prontocor",
+        "cinecors": "Hospital Ernesto Dornelles", "huse": "HUSE", "hospital geral de palmas": "Hospital Geral de Palmas", "hspm": "HSPM",
+        
+        // MEXICO/OTHERS
+        "instituto nacional de cardiologia": "Instituto Nacional de Cardiología",
+        "instituto nacional de cardiología": "Instituto Nacional de Cardiología",
+        "incor de natal": "InCor Natal", "hospital incor de natal": "InCor Natal"
     };
     const HOSPITAL_ALIASES_KEYS = Object.keys(HOSPITAL_ALIASES).sort((a, b) => b.length - a.length);
 
     const HOSPITAL_CITY_MAP = {
-        "Hospital Hapvida São Bernardo": "São Bernardo do Campo", "Hospital Paulo Sacramento": "Jundiaí", "Salvalus": "São Paulo", "Hospital São Francisco": "Ribeirão Preto", "InCor SP": "São Paulo", "Instituto Dante Pazzanese": "São Paulo", "Hospital Albert Einstein": "São Paulo", "Hospital Sírio-Libanês": "São Paulo",
-        "IECAC": "Rio de Janeiro", "Hospital Badim": "Rio de Janeiro", "Hospital Memorial": "Rio de Janeiro", "SMH Petrópolis": "Petrópolis", "Santa Tereza": "Guarapuava", "Hospital São José": "Criciúma",
-        "ICFUC": "Porto Alegre", "Cinecors": "Porto Alegre", "Hospital São Francisco de Paula": "Pelotas", "HCI": "Ijuí", "Hospital Santa Cruz": "Santa Cruz do Sul",
-        "Hospital Belo Horizonte": "Belo Horizonte", "Socor": "Belo Horizonte", "Prontocor": "Belo Horizonte",
+        "Hospital Hapvida São Bernardo": "São Bernardo do Campo", "Hospital Paulo Sacramento": "Jundiaí", "Hospital Salvalus": "São Paulo", "Hospital São Francisco": "Ribeirão Preto", "InCor SP": "São Paulo", "Instituto Dante Pazzanese": "São Paulo", "Hospital Albert Einstein": "São Paulo", "Hospital Sírio-Libanês": "São Paulo",
+        "IECAC": "Rio de Janeiro", "Hospital Badim": "Rio de Janeiro", "Hospital Memorial": "Rio de Janeiro", "SMH Petrópolis": "Petrópolis", "Santa Tereza": "Guarapuava", "Hospital São José": "Rio de Janeiro",
+        "ICFUC": "Porto Alegre", "Hospital Ernesto Dornelles": "Porto Alegre", "Hospital São Francisco de Paula": "Pelotas", "HCI": "Ijuí", "Hospital Santa Cruz": "Santa Cruz do Sul",
+        "Hospital Belo Horizonte": "Belo Horizonte", "Hospital Socor": "Belo Horizonte", "Prontocor": "Belo Horizonte",
         "Hospital Hapvida Ilha do Leite": "Recife", "Hospital Agamenom Magalhães": "Recife",
         "Hospital Angiocor": "Aracaju", "HUSE": "Aracaju", "Hospital Hapvida Rio Negro": "Manaus", "Hospital Hapvida Maceió": "Maceió",
         "Hospital Hapvida Antonio Prudente": "Fortaleza", "InCor Natal": "Natal", "Hospital Onco Center": "Teresina"
@@ -526,21 +675,12 @@
 
     const CITY_COORDS = { "São Paulo": [-23.5505, -46.6333], "Ribeirão Preto": [-21.1704, -47.8103], "Jundiaí": [-23.1857, -46.8978], "São Bernardo do Campo": [-23.6938, -46.5650], "Rio de Janeiro": [-22.9068, -43.1729], "Petrópolis": [-22.5050, -43.1786], "Guarapuava": [-25.3953, -51.4581], "Criciúma": [-28.6758, -49.3694], "Porto Alegre": [-30.0346, -51.2177], "Pelotas": [-31.7654, -52.3376], "Ijuí": [-28.3869, -53.9116], "Santa Cruz do Sul": [-28.7156, -52.4281], "Belo Horizonte": [-19.9167, -43.9345], "Recife": [-8.0476, -34.8770], "Aracaju": [-10.9472, -37.0731], "Manaus": [-3.1190, -60.0217], "Maceió": [-9.6498, -35.7089], "Fortaleza": [-3.7172, -38.5433], "Natal": [-5.7945, -35.2110], "Teresina": [-5.0892, -42.8016] };
     
-    // COORDENADAS GLOBAIS COM VENEZUELA INCLUSA
     const COUNTRY_COORDS = { 
-        "Brazil": [-14.235, -51.925], 
-        "Argentina": [-38.4161, -63.6167], 
-        "Chile": [-35.6751, -71.5430], 
-        "Colombia": [4.5709, -74.2973], 
-        "Mexico": [23.6345, -102.5528], 
-        "Ecuador": [-1.8312, -78.1834], 
-        "Peru": [-9.19, -75.0152],
-        "Uruguay": [-32.5228, -55.7658],
-        "Paraguay": [-23.4425, -58.4438],
-        "Venezuela": [6.4238, -66.5897],
-        "Dominican Republic": [18.7357, -70.1627], 
-        "Panama": [8.5379, -80.7821],
-        "Bolivia": [-16.2902, -63.5887]
+        "Brazil": [-14.235, -51.925], "Argentina": [-38.4161, -63.6167], "Chile": [-35.6751, -71.5430], 
+        "Colombia": [4.5709, -74.2973], "Mexico": [23.6345, -102.5528], "Ecuador": [-1.8312, -78.1834], 
+        "Peru": [-9.19, -75.0152], "Uruguay": [-32.5228, -55.7658], "Paraguay": [-23.4425, -58.4438],
+        "Venezuela": [6.4238, -66.5897], "Dominican Republic": [18.7357, -70.1627], 
+        "Panama": [8.5379, -80.7821], "Bolivia": [-16.2902, -63.5887]
     };
 
     // --- 2. GLOBAL VARIABLES ---
@@ -549,9 +689,19 @@
     let fullyFilteredData = [];
     let fileUploads = {}; 
     
+    // Arrays for EXCEL Export
+    let proctorFinanceDataExport = [];
+    let currentSopExportData = [];
+
+    // Hybrid Physicians
+    let globalImplanters = new Set();
+    let globalVenusPSpecs = new Set();
+    let hybridPhysicians = new Set();
+
     // S&OP Engine Variables
     let sopGlobalTargetUSD = 6000000;
     let sopLockedCountryUSD = {}; 
+    let sopInventory = {}; // Inventory logic storage
 
     let brazilGeoJSON = null; 
     let gHospMap = {}, gImpMap = {}, gSpecMap = {}, gProcMap = {};
@@ -560,6 +710,7 @@
     let chartsLoaded = false;
     let activeYears = [];
     let activeCountryExpanded = null;
+    let activeTabId = 'tab-ops';
     
     let activeSOPCountry = null; 
     let activeSOPValve = null; 
@@ -576,6 +727,21 @@
     // LOAD MAP DATA
     fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
         .then(res => res.json()).then(data => { brazilGeoJSON = data; if(leafletMap) renderGeo(); }).catch(err => console.log("Offline mode"));
+
+    // --- DRAG & DROP STARTUP LOGIC ---
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('click', () => document.getElementById('startup-file-input').click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    document.getElementById('startup-file-input').addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
 
     // --- 3. HELPER FUNCTIONS ---
     function toTitleCase(str) {
@@ -676,14 +842,25 @@
     function stdName(raw) {
         let clean = cleanStr(raw);
         for(let k of PERSON_ALIASES_KEYS) { if(clean.includes(cleanStr(k))) return PERSON_ALIASES[k]; }
-        let formatted = raw.replace(/^(Dr\.|Dra\.|Dr|Dra|Prof\.|Prof|Ing\.|Ing|Eng\.|Eng|Enf\.|Enf)\s+/i, '').trim();
+        let formatted = raw.replace(/^(Dr\.|Dra\.|Dr|Dra|Prof\.|Prof|Ing\.|Ing|Enf\.|Enf)\s+/i, '').trim();
         return formatted.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
-    function stdHosp(raw) {
+    function stdHosp(raw, implanter_str) {
         if (!raw) return 'Unknown Hospital';
-        let clean = cleanStr(raw);
-        for (let k of HOSPITAL_ALIASES_KEYS) { if (clean.includes(cleanStr(k))) return HOSPITAL_ALIASES[k]; }
+        let clean_raw = cleanStr(raw);
+        
+        if (clean_raw.includes('incor') || clean_raw.includes('in cor')) {
+            let imp_clean = cleanStr(implanter_str);
+            if (imp_clean.includes('francisco') || imp_clean.includes('feancisco') || imp_clean.includes('bruno coutinho') || clean_raw.includes('natal')) {
+                return 'InCor Natal';
+            } else {
+                return 'InCor SP'; 
+            }
+        }
+        
+        for (let k of HOSPITAL_ALIASES_KEYS) { if (clean_raw.includes(cleanStr(k))) return HOSPITAL_ALIASES[k]; }
+        
         let formatted = raw.replace(/^(Dr|Dra|Ing|Prof|Dr\.|Dra\.|Prof\.)\s*/i, '');
         return formatted.trim() || 'Unknown Hospital';
     }
@@ -725,7 +902,7 @@
     function toggleAccordion(el) { if(el && el.parentElement) el.parentElement.classList.toggle('active-accordion'); }
     
     function initEntity(map, name, country) { 
-        if(!map[name]) map[name] = { count: 0, country: country, cases: [] }; 
+        if(!map[name]) map[name] = { count: 0, country: country, cases: [], valves: {} }; 
     }
 
     function toggleForecastLines() {
@@ -844,7 +1021,7 @@
         return alloc;
     }
 
-    // --- NOVA FUNÇÃO DE SINCRONIZAÇÃO VISUAL DO S&OP ---
+    // --- S&OP UI SYNC ---
     function updateSOPTopBarUI() {
         let usdInput = document.getElementById('sop-target-usd-input');
         let usdLabel = document.getElementById('sop-target-usd-label');
@@ -896,8 +1073,13 @@
         }
     }
 
-    // --- NOVA FUNÇÃO: GERA O HTML DOS CARDS GRANDES DE LOGÍSTICA ---
-    function buildFamilyCardsHtml(szTargetsDict) {
+    function updateStock(key, value) {
+        sopInventory[key] = Number(value) || 0;
+        renderSOP(); // Re-render everything to update Net Demand
+    }
+
+    // --- LOGISTICS CARDS & INVENTORY ---
+    function buildFamilyCardsHtml(szTargetsDict, contextPrefix) {
         let familyGroups = {};
         Object.entries(szTargetsDict).forEach(entry => {
             let szName = entry[0];
@@ -925,13 +1107,28 @@
 
             let sizesHtml = '';
             Object.entries(fg.sizes).sort((a,b)=>b[1]-a[1]).forEach(szEntry => {
+                let szName = szEntry[0];
+                let szQty = szEntry[1];
+                let invKey = `${contextPrefix}_${szName}`;
+                let stock = sopInventory[invKey] || 0;
+                let netQty = szQty - stock; if (netQty < 0) netQty = 0;
+
                 sizesHtml += `
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 12px 18px; background: #f8fafc; border-radius: 10px;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <img src="${baseImg}" style="height: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
-                            <span style="font-weight: 800; font-size: 15px; color: var(--v-deep-blue);">${szEntry[0]}</span>
+                            <span style="font-weight: 800; font-size: 15px; color: var(--v-deep-blue);">${szName}</span>
                         </div>
-                        <span class="tech-font" style="font-weight: 800; font-size: 20px; color: var(--v-blue);">${szEntry[1]}</span>
+                        <div style="display:flex; align-items:center; gap: 15px;">
+                            <div style="text-align:right;">
+                                <div style="font-size:8px; text-transform:uppercase; color:var(--v-text-mutated); font-weight:bold;">Stock on Hand</div>
+                                <input type="number" class="stock-input" value="${stock}" onchange="updateStock('${invKey}', this.value)" min="0">
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:8px; text-transform:uppercase; color:var(--v-text-mutated); font-weight:bold;">Net Demand</div>
+                                <span class="tech-font" style="font-weight: 800; font-size: 20px; color: var(--v-blue);">${netQty}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
@@ -962,7 +1159,7 @@
                             <h3 style="margin: 0; font-size: 22px; font-weight: 800; font-family:'Inter', sans-serif;">${vBase}</h3>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Required Units</div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Gross Units Target</div>
                             <div class="tech-font" style="font-size: 32px; color: var(--v-yellow); font-weight: 800; line-height: 1; margin-top: 4px;">${fg.total}</div>
                         </div>
                     </div>
@@ -982,13 +1179,52 @@
         return html;
     }
 
+    // Generate Month Weights based on historical context
+    function getSeasonalityWeights(country) {
+        let counts = new Array(12).fill(0);
+        let total = 0;
+        allCasesGlobal.forEach(c => {
+            if(!country || c.country === country) {
+                let parts = c.date.split('/');
+                if(parts.length === 3) {
+                    let m = parseInt(parts[1], 10);
+                    if(m >= 1 && m <= 12) {
+                        counts[m-1]++;
+                        total++;
+                    }
+                }
+            }
+        });
+        if(total === 0) return new Array(12).fill(1/12);
+        return counts.map(x => x / total);
+    }
+
+    function distribute12Months(netUnits, weights) {
+        if(netUnits === 0) return new Array(12).fill(0);
+        let fractions = weights.map(w => w * netUnits);
+        let floors = fractions.map(f => Math.floor(f));
+        let allocated = floors.reduce((a,b) => a + b, 0);
+        
+        let remainders = fractions.map((f, i) => ({idx: i, rem: f - floors[i]}));
+        remainders.sort((a,b) => b.rem - a.rem);
+        
+        let diff = netUnits - allocated;
+        for(let i = 0; i < diff; i++) {
+            floors[remainders[i].idx]++;
+        }
+        return floors;
+    }
+
     // --- 4. DATA BUILDER ---
-    document.getElementById('excel-file').addEventListener('change', async (e) => {
-        let files = e.target.files; 
+    async function handleFiles(files) {
         if(!files || files.length === 0) return;
         
         let errAlert = document.getElementById('error-alert');
         if(errAlert) errAlert.style.display = 'none';
+
+        // Hide startup, show main app
+        document.getElementById('startup-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'flex';
 
         try {
             let allPromises = Array.from(files).map(file => {
@@ -1063,7 +1299,6 @@
                         if (country === 'Unknown' || country === '') return;
 
                         let dist = getSmartColumnValue(item.row, ['distributor','dist']) || 'Venus Direct (No Partner)';
-                        let hospRaw = getSmartColumnValue(item.row, ['hospital','centro']); let hosp = hospRaw ? stdHosp(hospRaw) : 'Unknown Hospital';
                         
                         let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula']);
                         let sz = getSmartColumnValue(item.row, ['size','tamanho']); 
@@ -1083,13 +1318,40 @@
 
                         let valveFullName = vName + (cleanSz ? ' ' + cleanSz : '');
 
-                        let validName = x => x && x.toLowerCase() !== 'false' && x.toLowerCase() !== 'true';
-                        let impArr = getSmartColumnValue(item.row, ['implanter','medico'], true).split(/[,/&+]/).map(stdName).filter(validName);
+                        // PURGE LIST: Exclui erros de digitação e boleanos
+                        let validName = x => {
+                            let cl = cleanStr(x);
+                            return cl && !['false', 'true', 'n/a', 'na', 'nan', 'load', 'loader', '0', '-'].includes(cl) && !/^\d+$/.test(cl);
+                        };
+                        let splitRegex = /\s*[,/&+-]\s*|\s+y\s+|\s+e\s+/i;
                         
-                        let specArr = getSmartColumnValue(item.row, ['specialist','cs','clinical','especialista'], true).split(/[,/&+]/).map(stdName).filter(validName);
-                        if(country === 'Brazil') specArr = specArr.filter(s => !BLOCKED_SPECIALISTS.includes(cleanStr(s)));
+                        // Strict col matching para Proctor:
+                        let procRawStr = '';
+                        let procKeys = Object.keys(item.row).filter(k => cleanStr(k) === 'proctor name' || cleanStr(k) === 'proctor');
+                        if (procKeys.length > 0) procRawStr = String(item.row[procKeys[0]]);
                         
-                        let procArr = getSmartColumnValue(item.row, ['proctor','proc'], true).split(/[,/&+]/).map(stdName).filter(validName);
+                        let impRawStr = getSmartColumnValue(item.row, ['implanter','medico','operator'], true);
+                        let specRawStr = getSmartColumnValue(item.row, ['specialist','cs','clinical','especialista'], true);
+                        
+                        let impArr = impRawStr.split(splitRegex).map(stdName).filter(validName);
+                        let specArr = specRawStr.split(splitRegex).map(stdName).filter(validName);
+                        let procArr = procRawStr.split(splitRegex).map(stdName).filter(validName);
+
+                        // COLOMBIA EXCEPTION (Luis Gabriel Loaiza)
+                        if (country === 'Colombia') {
+                            let filteredImp = [];
+                            for (let i = 0; i < impArr.length; i++) {
+                                if (impArr[i] === 'Luis Gabriel Loaiza') {
+                                    if (!specArr.includes('Luis Gabriel Loaiza')) specArr.push('Luis Gabriel Loaiza');
+                                } else {
+                                    filteredImp.push(impArr[i]);
+                                }
+                            }
+                            impArr = filteredImp;
+                        }
+
+                        let hospRaw = getSmartColumnValue(item.row, ['hospital','centro']); 
+                        let hosp = stdHosp(hospRaw, impArr.join(' '));
                         
                         let dateStr = 'N/A';
                         if (item.dObj) {
@@ -1117,9 +1379,45 @@
             processData();
 
         } catch (err) {
-            if(errAlert) { errAlert.innerText = "🚨 Erro ao ler arquivos: " + err.message; errAlert.style.display = 'block'; }
+            if(errAlert) { errAlert.innerText = "🚨 Data Reading Error: " + err.message; errAlert.style.display = 'block'; }
         }
-    });
+    }
+
+    // --- EXPORT TO EXCEL LOGIC ---
+    function exportCurrentTab() {
+        let wb = XLSX.utils.book_new();
+        let ws;
+        let filename = "LATAM_Export";
+
+        if (activeTabId === 'tab-ops' || activeTabId === 'tab-geo') {
+            filename = "LATAM_Operations_Filtered";
+            let exportData = fullyFilteredData.map(c => ({
+                "Date": c.date,
+                "Country": c.country,
+                "Hospital": c.hospital,
+                "Distributor": c.dist,
+                "Valve": c.valve,
+                "Serial Number": c.serial,
+                "Implanter": c.implanter,
+                "Specialist": c.specialist,
+                "Proctor": c.proctor
+            }));
+            ws = XLSX.utils.json_to_sheet(exportData);
+            
+        } else if (activeTabId === 'tab-finance') {
+            filename = "LATAM_Proctor_Finance";
+            ws = XLSX.utils.json_to_sheet(proctorFinanceDataExport);
+            
+        } else if (activeTabId === 'tab-sop') {
+            filename = "LATAM_12Month_Forecast_Schedule";
+            ws = XLSX.utils.json_to_sheet(currentSopExportData);
+        }
+
+        if (ws) {
+            XLSX.utils.book_append_sheet(wb, ws, "Report");
+            XLSX.writeFile(wb, filename + ".xlsx");
+        }
+    }
 
     function extractFilters() {
         let ys = new Set();
@@ -1180,12 +1478,45 @@
             });
 
             gHospMap = {}; gImpMap = {}; gSpecMap = {}; gProcMap = {}; 
+            globalImplanters = new Set(); globalVenusPSpecs = new Set(); hybridPhysicians = new Set();
             
+            // Map Hybrid Physicians globally across all data
+            allCasesGlobal.forEach(c => {
+                let imps = String(c.implanter).split(', ');
+                let specs = String(c.specialist).split(', ');
+                
+                imps.forEach(i => { if(i !== 'N/A') globalImplanters.add(i); });
+                if (c.valveBase === 'Venus P') {
+                    specs.forEach(s => { if(s !== 'N/A') globalVenusPSpecs.add(s); });
+                }
+            });
+            hybridPhysicians = new Set([...globalImplanters].filter(x => globalVenusPSpecs.has(x)));
+
             fullyFilteredData.forEach(caseObj => {
-                if(caseObj.hospital && caseObj.hospital !== 'Unknown Hospital') { initEntity(gHospMap, caseObj.hospital, caseObj.country); gHospMap[caseObj.hospital].count++; gHospMap[caseObj.hospital].cases.push(caseObj); }
-                if(caseObj.implanter !== 'N/A') String(caseObj.implanter).split(', ').forEach(i => { initEntity(gImpMap, i, caseObj.country); gImpMap[i].count++; gImpMap[i].cases.push(caseObj); });
-                if(caseObj.specialist !== 'N/A') String(caseObj.specialist).split(', ').forEach(s => { initEntity(gSpecMap, s, caseObj.country); gSpecMap[s].count++; gSpecMap[s].cases.push(caseObj); });
-                if(caseObj.proctor !== 'N/A') String(caseObj.proctor).split(', ').forEach(p => { initEntity(gProcMap, p, caseObj.country); gProcMap[p].count++; gProcMap[p].cases.push(caseObj); });
+                if(caseObj.hospital && caseObj.hospital !== 'Unknown Hospital') { 
+                    initEntity(gHospMap, caseObj.hospital, caseObj.country); 
+                    gHospMap[caseObj.hospital].count++; 
+                    gHospMap[caseObj.hospital].cases.push(caseObj); 
+                    gHospMap[caseObj.hospital].valves[caseObj.valveBase] = (gHospMap[caseObj.hospital].valves[caseObj.valveBase] || 0) + 1;
+                }
+                if(caseObj.implanter !== 'N/A') String(caseObj.implanter).split(', ').forEach(i => { 
+                    initEntity(gImpMap, i, caseObj.country); 
+                    gImpMap[i].count++; 
+                    gImpMap[i].cases.push(caseObj); 
+                    gImpMap[i].valves[caseObj.valveBase] = (gImpMap[i].valves[caseObj.valveBase] || 0) + 1;
+                });
+                if(caseObj.specialist !== 'N/A') String(caseObj.specialist).split(', ').forEach(s => { 
+                    initEntity(gSpecMap, s, caseObj.country); 
+                    gSpecMap[s].count++; 
+                    gSpecMap[s].cases.push(caseObj); 
+                    gSpecMap[s].valves[caseObj.valveBase] = (gSpecMap[s].valves[caseObj.valveBase] || 0) + 1;
+                });
+                if(caseObj.proctor !== 'N/A') String(caseObj.proctor).split(', ').forEach(p => { 
+                    initEntity(gProcMap, p, caseObj.country); 
+                    gProcMap[p].count++; 
+                    gProcMap[p].cases.push(caseObj); 
+                    gProcMap[p].valves[caseObj.valveBase] = (gProcMap[p].valves[caseObj.valveBase] || 0) + 1;
+                });
             });
 
             renderCountryCards(processedData, Math.max(...activeYears));
@@ -1206,7 +1537,7 @@
         } catch (masterErr) {
             console.error(masterErr);
             let errAlert = document.getElementById('error-alert');
-            if(errAlert) { errAlert.innerText = "🚨 Erro no processamento: " + masterErr.message; errAlert.style.display = 'block'; }
+            if(errAlert) { errAlert.innerText = "🚨 Processing Error: " + masterErr.message; errAlert.style.display = 'block'; }
         }
     }
 
@@ -1217,6 +1548,8 @@
         let t = document.getElementById(tabId);
         if(t) t.classList.add('active');
         
+        activeTabId = tabId;
+
         let opsTarget = document.getElementById('ops-target-container');
         if (opsTarget) opsTarget.style.display = tabId === 'tab-ops' ? 'block' : 'none';
 
@@ -1472,20 +1805,41 @@
 
         const drawRank = (map, el, role) => {
             let h = ''; 
-            Object.entries(map).sort((a,b)=>b[1].count-a[1].count).forEach(e => {
+            let sortedEntries = Object.entries(map).sort((a,b)=>b[1].count-a[1].count);
+            let maxCount = sortedEntries.length > 0 ? sortedEntries[0][1].count : 0;
+
+            sortedEntries.forEach(e => {
                 let name = e[0]; let data = e[1]; let count = data.count;
                 let cFlag = NATIONALITIES[name] || data.country; let flag = FLAGS[cFlag] || "🌍"; 
-                let p = filteredTotalForRankings > 0 ? ((count/filteredTotalForRankings)*100).toFixed(1) : 0;
+                let p = maxCount > 0 ? ((count/maxCount)*100).toFixed(1) : 0;
                 let safeName = name.replace(/'/g, "\\'");
+                
+                let isHybrid = role === 'Specialist' && hybridPhysicians.has(name);
+                let hybridBadge = isHybrid ? `<span class="badge" style="background:#1e293b; color:#fbbf24; margin-left:8px; font-size:9px;">⚙️ HYBRID PHYSICIAN</span>` : '';
+
+                let valvesHtml = Object.entries(data.valves).map(([v, cnt]) => {
+                    return `<div style="display:inline-flex; align-items:center; font-size:10px; color:var(--v-text-mutated); background:#E2E8F0; padding:4px 8px; border-radius:12px;"><img src="${VALVE_IMGS[v]}" style="height:18px; margin-right:6px;"> <strong style="font-size:12px;">${cnt}</strong></div>`;
+                }).join('');
+
                 h += `<div class="ranking-row" onclick="openDrilldown('${safeName}', '${role}', '${flag}')">
-                    <div class="ranking-labels"><div style="display:flex; align-items:center;"><span class="flag-icon">${flag}</span> ${name}</div>
-                        <div class="tech-font" style="color:var(--v-text-mutated); font-size: 14px; font-weight: bold;">${count}</div></div>
-                    <div class="ranking-track"><div class="ranking-fill" style="width:${p}%; background:var(--v-blue);"></div></div></div>`;
+                    <div class="ranking-labels">
+                        <div style="display:flex; align-items:center; flex-wrap:wrap; font-size:15px;">
+                            <span class="flag-icon">${flag}</span> ${name} ${hybridBadge}
+                        </div>
+                        <div class="tech-font" style="color:var(--v-blue); font-size: 18px; font-weight: 800;">${count}</div>
+                    </div>
+                    <div class="valve-mini-row">${valvesHtml}</div>
+                    <div class="ranking-track"><div class="ranking-fill" style="width:${p}%; background:var(--v-blue);"></div></div>
+                </div>`;
             });
             let container = document.getElementById(el);
             if(container) container.innerHTML = h || `<span style="font-size:12px; color:var(--v-text-mutated);">No data for this selection.</span>`;
         };
-        drawRank(gHospMap, 'rank-hospitals', 'Hospital'); drawRank(gImpMap, 'rank-implanters', 'Implanter'); drawRank(gSpecMap, 'rank-specialists', 'Specialist'); drawRank(gProcMap, 'rank-proctors', 'Proctor'); 
+        
+        drawRank(gHospMap, 'rank-hospitals', 'Hospital'); 
+        drawRank(gImpMap, 'rank-implanters', 'Implanter'); 
+        drawRank(gSpecMap, 'rank-specialists', 'Specialist'); 
+        drawRank(gProcMap, 'rank-proctors', 'Proctor'); 
     }
 
     function renderTrendChart() {
@@ -1497,7 +1851,7 @@
         if(!container) return;
 
         if(chartData.length === 0 || activeYears.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Aguardando dados...</div>`;
+            container.innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div>`;
             return;
         }
 
@@ -1627,6 +1981,12 @@
         
         let data = google.visualization.arrayToDataTable(dataTable);
         
+        // Calculate max value for breathing room
+        let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
+        if(showForecastLines) { allValues.push(targetPerMonth, runRatePerMonth); }
+        let maxDataVal = allValues.length > 0 ? Math.max(...allValues) : 0;
+        let viewMax = maxDataVal + 10;
+        
         let seriesConfig = {};
         if (compYear) {
             seriesConfig = { 0: {type: 'bars'}, 1: {type: 'bars'} };
@@ -1653,7 +2013,7 @@
             colors: colorsConfig,
             seriesType: 'bars',
             series: seriesConfig,
-            vAxis: { minValue: 0, textStyle: {color: '#575567', fontName: 'Space Mono', fontSize: 13}, gridlines: {color: '#E2E8F0'} },
+            vAxis: { minValue: 0, viewWindow: { max: viewMax }, textStyle: {color: '#575567', fontName: 'Space Mono', fontSize: 13}, gridlines: {color: '#E2E8F0'} },
             hAxis: { textStyle: {color: '#575567', fontName: 'Space Mono', fontSize: 12} },
             annotations: { alwaysOutside: true, textStyle: { fontName: 'Space Mono', fontSize: 11, bold: true, color: '#171434' } },
             backgroundColor: 'transparent',
@@ -1735,6 +2095,9 @@
         if(mName) mName.innerHTML = `<span style="font-size:24px;">📍</span> ${locName}`;
         let mRole = document.getElementById('modal-person-role');
         if(mRole) mRole.innerText = `Role: Regional Hub | Total Procedures: ${casesList.length}`;
+        document.getElementById('modal-yoy-stats').innerHTML = '';
+        document.getElementById('modal-portfolio-mix').innerHTML = '';
+        
         buildModalContent(casesList);
     }
 
@@ -1744,7 +2107,7 @@
         
         let casesList = [];
         if(role === 'Proctor') {
-            casesList = fullyFilteredData.filter(c => {
+            casesList = allCasesGlobal.filter(c => {
                 if(!c.proctor) return false;
                 let isMatch = false;
                 c.proctor.split(', ').forEach(p => {
@@ -1754,8 +2117,13 @@
                 return isMatch;
             });
         } else {
-            if(!map || !map[name]) return;
-            casesList = map[name].cases; 
+            // Find in global to calculate true YoY
+            casesList = allCasesGlobal.filter(c => {
+                if (role === 'Hospital' && cleanStr(c.hospital) === cleanStr(name)) return true;
+                if (role === 'Implanter' && c.implanter.includes(name)) return true;
+                if (role === 'Specialist' && c.specialist.includes(name)) return true;
+                return false;
+            });
         }
 
         if(casesList.length === 0) return;
@@ -1766,29 +2134,104 @@
         let affiliation = "";
         let nClean = cleanStr(name);
         
-        if (nClean.includes("fabio silva") || nClean.includes("stephanie bugeno") || nClean.includes("ariane sanchez")) {
+        if (nClean.includes("fabio silva") || nClean.includes("stephanie bugeno") || nClean.includes("ariane sanchez") || nClean.includes("jian wang") || nClean.includes("jian")) {
             affiliation = "VENUS MEDTECH";
-        } else if (role === 'Specialist' || role === 'Implanter') {
+        } else if (role === 'Specialist') { // EMPLOYEE BADGE ONLY FOR SPECIALISTS NOW
             let distCounts = {};
             casesList.forEach(c => { distCounts[c.dist] = (distCounts[c.dist] || 0) + 1; });
             let topDist = Object.keys(distCounts).sort((a,b) => distCounts[b] - distCounts[a])[0];
             if (topDist && topDist !== 'Venus Direct (No Partner)') affiliation = topDist.toUpperCase();
         }
 
-        let roleText = `Role: ${role} | Total Procedures: ${casesList.length}`;
-        let extraBadge = "";
+        let isHybrid = role === 'Specialist' && hybridPhysicians.has(name);
+        let extraBadge = isHybrid ? `<span class="badge" style="background:#1e293b; color:#fbbf24; margin-left:10px; font-size:11px;">⚙️ HYBRID PHYSICIAN</span>` : '';
+        
         if (affiliation === "VENUS MEDTECH") {
-            extraBadge = `<span class="badge" style="background:var(--v-deep-blue); color:var(--v-yellow); margin-left:10px; font-size:11px;">VENUS CORPORATE STAFF</span>`;
+            extraBadge += `<span class="badge" style="background:var(--v-deep-blue); color:var(--v-yellow); margin-left:10px; font-size:11px;">VENUS CORPORATE STAFF</span>`;
         } else if (affiliation) {
-            extraBadge = `<span class="badge" style="background:var(--v-deep-blue); color:var(--v-yellow); margin-left:10px; font-size:11px;">EMPLOYEE OF: ${affiliation}</span>`;
+            extraBadge += `<span class="badge" style="background:var(--v-deep-blue); color:var(--v-yellow); margin-left:10px; font-size:11px;">EMPLOYEE OF: ${affiliation}</span>`;
         }
+        
+        let sharePct = ((casesList.length / allCasesGlobal.length) * 100).toFixed(1);
+        let roleText = `Role: ${role} | Total LATAM Hist: ${casesList.length} (${sharePct}% Share)`;
         
         let mRole = document.getElementById('modal-person-role');
         if(mRole) mRole.innerHTML = roleText + extraBadge;
-        buildModalContent(casesList);
+        
+        // Calculate YTD Dynamics
+        let yearCounts = {'2025': 0, '2026': 0};
+        let valveMix = {};
+        
+        // Determine the max month we have data for in 2026 to create a fair YTD comparison
+        let maxMonth2026 = 0;
+        allCasesGlobal.forEach(c => {
+             let parts = c.date.split('/');
+             if(parts.length === 3 && parts[2] === '2026') {
+                 let m = parseInt(parts[1], 10);
+                 if(m > maxMonth2026) maxMonth2026 = m;
+             }
+        });
+        if(maxMonth2026 === 0) maxMonth2026 = 12; // Fallback
+
+        casesList.forEach(c => {
+            let parts = c.date.split('/');
+            if(parts.length===3) {
+                let m = parseInt(parts[1], 10);
+                let yr = parts[2];
+                // Only count YTD (months up to maxMonth2026) for fair comparison
+                if (yr === '2025' || yr === '2026') {
+                    if (m <= maxMonth2026) {
+                        yearCounts[yr] = (yearCounts[yr] || 0) + 1;
+                    }
+                }
+            }
+            valveMix[c.valveBase] = (valveMix[c.valveBase] || 0) + 1;
+        });
+
+        let y2025 = yearCounts['2025'] || 0;
+        let y2026 = yearCounts['2026'] || 0;
+        let yoyHtml = '';
+        if (y2025 > 0 || y2026 > 0) {
+            let growth = y2025 > 0 ? (((y2026 / y2025) - 1) * 100).toFixed(0) : 'N/A';
+            let growthStr = growth !== 'N/A' ? (growth >= 0 ? `+${growth}%` : `${growth}%`) : 'New in 2026';
+            let growthColor = growth >= 0 || growth === 'N/A' ? '#10b981' : '#ef4444';
+            
+            let monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            let periodText = `Jan-${monthNamesShort[maxMonth2026-1]}`;
+
+            yoyHtml = `<div style="font-size:11px; margin-top:8px; font-weight:bold; color:var(--v-text-mutated);"><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; margin-right:8px;">2025 (YTD ${periodText}): <span style="color:var(--v-deep-blue);">${y2025 > 0 ? y2025 : 'N/A'}</span></span> <span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; margin-right:8px;">2026 (YTD): <span style="color:var(--v-deep-blue);">${y2026}</span></span> <span style="color:${growthColor}; background:rgba(${growth >= 0 || growth === 'N/A' ? '16, 185, 129' : '239, 68, 68'}, 0.1); padding:4px 8px; border-radius:4px;">${growthStr} YoY</span></div>`;
+        }
+        document.getElementById('modal-yoy-stats').innerHTML = yoyHtml;
+
+        // Portfolio Mix HTML
+        let mixHtml = '';
+        Object.entries(valveMix).sort((a,b)=>b[1]-a[1]).forEach(([vName, vCount]) => {
+            mixHtml += `<div><img src="${VALVE_IMGS[vName]}" style="height:35px; margin-bottom:5px; display:block; margin: 0 auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"><div class="tech-font" style="font-size:14px; font-weight:800; color:var(--v-blue);">${vCount}</div></div>`;
+        });
+        document.getElementById('modal-portfolio-mix').innerHTML = mixHtml;
+
+        // Filter back to current view context for the logs
+        let contextCases = casesList.filter(c => {
+             if (activeYears.length > 0) {
+                 let y = parseInt(c.date.split('/')[2], 10);
+                 if (!activeYears.includes(y)) return false;
+             }
+             if (activeCountryExpanded && c.country !== activeCountryExpanded) return false;
+             if (activeDistFilter && c.dist !== activeDistFilter) return false;
+             if (activeValveFilter && c.valveBase !== activeValveFilter) return false;
+             return true;
+        });
+
+        buildModalContent(contextCases);
     }
 
     function buildModalContent(casesList) {
+        if(casesList.length === 0) {
+            document.getElementById('modal-detail-list').innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); padding:20px;">No procedures found for this specific active filter context.</div>`;
+            document.getElementById('drilldown-modal').classList.add('active');
+            return;
+        }
+
         let hCount = {}, dCount = {}, vCount = {};
         casesList.forEach(c => { hCount[c.hospital] = (hCount[c.hospital]||0)+1; dCount[c.dist] = (dCount[c.dist]||0)+1; vCount[c.valve] = (vCount[c.valve]||0)+1; });
         let topHosp = Object.keys(hCount).sort((a,b)=>hCount[b]-hCount[a])[0] || 'N/A';
@@ -1798,7 +2241,7 @@
         let sKpi = document.getElementById('modal-summary-kpis');
         if(sKpi) {
             sKpi.innerHTML = `
-            <div class="grid-3" style="margin-bottom: 20px;">
+            <div class="grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom: 20px;">
                 <div class="metric-card" style="padding: 15px; border-color:var(--v-yellow);"><div style="font-size: 10px; font-weight: 800; color: var(--v-yellow);">TOP HOSPITAL</div><div style="font-size: 15px; font-weight: 700; color: var(--v-deep-blue); margin-top: 5px;">${topHosp}</div></div>
                 <div class="metric-card" style="padding: 15px;"><div style="font-size: 10px; font-weight: 800; color: var(--v-text-mutated);">MAIN DISTRIBUTOR</div><div style="font-size: 15px; font-weight: 700; color: var(--v-deep-blue); margin-top: 5px;">${topDist}</div></div>
                 <div class="metric-card" style="padding: 15px;"><div style="font-size: 10px; font-weight: 800; color: var(--v-text-mutated);">MOST USED VALVE</div><div style="font-size: 15px; font-weight: 700; color: var(--v-deep-blue); margin-top: 5px;">${topValve}</div></div>
@@ -1859,7 +2302,8 @@
                 }
             }
 
-            listH += `<div class="acc-level-1 active-accordion"><div class="acc-header-1" onclick="toggleAccordion(this)"><span>${cFlag} ${country}</span><span class="badge" style="background:var(--v-yellow); color:#fff;">${countryCases} CASES</span></div><div class="acc-body-1">${cBody}</div></div>`;
+            // Accordion FECHADO por padrão (removido o active-accordion daqui)
+            listH += `<div class="acc-level-1"><div class="acc-header-1" onclick="toggleAccordion(this)"><span>${cFlag} ${country}</span><span class="badge" style="background:var(--v-yellow); color:#fff;">${countryCases} CASES</span></div><div class="acc-body-1">${cBody}</div></div>`;
         }
 
         let mDet = document.getElementById('modal-detail-list');
@@ -1905,6 +2349,7 @@
         });
 
         let tbody = ''; let totalCost = 0; let totalCasesAll = 0; let totalDaysAll = 0;
+        proctorFinanceDataExport = []; // Reset for export
         
         Object.values(pMap).sort((a,b)=>b.totalCases-a.totalCases).forEach((p, idx) => {
             let fId = `fee-${idx}`;
@@ -1930,6 +2375,17 @@
             totalCasesAll += p.totalCases;
             totalDaysAll += (nonBrDays + brDays);
             
+            // Add to export data
+            proctorFinanceDataExport.push({
+                "Official Proctor": p.name,
+                "Total Cases": p.totalCases,
+                "Total Days": (nonBrDays + brDays),
+                "Brazil Days (Free)": brDays,
+                "Intl Days (Billable)": nonBrDays,
+                "Fee / Intl Day (USD)": fee,
+                "Total Travel Cost (USD)": cost
+            });
+
             let safeName = p.name.replace(/'/g, "\\'"); 
             let cFlag = NATIONALITIES[p.name] || 'Unknown'; 
             let iso = COUNTRY_ISO[cFlag];
@@ -1937,7 +2393,7 @@
             
             let feeInputHtml = '';
             if (nonBrDays === 0) {
-                feeInputHtml = `<span style="font-size:12px; font-weight:bold; color:var(--v-text-mutated); background:#f1f5f9; padding:4px 8px; border-radius:4px;">Isento (Local BR)</span>`;
+                feeInputHtml = `<span style="font-size:12px; font-weight:bold; color:var(--v-text-mutated); background:#f1f5f9; padding:4px 8px; border-radius:4px;">Waived (Local BR)</span>`;
             } else {
                 feeInputHtml = `<input type="number" class="table-input tech-font" id="${fId}" value="${fee}" onchange="updateFee('${fId}')" onclick="event.stopPropagation()">`;
             }
@@ -2024,95 +2480,16 @@
         document.getElementById('price-wrap-v').style.display = hasV ? 'inline-block' : 'none';
     }
 
-    function buildFamilyCardsHtml(szTargetsDict) {
-        let familyGroups = {};
-        Object.entries(szTargetsDict).forEach(entry => {
-            let szName = entry[0];
-            let szQty = entry[1];
-            if (szQty === 0) return;
-
-            let vBase = getValveBaseFromSize(szName);
-            if (activeSOPValve && vBase !== activeSOPValve) return;
-
-            if (!familyGroups[vBase]) familyGroups[vBase] = { total: 0, sizes: {}, ds: {} };
-            
-            familyGroups[vBase].total += szQty;
-            familyGroups[vBase].sizes[szName] = (familyGroups[vBase].sizes[szName] || 0) + szQty;
-
-            let dsCode = getDS(szName);
-            if (dsCode !== 'N/A' && dsCode !== 'Check Catalog') {
-                familyGroups[vBase].ds[dsCode] = (familyGroups[vBase].ds[dsCode] || 0) + szQty;
-            }
-        });
-
-        let html = '';
-        Object.keys(familyGroups).sort().forEach(vBase => {
-            let fg = familyGroups[vBase];
-            let baseImg = getValveBaseImgUrl(vBase);
-
-            let sizesHtml = '';
-            Object.entries(fg.sizes).sort((a,b)=>b[1]-a[1]).forEach(szEntry => {
-                sizesHtml += `
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 12px 18px; background: #f8fafc; border-radius: 10px;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="${baseImg}" style="height: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
-                            <span style="font-weight: 800; font-size: 15px; color: var(--v-deep-blue);">${szEntry[0]}</span>
-                        </div>
-                        <span class="tech-font" style="font-weight: 800; font-size: 20px; color: var(--v-blue);">${szEntry[1]}</span>
-                    </div>
-                `;
-            });
-
-            let dsHtml = '';
-            Object.entries(fg.ds).sort((a,b)=>b[1]-a[1]).forEach(dsEntry => {
-                let dsCode = dsEntry[0];
-                let isKit = dsCode === 'Integrated Kit';
-                let dsBadgeClass = isKit ? 'background: #f1f5f9; color: var(--v-text-mutated); border: 1px solid #cbd5e1;' : 'background: #E0E7FF; color: #1E3A8A; border: 1px solid transparent;';
-                
-                dsHtml += `
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--v-border);">
-                        <span style="font-weight: 800; font-size: 12px; text-transform: uppercase; padding: 6px 12px; border-radius: 6px; ${dsBadgeClass}">${dsCode}</span>
-                        <span class="tech-font" style="font-weight: 800; font-size: 20px; color: var(--v-deep-blue);">${dsEntry[1]}</span>
-                    </div>
-                `;
-            });
-            
-            if (Object.keys(fg.ds).length === 0) {
-                 dsHtml = `<div style="font-size:12px; color:var(--v-text-mutated); padding: 10px 0;">No delivery systems required.</div>`;
-            }
-
-            html += `
-                <div style="width: 100%; max-width: 600px; flex: 1 1 500px; background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                    <div style="background: var(--v-deep-blue); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <img src="${baseImg}" style="height: 40px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
-                            <h3 style="margin: 0; font-size: 22px; font-weight: 800; font-family:'Inter', sans-serif;">${vBase}</h3>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Required Units</div>
-                            <div class="tech-font" style="font-size: 32px; color: var(--v-yellow); font-weight: 800; line-height: 1; margin-top: 4px;">${fg.total}</div>
-                        </div>
-                    </div>
-                    <div style="padding: 25px 30px; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 30px;">
-                        <div>
-                            <h4 style="font-size: 12px; font-weight: 800; color: var(--v-text-mutated); text-transform: uppercase; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 1px solid var(--v-border);">Valve Breakdown</h4>
-                            ${sizesHtml}
-                        </div>
-                        <div>
-                            <h4 style="font-size: 12px; font-weight: 800; color: var(--v-text-mutated); text-transform: uppercase; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 1px solid var(--v-border);">Delivery Systems</h4>
-                            ${dsHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        return html;
-    }
-
     function renderSOP() {
         let alloc = getSOPTiers();
+        currentSopExportData = []; // Reset for export
         
         let pTargets = { "Venus A": 0, "Venus P": 0, "PowerX": 0, "Vitae": 0 };
+        let totalGrossUnits = 0;
+        let totalNetUnits = 0;
+        let totalStockCount = 0;
+        let sizeNetList = []; // For table generation
+
         let countriesToRender = activeSOPCountry ? [activeSOPCountry] : Object.keys(alloc);
         
         countriesToRender.forEach(c => {
@@ -2120,17 +2497,59 @@
                 Object.entries(alloc[c].dists).forEach(distEntry => {
                     let dName = distEntry[0];
                     let d = distEntry[1];
-                    // Aplica filtro de distribuidor no Top Portfolio se estiver dentro de um país focado
                     if (activeSOPCountry && activeSOPDistributor && activeSOPDistributor !== dName) return;
                     
                     Object.keys(d.sz).forEach(sz => {
                         let vBase = getValveBaseFromSize(sz);
                         pTargets[vBase] += d.sz[sz];
+                        
+                        if (!activeSOPValve || activeSOPValve === vBase) {
+                            let qty = d.sz[sz];
+                            let invKey = `${c}_${dName}_${sz}`;
+                            let stock = sopInventory[invKey] || 0;
+                            let netQty = qty - stock; if (netQty < 0) netQty = 0;
+                            
+                            totalGrossUnits += qty;
+                            totalStockCount += stock;
+                            totalNetUnits += netQty;
+
+                            if (qty > 0) {
+                                sizeNetList.push({
+                                    country: c, dist: dName, vBase: vBase, sz: sz, 
+                                    gross: qty, stock: stock, net: netQty
+                                });
+                            }
+                        }
                     });
                 });
             }
         });
 
+        // 1. RATIONALE GENERATION
+        let ratBox = document.getElementById('sop-rationale-container');
+        let ratText = document.getElementById('sop-rationale-text');
+        
+        if (activeSOPCountry || activeSOPValve) {
+            let contextName = activeSOPDistributor ? activeSOPDistributor : (activeSOPCountry ? activeSOPCountry : "the region");
+            if (activeSOPValve) contextName += ` (${activeSOPValve})`;
+            
+            let usdTargetStr = sopGlobalTargetUSD.toLocaleString();
+            let sharePct = "a calculated";
+            
+            if (activeSOPCountry && alloc[activeSOPCountry]) {
+                let countryUSD = alloc[activeSOPCountry].usd;
+                let pct = ((countryUSD / sopGlobalTargetUSD) * 100).toFixed(1);
+                sharePct = `**${pct}%**`;
+            }
+
+            ratText.innerHTML = `To achieve the <strong>$${usdTargetStr}</strong> LATAM revenue target, <strong>${contextName}</strong> has been allocated ${sharePct} of the regional demand based on historical adoption rates. This results in a gross requirement of <strong>${totalGrossUnits} units</strong> for the selected portfolio. Accounting for the <strong>${totalStockCount} units</strong> currently in local inventory, the net import demand drops to <strong>${totalNetUnits} units</strong>. This pipeline has been algorithmically distributed across the upcoming 12 months to mirror the established seasonal procedure curve.`;
+            ratBox.style.display = 'block';
+        } else {
+            ratBox.style.display = 'none';
+        }
+
+
+        // 2. PORTFOLIO SHOWCASE (TOP CARDS)
         let pHtml = '';
         let portfTitle = document.getElementById('sop-portfolio-title');
         let titleContext = activeSOPCountry ? `${activeSOPCountry} | ` : `Consolidated `;
@@ -2148,7 +2567,7 @@
                 <div class="ops-valve-card ${isActive} ${isDimmed}" style="min-width: 200px;" onclick="selectSOPValve('${p}')">
                     <h3 style="font-size:20px; color:var(--v-deep-blue); margin:0; font-family:'Inter', sans-serif;">${p}</h3>
                     <img src="${imgSrc}" class="ops-valve-img" style="max-height:140px;">
-                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">Target Demand</div>
+                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">Gross Demand</div>
                     <div class="tech-font" style="font-size:28px; font-weight:800; color:var(--v-yellow); margin-top:5px; line-height: 1;">${pTargets[p]}</div>
                 </div>
             `;
@@ -2157,27 +2576,24 @@
         let pContainer = document.getElementById('sop-product-showcase-container');
         if(pContainer) { pContainer.innerHTML = pHtml; }
 
+
+        // 3. COUNTRY CARDS
         let sopCardsHtml = '';
         let totalCalculatedRevenue = 0;
-        
         let sortedCountriesList = Object.keys(alloc).sort((a,b) => alloc[b].usd - alloc[a].usd);
 
         sortedCountriesList.forEach(cName => {
             let cFlag = FLAGS[cName] || "🌍";
             let iso = COUNTRY_ISO[cName];
-            
-            let cUnits = 0;
-            let cUSD = 0;
+            let cUnits = 0; let cUSD = 0;
             
             Object.entries(alloc[cName].dists).forEach(distEntry => {
-                let dName = distEntry[0];
-                let d = distEntry[1];
-                if (activeSOPCountry === cName && activeSOPDistributor && activeSOPDistributor !== dName) return;
+                let dName = distEntry[0]; let d = distEntry[1];
+                if (activeSOPCountry && activeSOPDistributor && activeSOPDistributor !== dName) return;
 
                 Object.keys(d.sz).forEach(sz => {
                     let vBase = getValveBaseFromSize(sz);
                     if (activeSOPValve && vBase !== activeSOPValve) return;
-                    
                     let qty = d.sz[sz];
                     cUnits += qty;
                     cUSD += qty * getPrice(vBase);
@@ -2214,20 +2630,20 @@
         let revEl = document.getElementById('sop-projected-revenue');
         if(revEl) revEl.innerText = '$ ' + totalCalculatedRevenue.toLocaleString();
 
-        let focusCountry = activeSOPCountry;
+
+        // 4. LOGISTICS CART
         let cartTitle = document.getElementById('sop-cart-title');
-        
-        let cartContext = focusCountry ? `Partner Breakdown (${focusCountry})` : `LATAM Consolidated`;
+        let cartContext = activeSOPCountry ? `Partner Breakdown (${activeSOPCountry})` : `LATAM Consolidated`;
         if (activeSOPValve) cartContext += ` [${activeSOPValve}]`;
         if (cartTitle) cartTitle.innerText = `${cartContext} | Logistics Cart`;
 
         let cartHtml = '';
         
-        if (focusCountry) {
-            let cData = alloc[focusCountry];
+        if (activeSOPCountry) {
+            let cData = alloc[activeSOPCountry];
             
             if (Object.keys(cData.dists).length > 1) {
-                cartHtml += `<div style="display:flex; gap:10px; margin-bottom:20px; justify-content:center; width:100%; flex-wrap:wrap;">`;
+                cartHtml += `<div style="display:flex; gap:10px; margin-bottom:20px; justify-content:center; width:100%; flex-wrap:wrap; grid-column: 1 / -1;">`;
                 cartHtml += `<button class="year-pill ${!activeSOPDistributor ? 'active' : ''}" onclick="selectSOPDistributor(null)">ALL PARTNERS</button>`;
                 Object.keys(cData.dists).sort((a,b) => {
                     let sumA = Object.values(cData.dists[a].sz).reduce((x,y)=>x+y,0);
@@ -2245,17 +2661,14 @@
                 let sumB = Object.values(b[1].sz).reduce((x,y)=>x+y,0);
                 return sumB - sumA;
             }).forEach(entry => {
-                let dName = entry[0];
-                let dData = entry[1];
-                
+                let dName = entry[0]; let dData = entry[1];
                 if (activeSOPDistributor && activeSOPDistributor !== dName) return;
                 
-                let distUSD = 0;
-                let szTargets = dData.sz;
-                
+                let distUSD = 0; let szTargets = dData.sz;
                 Object.entries(szTargets).forEach(szF => distUSD += szF[1] * getPrice(getValveBaseFromSize(szF[0])));
 
-                let familyCardsHtml = buildFamilyCardsHtml(szTargets);
+                let prefix = `${activeSOPCountry}_${dName}`;
+                let familyCardsHtml = buildFamilyCardsHtml(szTargets, prefix);
 
                 if(familyCardsHtml) {
                     let totalDUnits = Object.entries(szTargets).reduce((sum, szEntry) => {
@@ -2265,16 +2678,14 @@
                     }, 0);
 
                     cartHtml += `
-                        <div style="width:100%; margin-top:10px; margin-bottom:10px;">
+                        <div style="width:100%; grid-column: 1 / -1; margin-top:10px; margin-bottom:10px;">
                             <h4 style="color:var(--v-deep-blue); border-bottom: 1px solid var(--v-border); padding-bottom: 10px; display:flex; align-items:center; font-family:'Inter', sans-serif;">
                                 <div style="margin-right:15px;">${getDistLogoHTML(dName)}</div>
                                 ${dName} 
                                 <span style="color:var(--v-yellow); margin-left:auto; font-weight:800; font-family:'Space Mono', monospace;">${totalDUnits} Units ($ ${(distUSD/1000).toFixed(0)}k)</span>
                             </h4>
                         </div>
-                        <div style="display:flex; flex-wrap:wrap; gap:30px; width:100%; margin-bottom: 40px; justify-content:center;">
-                            ${familyCardsHtml}
-                        </div>
+                        ${familyCardsHtml}
                     `;
                 }
             });
@@ -2290,13 +2701,57 @@
                     });
                 }
             });
-
-            let familyCardsHtml = buildFamilyCardsHtml(consolTargets);
+            // When consolidated, we mock a global prefix to zero out stock UI for simplicity
+            let familyCardsHtml = buildFamilyCardsHtml(consolTargets, "LATAM_GLOBAL");
             cartHtml += familyCardsHtml;
         }
 
         let cartContainer = document.getElementById('sop-logistics-cart-container');
-        if(cartContainer) cartContainer.innerHTML = cartHtml || `<div style="color:var(--v-text-mutated); margin-top:10px; width:100%; text-align:center;">No stock requirements calculated for this selection.</div>`;
+        if(cartContainer) cartContainer.innerHTML = cartHtml || `<div style="color:var(--v-text-mutated); margin-top:10px; width:100%; text-align:center; grid-column: 1 / -1;">No stock requirements calculated for this selection.</div>`;
+
+        // 5. THE 12-MONTH S&OP TABLE
+        let tableContainer = document.getElementById('sop-12month-container');
+        let tBody = document.querySelector('#sop-12month-table tbody');
+        
+        if (sizeNetList.length > 0 && activeSOPCountry) {
+            let countryWeights = getSeasonalityWeights(activeSOPCountry);
+            let trHtml = '';
+
+            sizeNetList.forEach(item => {
+                if (item.net === 0) return; 
+                let distributed = distribute12Months(item.net, countryWeights);
+                
+                trHtml += `<tr>
+                    <td>${item.sz} <span style="font-size:9px; font-family:'Inter',sans-serif; color:var(--v-text-mutated); display:block; text-transform:uppercase;">${item.dist}</span></td>
+                    ${distributed.map(n => `<td>${n}</td>`).join('')}
+                    <td class="total-col">${item.net}</td>
+                </tr>`;
+                
+                // Add to export matrix
+                currentSopExportData.push({
+                    "Country": item.country,
+                    "Distributor": item.dist,
+                    "Valve Family": item.vBase,
+                    "Valve Size": item.sz,
+                    "Gross Target": item.gross,
+                    "Stock On Hand": item.stock,
+                    "Net To-Order": item.net,
+                    "Jan": distributed[0], "Feb": distributed[1], "Mar": distributed[2],
+                    "Apr": distributed[3], "May": distributed[4], "Jun": distributed[5],
+                    "Jul": distributed[6], "Aug": distributed[7], "Sep": distributed[8],
+                    "Oct": distributed[9], "Nov": distributed[10], "Dec": distributed[11]
+                });
+            });
+
+            if(trHtml !== '') {
+                tBody.innerHTML = trHtml;
+                tableContainer.style.display = 'block';
+            } else {
+                tableContainer.style.display = 'none';
+            }
+        } else {
+            tableContainer.style.display = 'none';
+        }
     }
 </script>
 
