@@ -563,14 +563,6 @@
     // Official Proctors (Shielded in Finance Module)
     const OFFICIAL_PROCTORS = ["Marcio Montenegro", "Edgard Quintella", "Pablo Lamelas", "Fernando Pineda", "Daniel Springmuller", "Marcelo Rivarola", "Victorio Lucini", "Pablo Spaletra", "Juan Pablo De Brahi", "Jorge Sandoval", "Gian Manuel Jimenez", "Luis Cressa", "Francisco Garay", "Jorge Baccaro"];
     
-    // Hardcoded Hybrid Physicians (Double Hat)
-    const HYBRID_PHYSICIANS_HARDCODED = new Set([
-        "Daniel Springmuller",
-        "Marcelo Rivarola",
-        "Jesus María Damsky Barbosa",
-        "Diego Villar"
-    ]);
-    
     // Name Cleansing (Hidden Master Normalization - Rosetta Stone)
     const PERSON_ALIASES = {
         "stephanie bugueño": "Stephanie Bugeño Apablaza", "stephanie bugeno": "Stephanie Bugeño Apablaza", "stephanie bugeño": "Stephanie Bugeño Apablaza", "stephie": "Stephanie Bugeño Apablaza", "stephanie": "Stephanie Bugeño Apablaza",
@@ -622,7 +614,8 @@
         "henrique ribeiro": "Henrique Ribeiro",
         "damsky barbosa": "Jesus María Damsky Barbosa", "damsky jesus": "Jesus María Damsky Barbosa", "damsky jesús": "Jesus María Damsky Barbosa", "dr. damsky": "Jesus María Damsky Barbosa", "damsky": "Jesus María Damsky Barbosa",
         "frederico": "Frederico", "rafael feldman": "Rafael Feldman", "feldman": "Rafael Feldman",
-        "daniel springmuller": "Daniel Springmuller", "springmuller": "Daniel Springmuller", "diego villar": "Diego Villar"
+        "daniel springmuller": "Daniel Springmuller", "springmuller": "Daniel Springmuller", "diego villar": "Diego Villar",
+        "francisco garay": "Francisco Garay", "garay": "Francisco Garay"
     };
     const PERSON_ALIASES_KEYS = Object.keys(PERSON_ALIASES).sort((a, b) => b.length - a.length);
 
@@ -725,9 +718,10 @@
     let proctorFinanceDataExport = [];
     let currentSopExportData = [];
 
+    // Dynamic Hybrid Physicians Calculation Sets
     let globalImplanters = new Set();
     let globalVenusPSpecs = new Set();
-    let hybridPhysicians = new Set([...HYBRID_PHYSICIANS_HARDCODED]);
+    let hybridPhysicians = new Set();
 
     // S&OP Engine Variables
     let sopGlobalTargetUSD = 6000000;
@@ -1372,6 +1366,16 @@
                         let specArr = specRawStr.split(splitRegex).map(stdName).filter(validName);
                         let procArr = procRawStr.split(splitRegex).map(stdName).filter(validName);
 
+                        // --- REGRA CLÍNICA DA VENUS P ---
+                        // Se for Venus P, o Proctor obrigatoriamente atuou na montagem técnica da válvula (Especialista)
+                        if (vName === 'Venus P') {
+                            procArr.forEach(p => {
+                                if (!specArr.includes(p)) {
+                                    specArr.push(p);
+                                }
+                            });
+                        }
+
                         // CHILE EXCEPTION
                         if (country === 'Chile') {
                             let filteredImp = [];
@@ -1556,6 +1560,24 @@
 
             gHospMap = {}; gImpMap = {}; gSpecMap = {}; gProcMap = {}; 
             
+            // Dynamic Hybrid Calculation Reset
+            globalImplanters = new Set(); 
+            globalVenusPSpecs = new Set(); 
+            hybridPhysicians = new Set();
+            
+            allCasesGlobal.forEach(c => {
+                let imps = String(c.implanter).split(', ');
+                let specs = String(c.specialist).split(', ');
+                
+                imps.forEach(i => { if(i !== 'N/A') globalImplanters.add(i); });
+                if (c.valveBase === 'Venus P') {
+                    specs.forEach(s => { if(s !== 'N/A') globalVenusPSpecs.add(s); });
+                }
+            });
+            
+            // Intersection magic creates the Hybrid Badge natively
+            hybridPhysicians = new Set([...globalImplanters].filter(x => globalVenusPSpecs.has(x)));
+
             fullyFilteredData.forEach(caseObj => {
                 if(caseObj.hospital && caseObj.hospital !== 'Unknown Hospital') { 
                     initEntity(gHospMap, caseObj.hospital, caseObj.country); 
