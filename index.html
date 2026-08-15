@@ -26,6 +26,15 @@
             --v-border: #E2E8F0;
             --v-text-dark: #000000;
             --v-text-mutated: #575567;
+            
+            --dist-sellmed: #F97316;
+            --dist-vip: #06B6D4;
+            --dist-mks: #8B5CF6;
+            --dist-camir: #EF4444;
+            --dist-medical: #3B82F6;
+            --dist-ddm: #10B981;
+            --dist-gpm: #F59E0B;
+            --dist-homac: #14B8A6;
         }
 
         body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: var(--v-text-dark); margin: 0; padding: 0; }
@@ -86,8 +95,8 @@
         .grid-2-finance { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; }
         .flex-center-cards { display: flex; justify-content: center; align-items: stretch; gap: 20px; margin-bottom: 40px; width: 100%; flex-wrap: wrap;}
         
-        /* S&OP CART CSS GRID FOR SYMMETRY */
-        .sop-cart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; width: 100%; justify-items: center; align-items: start;}
+        /* S&OP CART FLEX ALIGNMENT (CENTERED) */
+        .sop-cart-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; width: 100%; align-items: flex-start;}
         
         /* COUNTRY CARDS */
         .country-cards-wrapper { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; justify-content: center; } 
@@ -156,6 +165,8 @@
         .leaflet-tooltip-left::before, .leaflet-tooltip-right::before, .leaflet-tooltip-top::before, .leaflet-tooltip-bottom::before { display: none !important; }
         
         /* SCROLLABLE RANKING BARS */
+        .ranking-search { width: 100%; padding: 12px 15px; border: 1px solid var(--v-border); border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif; box-sizing: border-box; margin-bottom: 20px; background: #f8fafc url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23575567" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 15px center; padding-left: 45px; }
+        .ranking-search:focus { outline: none; border-color: var(--v-yellow); background-color: #fff; }
         .scroll-list { max-height: 450px; overflow-y: auto; padding-right: 15px; background: #fff; border: 1px solid var(--v-border); border-radius: 8px; padding: 15px;}
         .scroll-list::-webkit-scrollbar { width: 6px; }
         .scroll-list::-webkit-scrollbar-track { background: transparent; }
@@ -206,14 +217,13 @@
         .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; background: #E2E8F0; color: #475569;}
         
         /* S&OP Table */
-        .sop-table-container { margin-top: 20px; border-radius: 12px; overflow: hidden; border: 1px solid var(--v-border); }
+        .sop-table-container { margin-top: 20px; border-radius: 12px; overflow: hidden; border: 1px solid var(--v-border); box-shadow: 0 4px 10px rgba(0,0,0,0.02);}
         .sop-table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 13px; }
-        .sop-table th { background: var(--v-deep-blue); color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; text-transform: uppercase; padding: 12px 10px; text-align: center; }
+        .sop-table th { background: var(--v-deep-blue); color: #fff; font-family: 'Inter', sans-serif; font-size: 11px; text-transform: uppercase; padding: 15px 10px; text-align: center; }
         .sop-table th:first-child { text-align: left; padding-left: 20px; }
-        .sop-table td { padding: 12px 10px; text-align: center; border-bottom: 1px solid var(--v-border); background: #fff; color: var(--v-deep-blue); font-weight: bold;}
-        .sop-table td:first-child { text-align: left; padding-left: 20px; font-family: 'Inter', sans-serif; font-weight: 800; color: var(--v-blue); }
+        .sop-table td { padding: 15px 10px; text-align: center; border-bottom: 1px solid var(--v-border); background: #fff; color: var(--v-deep-blue); font-weight: bold;}
         .sop-table tr:hover td { background: #f8fafc; }
-        .sop-table .total-col { background: #fffdf5; color: var(--v-yellow); font-weight: bold; border-left: 2px solid var(--v-border); }
+        .sop-table .total-col { background: #fffdf5; color: var(--v-yellow); font-weight: bold; border-left: 2px solid var(--v-border); font-size: 16px;}
     </style>
 </head>
 <body>
@@ -341,8 +351,9 @@
         
         <div id="trend-chart-container"><div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div></div>
 
-        <h2 style="margin-top: 40px;">Key Players Ranking <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Scroll for more / Click to view Dashboard)</span></h2>
+        <h2 style="margin-top: 40px;">Key Players Ranking <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click to view Dashboard)</span></h2>
         <div class="section-dash">—</div>
+        <input type="text" id="ranking-search-input" class="ranking-search" placeholder="Search by name, hospital, or city..." onkeyup="filterRankings(this.value)">
         
         <!-- GRID 2x2 FOR RANKINGS -->
         <div class="grid-2" style="margin-bottom: 25px;">
@@ -478,7 +489,7 @@
         <div id="sop-logistics-cart-container" class="sop-cart-grid"></div>
         
         <!-- 12 MONTH FORECAST TABLE -->
-        <div id="sop-12month-container" style="display:none; margin-top: 30px;">
+        <div id="sop-12month-container" style="display:none; margin-top: 40px;">
             <h3 style="color:var(--v-deep-blue); font-size:18px; margin-bottom:5px;">12-Month "To-Order" Schedule</h3>
             <p style="font-size:12px; color:var(--v-text-mutated); margin-top:0;">Net Demand distributed according to historical seasonality curve.</p>
             <div class="sop-table-container">
@@ -537,17 +548,30 @@
     const LOGOS = {
         "VIP Medical": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20Vip%20Medical.png" class="dist-logo-img">`,
         "MKS": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20MKS%20.png" class="dist-logo-img" style="transform: scale(1.5);">`,
-        "Sellmed": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Logo%20Sellmed.jpg" class="dist-logo-img" style="transform: scale(1.3);">`
+        "Sellmed": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Logo%20Sellmed.jpg" class="dist-logo-img" style="transform: scale(1.3);">`,
+        "Camir": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/Camir%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
+        "DDM": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/DDM%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
+        "GPM Medical": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/GPM%20Medical%20Logo.jpg" class="dist-logo-img" style="transform: scale(1.2);">`,
+        "Medical World AS": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/MW%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
+        "HOMAC": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/e957a1d0ad1c6838be37d2732ddba9de7d711d54/Homac%20Logo.png" class="dist-logo-img" style="transform: scale(1.3);">`
     };
 
     const FLAGS = { "Brazil": "🇧🇷", "Argentina": "🇦🇷", "Chile": "🇨🇱", "Colombia": "🇨🇴", "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "Peru": "🇵🇪", "Uruguay": "🇺🇾", "Paraguay": "🇵🇾", "Panama": "🇵🇦", "Dominican Republic": "🇩🇴", "China": "🇨🇳", "Unknown": "🌍", "Venezuela": "🇻🇪", "Bolivia": "🇧🇴" };
     const COUNTRY_ISO = { "Brazil": "br", "Argentina": "ar", "Chile": "cl", "Colombia": "co", "Mexico": "mx", "Ecuador": "ec", "Peru": "pe", "Uruguay": "uy", "Paraguay": "py", "Panama": "pa", "Bolivia": "bo", "Venezuela": "ve", "Dominican Republic": "do", "China": "cn" };
-    const NATIONALITIES = { "Stephanie Bugeño Apablaza": "Chile", "Fabio Silva": "Brazil", "Ariane Sanchez": "Brazil", "Edgard Quintella": "Brazil", "Alice Moraes": "Brazil", "Marcio Montenegro": "Brazil", "Henrique Ribeiro": "Brazil", "Alexis Vasiluk Knebel": "Brazil", "Ricardo Lisboa Cardozo": "Brazil", "Cesar Roberto Pintos": "Brazil", "Francisco": "Brazil", "Igor Salles": "Brazil", "Carlos Magno": "Brazil", "Eudes Figueredo": "Brazil", "Jarede Pereira": "Brazil", "Andreia Vasconcellos": "Brazil", "Jorge Baccaro": "Argentina", "Marcelo Rivarola": "Argentina", "Laura Zemp": "Argentina", "Fernando Pineda": "Chile", "Daniel Springmuller": "Chile", "Francisco Garay": "Chile", "Juan Pablo De Brahi": "Argentina", "Jorge Sandoval": "Chile", "Pablo Spaletra": "Argentina", "Luis Cressa": "Venezuela", "Victorio Lucini": "Argentina", "Jian Wang": "China", "Jesus María Damsky Barbosa": "Argentina", "Gian Manuel Jimenez": "Mexico" };
+    const NATIONALITIES = { "Stephanie Bugeño Apablaza": "Chile", "Fabio Silva": "Brazil", "Ariane Sanchez": "Brazil", "Edgard Quintella": "Brazil", "Alice Moraes": "Brazil", "Marcio Montenegro": "Brazil", "Henrique Ribeiro": "Brazil", "Alexis Vasiluk Knebel": "Brazil", "Ricardo Lisboa Cardozo": "Brazil", "Cesar Roberto Pintos": "Brazil", "Francisco": "Brazil", "Igor Salles": "Brazil", "Carlos Magno": "Brazil", "Eudes Figueredo": "Brazil", "Jarede Pereira": "Brazil", "Andreia Vasconcellos": "Brazil", "Jorge Baccaro": "Argentina", "Marcelo Rivarola": "Argentina", "Laura Zemp": "Argentina", "Fernando Pineda": "Chile", "Daniel Springmuller": "Chile", "Francisco Garay": "Chile", "Juan Pablo De Brahi": "Argentina", "Jorge Sandoval": "Chile", "Pablo Spaletra": "Argentina", "Luis Cressa": "Venezuela", "Victorio Lucini": "Argentina", "Jian Wang": "China", "Jesus María Damsky Barbosa": "Argentina", "Gian Manuel Jimenez": "Mexico", "Diego Villar": "Argentina" };
     
     // Official Proctors (Shielded in Finance Module)
     const OFFICIAL_PROCTORS = ["Marcio Montenegro", "Edgard Quintella", "Pablo Lamelas", "Fernando Pineda", "Daniel Springmuller", "Marcelo Rivarola", "Victorio Lucini", "Pablo Spaletra", "Juan Pablo De Brahi", "Jorge Sandoval", "Gian Manuel Jimenez", "Luis Cressa", "Francisco Garay", "Jorge Baccaro"];
     
-    // Name Cleansing (Hidden Master Normalization)
+    // Hardcoded Hybrid Physicians (Double Hat)
+    const HYBRID_PHYSICIANS_HARDCODED = new Set([
+        "Daniel Springmuller",
+        "Marcelo Rivarola",
+        "Jesus María Damsky Barbosa",
+        "Diego Villar"
+    ]);
+    
+    // Name Cleansing (Hidden Master Normalization - Rosetta Stone)
     const PERSON_ALIASES = {
         "stephanie bugueño": "Stephanie Bugeño Apablaza", "stephanie bugeno": "Stephanie Bugeño Apablaza", "stephanie bugeño": "Stephanie Bugeño Apablaza", "stephie": "Stephanie Bugeño Apablaza", "stephanie": "Stephanie Bugeño Apablaza",
         "laura zemp": "Laura Zemp", "zemp laura": "Laura Zemp", "laura": "Laura Zemp",
@@ -597,7 +621,8 @@
         "gabriella duarte": "Gabriella Duarte", "gabriella": "Gabriella Duarte",
         "henrique ribeiro": "Henrique Ribeiro",
         "damsky barbosa": "Jesus María Damsky Barbosa", "damsky jesus": "Jesus María Damsky Barbosa", "damsky jesús": "Jesus María Damsky Barbosa", "dr. damsky": "Jesus María Damsky Barbosa", "damsky": "Jesus María Damsky Barbosa",
-        "frederico": "Frederico", "frederico": "Frederico"
+        "frederico": "Frederico", "rafael feldman": "Rafael Feldman", "feldman": "Rafael Feldman",
+        "daniel springmuller": "Daniel Springmuller", "springmuller": "Daniel Springmuller", "diego villar": "Diego Villar"
     };
     const PERSON_ALIASES_KEYS = Object.keys(PERSON_ALIASES).sort((a, b) => b.length - a.length);
 
@@ -657,14 +682,21 @@
         "Hospital Belo Horizonte": "Belo Horizonte", "Hospital Socor": "Belo Horizonte", "Prontocor": "Belo Horizonte",
         "Hospital Hapvida Ilha do Leite": "Recife", "Hospital Agamenom Magalhães": "Recife",
         "Hospital Angiocor": "Aracaju", "HUSE": "Aracaju", "Hospital Hapvida Rio Negro": "Manaus", "Hospital Hapvida Maceió": "Maceió",
-        "Hospital Hapvida Antonio Prudente": "Fortaleza", "InCor Natal": "Natal", "Hospital Onco Center": "Teresina"
+        "Hospital Hapvida Antonio Prudente": "Fortaleza", "InCor Natal": "Natal", "Hospital Onco Center": "Teresina",
+        "LUXEMBURGO": "Belo Horizonte", "HOSPITAL ONIX": "Curitiba", "HONPAR": "Arapongas", "HOSPITAL RIBEIRÃO PRETO": "Ribeirão Preto", "HOSPITAL BOM CLIMA": "Guarulhos", "SALVALUS": "São Paulo", "PAULO SACRAMENTO": "Jundiaí", "INCOR": "São Paulo", "HOSPITAL DO CORAÇAO": "São Paulo", "Ana Costa": "Santos", "MERIDIONAL PRAIA DA COSTA": "Vila Velha", "HOSPITAL GERAL DE PALMAS": "Palmas", "Hospital Geral de Palmas": "Palmas", "HOSPITAL LESTE MINEIRO": "Ipatinga", "HCI - POUSO ALEGRE": "Pouso Alegre", "Hospital Unimed GV": "Governador Valadares", "UNIMED VALADARES": "Governador Valadares", "HOSP AROLDO TOURINHO": "Montes Claros", "HOSPITAL VAZ MONTEIRO": "Lavras", "HOSPITAL UNIMED RECIFE III": "Recife", "REAL HOSPITAL PORTUGUÊS": "Recife", "Hospital Rio Grande": "Natal", "HOSPITAL DO CORAÇÃO ALAGOANO": "Maceió", "HOSPITAL RIO NEGRO (HAPVIDA)": "Manaus", "HOSPITAL AMECOR": "Cuiabá", "SANTA CASA DE MISERICORDIA DE ITABUNA": "Itabuna", "HEMOCOR": "Rio de Janeiro", "Cinecors": "Porto Alegre", "HUMANIZA": "Porto Alegre", "HRS": "São José", "SANTA MARTHA": "Niterói", "HEMODINÂMICA SÃO LUCAS": "Aracaju", "HOSPITAL METROPOLITANO DJMP": "Belém", "LACIC": "Vitória da Conquista", "HOSPITAL SANTA RITA": "Vitória"
     };
+
     const CITY_STATE_MAP = {
-        "São Paulo": "SP", "Ribeirão Preto": "SP", "Jundiaí": "SP", "São Bernardo do Campo": "SP",
-        "Rio de Janeiro": "RJ", "Petrópolis": "RJ", "Guarapuava": "PR", "Criciúma": "SC",
+        "São Paulo": "SP", "Ribeirão Preto": "SP", "Jundiaí": "SP", "São Bernardo do Campo": "SP", "Guarulhos": "SP", "Santos": "SP",
+        "Rio de Janeiro": "RJ", "Petrópolis": "RJ", "Niterói": "RJ", 
+        "Guarapuava": "PR", "Curitiba": "PR", "Arapongas": "PR",
+        "Criciúma": "SC", "São José": "SC",
         "Porto Alegre": "RS", "Pelotas": "RS", "Ijuí": "RS", "Santa Cruz do Sul": "RS",
-        "Belo Horizonte": "MG", "Recife": "PE", "Aracaju": "SE", "Manaus": "AM", "Maceió": "AL", "Fortaleza": "CE", "Natal": "RN", "Teresina": "PI"
+        "Belo Horizonte": "MG", "Ipatinga": "MG", "Pouso Alegre": "MG", "Governador Valadares": "MG", "Montes Claros": "MG", "Lavras": "MG",
+        "Recife": "PE", "Aracaju": "SE", "Manaus": "AM", "Maceió": "AL", "Fortaleza": "CE", "Natal": "RN", "Teresina": "PI",
+        "Vila Velha": "ES", "Vitória": "ES", "Palmas": "TO", "Cuiabá": "MT", "Itabuna": "BA", "Vitória da Conquista": "BA", "Belém": "PA"
     };
+
     const BR_TERRITORIES = {
         "PR": "MKS", "SC": "MKS", "RS": "MKS", "MG": "VIP Medical", "RJ": "VIP Medical", 
         "SP": "Sellmed", "MS": "Sellmed", "MT": "Sellmed", "GO": "Sellmed", "DF": "Sellmed", "ES": "Sellmed",
@@ -673,7 +705,7 @@
         "RR": "Sellmed", "AM": "Sellmed", "AC": "Sellmed", "RO": "Sellmed" 
     };
 
-    const CITY_COORDS = { "São Paulo": [-23.5505, -46.6333], "Ribeirão Preto": [-21.1704, -47.8103], "Jundiaí": [-23.1857, -46.8978], "São Bernardo do Campo": [-23.6938, -46.5650], "Rio de Janeiro": [-22.9068, -43.1729], "Petrópolis": [-22.5050, -43.1786], "Guarapuava": [-25.3953, -51.4581], "Criciúma": [-28.6758, -49.3694], "Porto Alegre": [-30.0346, -51.2177], "Pelotas": [-31.7654, -52.3376], "Ijuí": [-28.3869, -53.9116], "Santa Cruz do Sul": [-28.7156, -52.4281], "Belo Horizonte": [-19.9167, -43.9345], "Recife": [-8.0476, -34.8770], "Aracaju": [-10.9472, -37.0731], "Manaus": [-3.1190, -60.0217], "Maceió": [-9.6498, -35.7089], "Fortaleza": [-3.7172, -38.5433], "Natal": [-5.7945, -35.2110], "Teresina": [-5.0892, -42.8016] };
+    const CITY_COORDS = { "São Paulo": [-23.5505, -46.6333], "Ribeirão Preto": [-21.1704, -47.8103], "Jundiaí": [-23.1857, -46.8978], "São Bernardo do Campo": [-23.6938, -46.5650], "Guarulhos": [-23.4628, -46.5333], "Santos": [-23.9618, -46.3322], "Rio de Janeiro": [-22.9068, -43.1729], "Petrópolis": [-22.5050, -43.1786], "Niterói": [-22.8833, -43.1036], "Guarapuava": [-25.3953, -51.4581], "Curitiba": [-25.4284, -49.2733], "Arapongas": [-23.4150, -51.4286], "Criciúma": [-28.6758, -49.3694], "São José": [-27.6136, -48.6276], "Porto Alegre": [-30.0346, -51.2177], "Pelotas": [-31.7654, -52.3376], "Ijuí": [-28.3869, -53.9116], "Santa Cruz do Sul": [-28.7156, -52.4281], "Belo Horizonte": [-19.9167, -43.9345], "Ipatinga": [-19.4689, -42.5353], "Pouso Alegre": [-22.2282, -45.9381], "Governador Valadares": [-18.8525, -41.9472], "Montes Claros": [-16.7350, -43.8617], "Lavras": [-21.2464, -45.0003], "Recife": [-8.0476, -34.8770], "Aracaju": [-10.9472, -37.0731], "Manaus": [-3.1190, -60.0217], "Maceió": [-9.6498, -35.7089], "Fortaleza": [-3.7172, -38.5433], "Natal": [-5.7945, -35.2110], "Teresina": [-5.0892, -42.8016], "Vila Velha": [-20.3297, -40.2925], "Vitória": [-20.3155, -40.3128], "Palmas": [-10.2128, -48.3601], "Cuiabá": [-15.6010, -56.0974], "Itabuna": [-14.7892, -39.2811], "Vitória da Conquista": [-14.8661, -40.8394], "Belém": [-1.4550, -48.5024] };
     
     const COUNTRY_COORDS = { 
         "Brazil": [-14.235, -51.925], "Argentina": [-38.4161, -63.6167], "Chile": [-35.6751, -71.5430], 
@@ -693,15 +725,14 @@
     let proctorFinanceDataExport = [];
     let currentSopExportData = [];
 
-    // Hybrid Physicians
     let globalImplanters = new Set();
     let globalVenusPSpecs = new Set();
-    let hybridPhysicians = new Set();
+    let hybridPhysicians = new Set([...HYBRID_PHYSICIANS_HARDCODED]);
 
     // S&OP Engine Variables
     let sopGlobalTargetUSD = 6000000;
     let sopLockedCountryUSD = {}; 
-    let sopInventory = {}; // Inventory logic storage
+    let sopInventory = {}; 
 
     let brazilGeoJSON = null; 
     let gHospMap = {}, gImpMap = {}, gSpecMap = {}, gProcMap = {};
@@ -872,19 +903,27 @@
         if(c.includes('mks')) return 'var(--dist-mks)';
         if(c.includes('medical world')) return 'var(--dist-medical)';
         if(c.includes('camir')) return 'var(--dist-camir)';
+        if(c.includes('ddm')) return 'var(--dist-ddm)';
+        if(c.includes('gpm')) return 'var(--dist-gpm)';
+        if(c.includes('homac')) return 'var(--dist-homac)';
         return 'var(--v-yellow)'; 
     }
 
     function getDistLogoHTML(distName) {
         let c = cleanStr(distName);
-        if(c.includes('sellmed')) return `<div style="height:35px; width:90px; display:flex; align-items:center; justify-content:center;"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Logo%20Sellmed.jpg" style="max-height:100%; max-width:100%; object-fit:contain;"></div>`;
-        if(c.includes('vip')) return `<div style="height:35px; width:90px; display:flex; align-items:center; justify-content:center;"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20Vip%20Medical.png" style="max-height:100%; max-width:100%; object-fit:contain;"></div>`;
-        if(c.includes('mks')) return `<div style="height:35px; width:90px; display:flex; align-items:center; justify-content:center;"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20MKS%20.png" style="max-height:100%; max-width:100%; object-fit:contain; transform: scale(1.3);"></div>`;
-        return `<div style="height:35px; width:90px; display:flex; align-items:center; justify-content:center;"><span style="font-size:11px; font-weight:800; color:var(--v-blue); text-transform:uppercase;">${String(distName).substring(0,12)}</span></div>`;
+        if(c.includes('sellmed')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Logo%20Sellmed.jpg" style="max-height:100%; max-width:100%; object-fit:contain;">`;
+        if(c.includes('vip')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20Vip%20Medical.png" style="max-height:100%; max-width:100%; object-fit:contain;">`;
+        if(c.includes('mks')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20MKS%20.png" style="max-height:100%; max-width:100%; object-fit:contain; transform: scale(1.3);">`;
+        if(c.includes('camir')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/Camir%20Logo.png" style="max-height:100%; max-width:100%; object-fit:contain; transform: scale(1.1);">`;
+        if(c.includes('ddm')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/DDM%20Logo.png" style="max-height:100%; max-width:100%; object-fit:contain; transform: scale(1.1);">`;
+        if(c.includes('gpm')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/GPM%20Medical%20Logo.jpg" style="max-height:100%; max-width:100%; object-fit:contain; transform: scale(1.2);">`;
+        if(c.includes('medical world')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/MW%20Logo.png" style="max-height:100%; max-width:100%; object-fit:contain; transform: scale(1.1);">`;
+        if(c.includes('homac')) return `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/e957a1d0ad1c6838be37d2732ddba9de7d711d54/Homac%20Logo.png" style="max-height:100%; max-width:100%; object-fit:contain; transform: scale(1.3);">`;
+        return `<span style="font-size:11px; font-weight:800; color:var(--v-blue); text-transform:uppercase;">${String(distName).substring(0,12)}</span>`;
     }
 
     function getTooltipHTML(title, count, distName) {
-        let logo = getDistLogoHTML(distName);
+        let logo = `<div style="height:35px; width:90px; display:flex; align-items:center; justify-content:center;">${getDistLogoHTML(distName)}</div>`;
         return `<div style="text-align:center;"><div style="display:flex; justify-content:center; margin-bottom:8px;">${logo}</div><strong style="color:var(--v-deep-blue); font-family: 'Inter', sans-serif;">${title}</strong><br><span class="tech-font" style="color:var(--v-blue); font-weight:bold;">${count} cases</span></div>`;
     }
 
@@ -1075,7 +1114,7 @@
 
     function updateStock(key, value) {
         sopInventory[key] = Number(value) || 0;
-        renderSOP(); // Re-render everything to update Net Demand
+        renderSOP(); 
     }
 
     // --- LOGISTICS CARDS & INVENTORY ---
@@ -1152,7 +1191,7 @@
             }
 
             html += `
-                <div style="width: 100%; max-width: 600px; flex: 1 1 500px; background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                <div style="width: 100%; max-width: 600px; flex: 1 1 400px; background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;">
                     <div style="background: var(--v-deep-blue); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <img src="${baseImg}" style="height: 40px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
@@ -1179,7 +1218,6 @@
         return html;
     }
 
-    // Generate Month Weights based on historical context
     function getSeasonalityWeights(country) {
         let counts = new Array(12).fill(0);
         let total = 0;
@@ -1222,7 +1260,6 @@
         let errAlert = document.getElementById('error-alert');
         if(errAlert) errAlert.style.display = 'none';
 
-        // Hide startup, show main app
         document.getElementById('startup-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'flex';
 
@@ -1318,14 +1355,12 @@
 
                         let valveFullName = vName + (cleanSz ? ' ' + cleanSz : '');
 
-                        // PURGE LIST: Exclui erros de digitação e boleanos
                         let validName = x => {
                             let cl = cleanStr(x);
                             return cl && !['false', 'true', 'n/a', 'na', 'nan', 'load', 'loader', '0', '-'].includes(cl) && !/^\d+$/.test(cl);
                         };
                         let splitRegex = /\s*[,/&+-]\s*|\s+y\s+|\s+e\s+/i;
                         
-                        // Strict col matching para Proctor:
                         let procRawStr = '';
                         let procKeys = Object.keys(item.row).filter(k => cleanStr(k) === 'proctor name' || cleanStr(k) === 'proctor');
                         if (procKeys.length > 0) procRawStr = String(item.row[procKeys[0]]);
@@ -1337,7 +1372,40 @@
                         let specArr = specRawStr.split(splitRegex).map(stdName).filter(validName);
                         let procArr = procRawStr.split(splitRegex).map(stdName).filter(validName);
 
-                        // COLOMBIA EXCEPTION (Luis Gabriel Loaiza)
+                        // CHILE EXCEPTION
+                        if (country === 'Chile') {
+                            let filteredImp = [];
+                            for (let i = 0; i < impArr.length; i++) {
+                                if (impArr[i] === 'Francisco Navarro') {
+                                    if (!specArr.includes('Francisco Navarro')) specArr.push('Francisco Navarro');
+                                } else {
+                                    filteredImp.push(impArr[i]);
+                                }
+                            }
+                            impArr = filteredImp;
+                        }
+
+                        // FRANCISCO NAVARRO GLOBAL EXCEPTION (CAMIR)
+                        if (impArr.includes('Francisco Navarro')) {
+                            impArr = impArr.filter(name => name !== 'Francisco Navarro');
+                            if (!specArr.includes('Francisco Navarro')) {
+                                specArr.push('Francisco Navarro');
+                            }
+                        }
+
+                        // ARGENTINA/BRAZIL EXCEPTION 
+                        let filteredProc = [];
+                        for (let i = 0; i < procArr.length; i++) {
+                            if (procArr[i] === 'Rafael Feldman') {
+                                if (!impArr.includes('Rafael Feldman')) impArr.push('Rafael Feldman');
+                                if (!filteredProc.includes('Pablo Spaletra')) filteredProc.push('Pablo Spaletra');
+                            } else {
+                                filteredProc.push(procArr[i]);
+                            }
+                        }
+                        procArr = filteredProc;
+
+                        // COLOMBIA EXCEPTION
                         if (country === 'Colombia') {
                             let filteredImp = [];
                             for (let i = 0; i < impArr.length; i++) {
@@ -1383,7 +1451,6 @@
         }
     }
 
-    // --- EXPORT TO EXCEL LOGIC ---
     function exportCurrentTab() {
         let wb = XLSX.utils.book_new();
         let ws;
@@ -1458,6 +1525,16 @@
         processData();
     }
 
+    function filterRankings(query) {
+        let lowerQuery = cleanStr(query);
+        let rows = document.querySelectorAll('.ranking-row');
+        rows.forEach(row => {
+            let text = cleanStr(row.innerText);
+            if(text.includes(lowerQuery)) row.style.display = 'block';
+            else row.style.display = 'none';
+        });
+    }
+
     function processData() {
         try {
             processedData = allCasesGlobal.filter(c => {
@@ -1478,20 +1555,7 @@
             });
 
             gHospMap = {}; gImpMap = {}; gSpecMap = {}; gProcMap = {}; 
-            globalImplanters = new Set(); globalVenusPSpecs = new Set(); hybridPhysicians = new Set();
             
-            // Map Hybrid Physicians globally across all data
-            allCasesGlobal.forEach(c => {
-                let imps = String(c.implanter).split(', ');
-                let specs = String(c.specialist).split(', ');
-                
-                imps.forEach(i => { if(i !== 'N/A') globalImplanters.add(i); });
-                if (c.valveBase === 'Venus P') {
-                    specs.forEach(s => { if(s !== 'N/A') globalVenusPSpecs.add(s); });
-                }
-            });
-            hybridPhysicians = new Set([...globalImplanters].filter(x => globalVenusPSpecs.has(x)));
-
             fullyFilteredData.forEach(caseObj => {
                 if(caseObj.hospital && caseObj.hospital !== 'Unknown Hospital') { 
                     initEntity(gHospMap, caseObj.hospital, caseObj.country); 
@@ -1531,6 +1595,9 @@
             updateSOPPriceVisibility();
             renderSOP();
             
+            let searchInput = document.getElementById('ranking-search-input');
+            if(searchInput && searchInput.value) filterRankings(searchInput.value);
+
             let errAlert = document.getElementById('error-alert');
             if(errAlert) errAlert.style.display = 'none';
 
@@ -1661,11 +1728,19 @@
         let elTotal = document.getElementById('hero-total-cases');
         if(elTotal) elTotal.innerText = donePrimaryYTD;
 
-        let proctoredCount = casesPrimaryYear.filter(d => d.proctor && d.proctor !== 'N/A' && d.proctor.trim() !== '').length;
-        let pRate = donePrimaryYTD > 0 ? ((proctoredCount / donePrimaryYTD) * 100).toFixed(1) : 0;
+        let casesForProctorRate = casesPrimaryYear;
+        if (!activeCountryExpanded) {
+            casesForProctorRate = casesPrimaryYear.filter(d => d.country !== 'Brazil');
+        }
+
+        let totalForProctorRate = casesForProctorRate.length;
+        let proctoredCount = casesForProctorRate.filter(d => d.proctor && d.proctor !== 'N/A' && d.proctor.trim() !== '').length;
+        let pRate = totalForProctorRate > 0 ? ((proctoredCount / totalForProctorRate) * 100).toFixed(1) : 0;
+        
         let heroProcEl = document.getElementById('hero-proctor-rate');
         if (heroProcEl) {
-            heroProcEl.innerText = `Proctor Dependency Rate: ${pRate}% (${proctoredCount} of ${donePrimaryYTD} proctored)`;
+            let labelContext = !activeCountryExpanded ? "Proctor Dependency Rate (Excl. BR)" : "Proctor Dependency Rate";
+            heroProcEl.innerText = `${labelContext}: ${pRate}% (${proctoredCount} of ${totalForProctorRate} proctored)`;
         }
 
         let maxMonthActive = 0;
@@ -1785,11 +1860,12 @@
             let distName = e[0]; let count = e[1].count;
             let p = filteredTotalForRankings > 0 ? ((count/filteredTotalForRankings)*100).toFixed(1) : 0;
             let safeName = distName.replace(/'/g, "\\'"); let isActive = activeDistFilter === distName ? 'active-row' : '';
-            let logoCell = getDistLogoHTML(distName);
+            
+            let logoHtml = `<div style="height:35px; width:90px; display:flex; align-items:center; justify-content:center;">${getDistLogoHTML(distName)}</div>`;
             let barColor = getColors(distName);
 
             dHtml += `<tr class="dist-row ${isActive}" onclick="toggleDistributorFilter('${safeName}')">
-                <td style="width: 70px;">${logoCell}</td>
+                <td style="width: 70px;">${logoHtml}</td>
                 <td><strong style="color:var(--v-deep-blue); font-size: 16px;">${distName}</strong></td>
                 <td class="tech-font" style="font-weight: 800; color: var(--v-deep-blue); font-size: 20px;">${count}</td>
                 <td>
@@ -1846,7 +1922,6 @@
         if(!chartsLoaded || !google || !google.visualization) return;
 
         let chartData = fullyFilteredData;
-
         let container = document.getElementById('trend-chart-container');
         if(!container) return;
 
@@ -1860,28 +1935,40 @@
 
         let monthCountsPrimary = {};
         let monthCountsComp = {};
+        let vCountsPrimary = {};
+        let vCountsComp = {};
         let totalPrimary = 0;
         let totalComp = 0;
         let maxMonthActive = 0;
+
+        for(let i=1; i<=12; i++) {
+            vCountsPrimary[i] = {"Venus A":0, "Venus P":0, "PowerX":0, "Vitae":0};
+            vCountsComp[i] = {"Venus A":0, "Venus P":0, "PowerX":0, "Vitae":0};
+        }
 
         chartData.forEach(d => {
             let parts = d.date.split('/');
             if(parts.length === 3) {
                 let m = parseInt(parts[1], 10);
                 let y = parseInt(parts[2], 10);
+                let vb = d.valveBase || 'Venus A';
+                
                 if (!isNaN(m) && !isNaN(y)) {
                     if (y === primaryYear) {
                         monthCountsPrimary[m] = (monthCountsPrimary[m] || 0) + 1;
+                        if(vCountsPrimary[m][vb] !== undefined) vCountsPrimary[m][vb]++;
                         totalPrimary++;
                         if(m > maxMonthActive) maxMonthActive = m;
                     } else if (y === compYear) {
                         monthCountsComp[m] = (monthCountsComp[m] || 0) + 1;
+                        if(vCountsComp[m][vb] !== undefined) vCountsComp[m][vb]++;
                         totalComp++;
                     }
                 }
             }
         });
 
+        // Target Math
         let filterLabel = activeCountryExpanded ? activeCountryExpanded.toUpperCase() : 'LATAM REGION';
         if (activeValveFilter) filterLabel += ` | ${activeValveFilter}`;
         let chartTitle = `${filterLabel} Pipeline: ${primaryYear} (${totalPrimary} cases)`;
@@ -1901,19 +1988,14 @@
 
         let opsTargetInput = document.getElementById('ops-target-input');
         let targetUnits = opsTargetInput ? (Number(opsTargetInput.value) || 399) : 399;
-        
         if (activeValveFilter || activeCountryExpanded) {
             let mixData = {vBase: {}, cBase: {}};
             processedData.forEach(c => {
                 mixData.vBase[c.valveBase] = (mixData.vBase[c.valveBase] || 0) + 1;
                 mixData.cBase[c.country] = (mixData.cBase[c.country] || 0) + 1;
             });
-            
             let totHist = Object.values(mixData.vBase).reduce((a,b)=>a+b, 0);
-            
-            let cPct = 1;
-            if (activeCountryExpanded && totHist > 0) cPct = (mixData.cBase[activeCountryExpanded] || 0) / totHist;
-            
+            let cPct = 1; if (activeCountryExpanded && totHist > 0) cPct = (mixData.cBase[activeCountryExpanded] || 0) / totHist;
             let vPct = 1;
             if (activeValveFilter) {
                 let localMix = {vBase: {}};
@@ -1922,89 +2004,117 @@
                 localCases.forEach(c => localMix.vBase[c.valveBase] = (localMix.vBase[c.valveBase] || 0) + 1);
                 if (localTot > 0) vPct = (localMix.vBase[activeValveFilter] || 0) / localTot;
             }
-
             targetUnits = Math.round(targetUnits * cPct * vPct);
         }
         
         let monthsPassed = maxMonthActive || 1;
         let runRatePerMonth = Math.round(totalPrimary / monthsPassed);
-        let remainingUnits = targetUnits - totalPrimary;
-        if(remainingUnits < 0) remainingUnits = 0;
-        let remainingMonths = 12 - monthsPassed;
-        if(remainingMonths < 1) remainingMonths = 1;
+        let remainingUnits = targetUnits - totalPrimary; if(remainingUnits < 0) remainingUnits = 0;
+        let remainingMonths = 12 - monthsPassed; if(remainingMonths < 1) remainingMonths = 1;
         let targetPerMonth = Math.round(remainingUnits / remainingMonths);
 
         let dataTable = [];
-        if (compYear) {
-            let header = ['Month', String(compYear), { role: 'annotation' }, String(primaryYear), { role: 'annotation' }];
-            if (showForecastLines) header.push('Projected Target Run-Rate', { role: 'annotation' }, 'Required Target', { role: 'annotation' });
-            dataTable.push(header);
-        } else {
-            let header = ['Month', String(primaryYear), { role: 'annotation' }];
-            if (showForecastLines) header.push('Projected Target Run-Rate', { role: 'annotation' }, 'Required Target', { role: 'annotation' });
-            dataTable.push(header);
-        }
-
         let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        
-        for(let m=1; m<=12; m++) {
-            let histPrim = monthCountsPrimary[m] || 0;
-            let histComp = monthCountsComp[m] || 0;
-            
-            let lblPrim = histPrim > 0 ? String(histPrim) : null;
-            let lblComp = histComp > 0 ? String(histComp) : null;
 
-            if (compYear && histPrim > 0 && histComp > 0) {
-                let growth = ((histPrim / histComp) - 1) * 100;
-                let sign = growth >= 0 ? '+' : '';
-                lblPrim = `${histPrim} (${sign}${growth.toFixed(0)}%)`;
+        const genTooltip = (year, mName, tot, vMap) => {
+            if(tot === 0) return '';
+            let h = `<div style="padding:12px; font-family:'Inter', sans-serif; min-width:160px; background:#fff; border:1px solid #E2E8F0; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                <div style="font-weight:800; color:#171434; margin-bottom:8px; border-bottom:1px solid #E2E8F0; padding-bottom:5px; font-size:13px;">${mName} ${year} - ${tot} Cases</div>`;
+            ['Venus A', 'Venus P', 'PowerX', 'Vitae'].forEach(v => {
+                if(vMap[v] > 0) {
+                    let c = '#0284C7';
+                    if(v==='Venus P') c = '#9333EA';
+                    if(v==='PowerX') c = '#16A34A';
+                    if(v==='Vitae') c = '#DC2626';
+                    h += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                        <span style="color:#575567; display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${c};"></span>${v}</span>
+                        <strong style="color:#302B6A;">${vMap[v]}</strong>
+                    </div>`;
+                }
+            });
+            h += `</div>`;
+            return h;
+        };
+
+        let seriesConfig = {};
+        let colorsConfig = [];
+
+        if (compYear) {
+            // YOY Setup (2 Bars side by side, Custom HTML tooltips)
+            let header = ['Month', String(compYear), {role: 'tooltip', p:{html:true}}, { role: 'annotation' }, String(primaryYear), {role: 'tooltip', p:{html:true}}, { role: 'annotation' }];
+            if (showForecastLines) header.push('Projected Target Run-Rate', { role: 'annotation' }, 'Required Target', { role: 'annotation' });
+            dataTable.push(header);
+
+            for(let m=1; m<=12; m++) {
+                let hp = monthCountsPrimary[m] || 0;
+                let hc = monthCountsComp[m] || 0;
+                
+                let lblP = hp > 0 ? String(hp) : null;
+                let lblC = hc > 0 ? String(hc) : null;
+
+                if (hp > 0 && hc > 0) {
+                    let growth = ((hp / hc) - 1) * 100;
+                    let sign = growth >= 0 ? '+' : '';
+                    lblP = `${hp} (${sign}${growth.toFixed(0)}%)`;
+                }
+                
+                let ttC = genTooltip(compYear, monthNames[m-1], hc, vCountsComp[m]);
+                let ttP = genTooltip(primaryYear, monthNames[m-1], hp, vCountsPrimary[m]);
+
+                let row = [monthNames[m-1], hc, ttC, lblC, hp, ttP, lblP];
+                if (showForecastLines) {
+                    if (m < maxMonthActive) row.push(null, null, null, null);
+                    else if (m === maxMonthActive) row.push(hp, '', hp, '');
+                    else row.push(runRatePerMonth, String(runRatePerMonth), targetPerMonth, String(targetPerMonth));
+                }
+                dataTable.push(row);
             }
             
-            let row = [];
-            if (compYear) {
-                row = [monthNames[m-1], histComp, lblComp, histPrim, lblPrim];
-                if (showForecastLines) {
-                    if (m < maxMonthActive) row.push(null, null, null, null);
-                    else if (m === maxMonthActive) row.push(histPrim, '', histPrim, '');
-                    else row.push(runRatePerMonth, String(runRatePerMonth), targetPerMonth, String(targetPerMonth));
-                }
-            } else {
-                row = [monthNames[m-1], histPrim, lblPrim];
-                if (showForecastLines) {
-                    if (m < maxMonthActive) row.push(null, null, null, null);
-                    else if (m === maxMonthActive) row.push(histPrim, '', histPrim, '');
-                    else row.push(runRatePerMonth, String(runRatePerMonth), targetPerMonth, String(targetPerMonth));
-                }
-            }
-            dataTable.push(row);
-        }
-        
-        let data = google.visualization.arrayToDataTable(dataTable);
-        
-        // Calculate max value for breathing room
-        let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
-        if(showForecastLines) { allValues.push(targetPerMonth, runRatePerMonth); }
-        let maxDataVal = allValues.length > 0 ? Math.max(...allValues) : 0;
-        let viewMax = maxDataVal + 10;
-        
-        let seriesConfig = {};
-        if (compYear) {
+            colorsConfig = ['#cbd5e1', '#302B6A'];
             seriesConfig = { 0: {type: 'bars'}, 1: {type: 'bars'} };
             if (showForecastLines) {
                 seriesConfig[2] = {type: 'line', lineDashStyle: [4, 4], pointSize: 6, lineWidth: 3};
                 seriesConfig[3] = {type: 'line', lineDashStyle: [6, 4], pointSize: 6, lineWidth: 4};
+                colorsConfig.push('#94A3B8', '#FAA74A');
             }
+
         } else {
+            // Single Year Setup (Solid Blue Bar, Custom HTML tooltips)
+            let header = ['Month', String(primaryYear), {role: 'tooltip', p:{html:true}}, { role: 'annotation' }];
+            if (showForecastLines) header.push('Projected Target Run-Rate', { role: 'annotation' }, 'Required Target', { role: 'annotation' });
+            dataTable.push(header);
+
+            for(let m=1; m<=12; m++) {
+                let hp = monthCountsPrimary[m] || 0;
+                let ann = hp > 0 ? String(hp) : null;
+                let ttP = genTooltip(primaryYear, monthNames[m-1], hp, vCountsPrimary[m]);
+
+                let row = [monthNames[m-1], hp, ttP, ann];
+
+                if (showForecastLines) {
+                    if (m < maxMonthActive) row.push(null, null, null, null);
+                    else if (m === maxMonthActive) row.push(hp, '', hp, '');
+                    else row.push(runRatePerMonth, String(runRatePerMonth), targetPerMonth, String(targetPerMonth));
+                }
+                dataTable.push(row);
+            }
+            
+            colorsConfig = ['#302B6A'];
             seriesConfig = { 0: {type: 'bars'} };
             if (showForecastLines) {
                 seriesConfig[1] = {type: 'line', lineDashStyle: [4, 4], pointSize: 6, lineWidth: 3};
                 seriesConfig[2] = {type: 'line', lineDashStyle: [6, 4], pointSize: 6, lineWidth: 4};
+                colorsConfig.push('#94A3B8', '#FAA74A');
             }
         }
-            
-        let colorsConfig = compYear ? ['#cbd5e1', '#302B6A'] : ['#302B6A'];
-        if (showForecastLines) colorsConfig.push('#94A3B8', '#FAA74A');
 
+        let data = google.visualization.arrayToDataTable(dataTable);
+        
+        let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
+        if(showForecastLines) { allValues.push(targetPerMonth, runRatePerMonth); }
+        let maxDataVal = allValues.length > 0 ? Math.max(...allValues) : 0;
+        let viewMax = maxDataVal + (maxDataVal * 0.1) + 5; 
+        
         let options = {
             title: chartTitle,
             titleTextStyle: { color: '#171434', fontName: 'Space Mono', fontSize: 15, bold: true },
@@ -2013,6 +2123,8 @@
             colors: colorsConfig,
             seriesType: 'bars',
             series: seriesConfig,
+            focusTarget: 'datum',
+            tooltip: { isHtml: true },
             vAxis: { minValue: 0, viewWindow: { max: viewMax }, textStyle: {color: '#575567', fontName: 'Space Mono', fontSize: 13}, gridlines: {color: '#E2E8F0'} },
             hAxis: { textStyle: {color: '#575567', fontName: 'Space Mono', fontSize: 12} },
             annotations: { alwaysOutside: true, textStyle: { fontName: 'Space Mono', fontSize: 11, bold: true, color: '#171434' } },
@@ -2117,7 +2229,6 @@
                 return isMatch;
             });
         } else {
-            // Find in global to calculate true YoY
             casesList = allCasesGlobal.filter(c => {
                 if (role === 'Hospital' && cleanStr(c.hospital) === cleanStr(name)) return true;
                 if (role === 'Implanter' && c.implanter.includes(name)) return true;
@@ -2136,7 +2247,7 @@
         
         if (nClean.includes("fabio silva") || nClean.includes("stephanie bugeno") || nClean.includes("ariane sanchez") || nClean.includes("jian wang") || nClean.includes("jian")) {
             affiliation = "VENUS MEDTECH";
-        } else if (role === 'Specialist') { // EMPLOYEE BADGE ONLY FOR SPECIALISTS NOW
+        } else if (role === 'Specialist') {
             let distCounts = {};
             casesList.forEach(c => { distCounts[c.dist] = (distCounts[c.dist] || 0) + 1; });
             let topDist = Object.keys(distCounts).sort((a,b) => distCounts[b] - distCounts[a])[0];
@@ -2158,11 +2269,9 @@
         let mRole = document.getElementById('modal-person-role');
         if(mRole) mRole.innerHTML = roleText + extraBadge;
         
-        // Calculate YTD Dynamics
         let yearCounts = {'2025': 0, '2026': 0};
         let valveMix = {};
         
-        // Determine the max month we have data for in 2026 to create a fair YTD comparison
         let maxMonth2026 = 0;
         allCasesGlobal.forEach(c => {
              let parts = c.date.split('/');
@@ -2171,14 +2280,13 @@
                  if(m > maxMonth2026) maxMonth2026 = m;
              }
         });
-        if(maxMonth2026 === 0) maxMonth2026 = 12; // Fallback
+        if(maxMonth2026 === 0) maxMonth2026 = 12;
 
         casesList.forEach(c => {
             let parts = c.date.split('/');
             if(parts.length===3) {
                 let m = parseInt(parts[1], 10);
                 let yr = parts[2];
-                // Only count YTD (months up to maxMonth2026) for fair comparison
                 if (yr === '2025' || yr === '2026') {
                     if (m <= maxMonth2026) {
                         yearCounts[yr] = (yearCounts[yr] || 0) + 1;
@@ -2203,14 +2311,12 @@
         }
         document.getElementById('modal-yoy-stats').innerHTML = yoyHtml;
 
-        // Portfolio Mix HTML
         let mixHtml = '';
         Object.entries(valveMix).sort((a,b)=>b[1]-a[1]).forEach(([vName, vCount]) => {
             mixHtml += `<div><img src="${VALVE_IMGS[vName]}" style="height:35px; margin-bottom:5px; display:block; margin: 0 auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"><div class="tech-font" style="font-size:14px; font-weight:800; color:var(--v-blue);">${vCount}</div></div>`;
         });
         document.getElementById('modal-portfolio-mix').innerHTML = mixHtml;
 
-        // Filter back to current view context for the logs
         let contextCases = casesList.filter(c => {
              if (activeYears.length > 0) {
                  let y = parseInt(c.date.split('/')[2], 10);
@@ -2279,7 +2385,7 @@
                         cityCases += hCases.length;
                         
                         let caseListHtml = hCases.map((c, idx) => {
-                            let logoHtml = getDistLogoHTML(c.dist);
+                            let logoHtml = `<div style="height:35px; width:80px; display:flex; align-items:center; justify-content:center;">${getDistLogoHTML(c.dist)}</div>`;
                             return `<div class="metric-card" style="margin-bottom: 10px; padding: 15px; display:flex; align-items:center; background:#fff;"><div style="flex:1;"><div style="font-size: 11px; color: var(--v-text-mutated);" class="tech-font"><strong style="color:var(--v-deep-blue);">PROCEDURE #${idx + 1}</strong> &nbsp;|&nbsp; <span>${c.date}</span></div><div class="tech-font" style="font-size:12px; margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap: 8px;"><div>⚙️ Valve: <strong style="color:var(--v-blue);">${c.valve}</strong></div><div>🏷️ SN: ${c.serial}</div><div>👨‍⚕️ Imp: ${c.implanter}</div><div>👩‍⚕️ Spec: ${c.specialist}</div><div style="grid-column: span 2;">🎓 Proctor: ${c.proctor}</div></div></div><div style="width:100px; text-align:center; padding-left:15px; border-left:1px solid var(--v-border);">${logoHtml}<div style="font-size:9px; color:var(--v-text-mutated); margin-top:4px;">${c.dist}</div></div></div>`;
                         }).join('');
                         
@@ -2294,7 +2400,7 @@
                     countryCases += hCases.length;
                     
                     let caseListHtml = hCases.map((c, idx) => {
-                        let logoHtml = getDistLogoHTML(c.dist);
+                        let logoHtml = `<div style="height:35px; width:80px; display:flex; align-items:center; justify-content:center;">${getDistLogoHTML(c.dist)}</div>`;
                         return `<div class="metric-card" style="margin-bottom: 10px; padding: 15px; display:flex; align-items:center; background:#fff;"><div style="flex:1;"><div style="font-size: 11px; color: var(--v-text-mutated);" class="tech-font"><strong style="color:var(--v-deep-blue);">PROCEDURE #${idx + 1}</strong> &nbsp;|&nbsp; <span>${c.date}</span></div><div class="tech-font" style="font-size:12px; margin-top:8px; display:grid; grid-template-columns: 1fr 1fr; gap: 8px;"><div>⚙️ Valve: <strong style="color:var(--v-blue);">${c.valve}</strong></div><div>🏷️ SN: ${c.serial}</div><div>👨‍⚕️ Imp: ${c.implanter}</div><div>👩‍⚕️ Spec: ${c.specialist}</div><div style="grid-column: span 2;">🎓 Proctor: ${c.proctor}</div></div></div><div style="width:100px; text-align:center; padding-left:15px; border-left:1px solid var(--v-border);">${logoHtml}<div style="font-size:9px; color:var(--v-text-mutated); margin-top:4px;">${c.dist}</div></div></div>`;
                     }).join('');
 
@@ -2302,7 +2408,6 @@
                 }
             }
 
-            // Accordion FECHADO por padrão (removido o active-accordion daqui)
             listH += `<div class="acc-level-1"><div class="acc-header-1" onclick="toggleAccordion(this)"><span>${cFlag} ${country}</span><span class="badge" style="background:var(--v-yellow); color:#fff;">${countryCases} CASES</span></div><div class="acc-body-1">${cBody}</div></div>`;
         }
 
@@ -2349,7 +2454,7 @@
         });
 
         let tbody = ''; let totalCost = 0; let totalCasesAll = 0; let totalDaysAll = 0;
-        proctorFinanceDataExport = []; // Reset for export
+        proctorFinanceDataExport = [];
         
         Object.values(pMap).sort((a,b)=>b.totalCases-a.totalCases).forEach((p, idx) => {
             let fId = `fee-${idx}`;
@@ -2375,7 +2480,6 @@
             totalCasesAll += p.totalCases;
             totalDaysAll += (nonBrDays + brDays);
             
-            // Add to export data
             proctorFinanceDataExport.push({
                 "Official Proctor": p.name,
                 "Total Cases": p.totalCases,
@@ -2434,7 +2538,7 @@
     function selectSOPCountry(cName) {
         if (activeSOPCountry === cName) activeSOPCountry = null;
         else activeSOPCountry = cName;
-        activeSOPDistributor = null; // Limpa o distribuidor ao trocar de país
+        activeSOPDistributor = null;
         
         updateSOPTopBarUI();
         updateSOPPriceVisibility();
@@ -2482,13 +2586,13 @@
 
     function renderSOP() {
         let alloc = getSOPTiers();
-        currentSopExportData = []; // Reset for export
+        currentSopExportData = []; 
         
         let pTargets = { "Venus A": 0, "Venus P": 0, "PowerX": 0, "Vitae": 0 };
         let totalGrossUnits = 0;
         let totalNetUnits = 0;
         let totalStockCount = 0;
-        let sizeNetList = []; // For table generation
+        let sizeNetList = []; 
 
         let countriesToRender = activeSOPCountry ? [activeSOPCountry] : Object.keys(alloc);
         
@@ -2525,7 +2629,6 @@
             }
         });
 
-        // 1. RATIONALE GENERATION
         let ratBox = document.getElementById('sop-rationale-container');
         let ratText = document.getElementById('sop-rationale-text');
         
@@ -2548,8 +2651,6 @@
             ratBox.style.display = 'none';
         }
 
-
-        // 2. PORTFOLIO SHOWCASE (TOP CARDS)
         let pHtml = '';
         let portfTitle = document.getElementById('sop-portfolio-title');
         let titleContext = activeSOPCountry ? `${activeSOPCountry} | ` : `Consolidated `;
@@ -2576,8 +2677,6 @@
         let pContainer = document.getElementById('sop-product-showcase-container');
         if(pContainer) { pContainer.innerHTML = pHtml; }
 
-
-        // 3. COUNTRY CARDS
         let sopCardsHtml = '';
         let totalCalculatedRevenue = 0;
         let sortedCountriesList = Object.keys(alloc).sort((a,b) => alloc[b].usd - alloc[a].usd);
@@ -2630,8 +2729,6 @@
         let revEl = document.getElementById('sop-projected-revenue');
         if(revEl) revEl.innerText = '$ ' + totalCalculatedRevenue.toLocaleString();
 
-
-        // 4. LOGISTICS CART
         let cartTitle = document.getElementById('sop-cart-title');
         let cartContext = activeSOPCountry ? `Partner Breakdown (${activeSOPCountry})` : `LATAM Consolidated`;
         if (activeSOPValve) cartContext += ` [${activeSOPValve}]`;
@@ -2676,11 +2773,13 @@
                         if (activeSOPValve && vBase !== activeSOPValve) return sum;
                         return sum + szEntry[1];
                     }, 0);
+                    
+                    let distLogo = `<div style="height:35px; width:90px; display:flex; align-items:center; justify-content:flex-start;">${getDistLogoHTML(dName)}</div>`;
 
                     cartHtml += `
                         <div style="width:100%; grid-column: 1 / -1; margin-top:10px; margin-bottom:10px;">
                             <h4 style="color:var(--v-deep-blue); border-bottom: 1px solid var(--v-border); padding-bottom: 10px; display:flex; align-items:center; font-family:'Inter', sans-serif;">
-                                <div style="margin-right:15px;">${getDistLogoHTML(dName)}</div>
+                                <div style="margin-right:15px;">${distLogo}</div>
                                 ${dName} 
                                 <span style="color:var(--v-yellow); margin-left:auto; font-weight:800; font-family:'Space Mono', monospace;">${totalDUnits} Units ($ ${(distUSD/1000).toFixed(0)}k)</span>
                             </h4>
@@ -2701,7 +2800,6 @@
                     });
                 }
             });
-            // When consolidated, we mock a global prefix to zero out stock UI for simplicity
             let familyCardsHtml = buildFamilyCardsHtml(consolTargets, "LATAM_GLOBAL");
             cartHtml += familyCardsHtml;
         }
@@ -2709,7 +2807,6 @@
         let cartContainer = document.getElementById('sop-logistics-cart-container');
         if(cartContainer) cartContainer.innerHTML = cartHtml || `<div style="color:var(--v-text-mutated); margin-top:10px; width:100%; text-align:center; grid-column: 1 / -1;">No stock requirements calculated for this selection.</div>`;
 
-        // 5. THE 12-MONTH S&OP TABLE
         let tableContainer = document.getElementById('sop-12month-container');
         let tBody = document.querySelector('#sop-12month-table tbody');
         
@@ -2721,13 +2818,29 @@
                 if (item.net === 0) return; 
                 let distributed = distribute12Months(item.net, countryWeights);
                 
-                trHtml += `<tr>
-                    <td>${item.sz} <span style="font-size:9px; font-family:'Inter',sans-serif; color:var(--v-text-mutated); display:block; text-transform:uppercase;">${item.dist}</span></td>
-                    ${distributed.map(n => `<td>${n}</td>`).join('')}
-                    <td class="total-col">${item.net}</td>
+                let vBadgeStyle = 'background-color:#E2E8F0; color:#334155; border:1px solid #CBD5E1;';
+                if (item.vBase === 'Venus A') vBadgeStyle = 'background-color:#E0F2FE; color:#0369A1; border:1px solid #BAE6FD;';
+                if (item.vBase === 'Venus P') vBadgeStyle = 'background-color:#F3E8FF; color:#7E22CE; border:1px solid #E9D5FF;';
+                if (item.vBase === 'PowerX') vBadgeStyle = 'background-color:#DCFCE7; color:#15803D; border:1px solid #BBF7D0;';
+                if (item.vBase === 'Vitae') vBadgeStyle = 'background-color:#FEE2E2; color:#B91C1C; border:1px solid #FECACA;';
+
+                let distLogoHtml = `<div style="height:20px; width:50px; display:flex; align-items:center; justify-content:flex-start;">${getDistLogoHTML(item.dist)}</div>`;
+                let distColor = getColors(item.dist);
+
+                trHtml += `<tr style="border-left: 4px solid ${distColor};">
+                    <td style="text-align:left; padding-left:15px; padding-top:12px; padding-bottom:12px;">
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <div><span style="font-size:11px; font-weight:800; padding:4px 10px; border-radius:12px; ${vBadgeStyle}">${item.vBase} ${item.sz}</span></div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                ${distLogoHtml}
+                                <span style="font-size:10px; font-family:'Inter',sans-serif; color:var(--v-text-mutated); text-transform:uppercase; font-weight:800;">${item.dist}</span>
+                            </div>
+                        </div>
+                    </td>
+                    ${distributed.map(n => `<td style="font-size:15px;">${n}</td>`).join('')}
+                    <td class="total-col" style="font-size:18px;">${item.net}</td>
                 </tr>`;
                 
-                // Add to export matrix
                 currentSopExportData.push({
                     "Country": item.country,
                     "Distributor": item.dist,
