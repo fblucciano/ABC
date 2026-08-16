@@ -526,16 +526,16 @@
     <div id="tab-clinical" class="tab-content">
         <h2>Clinical Excellence & Device Safety</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database (unique key: Serial Number + Hospital + Date). The Problem Log below is <strong>strictly isolated to 2025 cases</strong> and inherits the global filters (Country / Distributor / Valve) applied in the Operations module. Success Rate = ((Total − Critical Cases) / Total) × 100.</p>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database (unique key: Serial Number + Hospital + Date). The Problem Log below reacts dynamically to the <strong>selected period</strong> ("Time Travel" active years) and inherits the global filters (Country / Distributor / Valve) applied in the Operations module. Success Rate = ((Total − Critical Cases) / Total) × 100.</p>
         <div id="clinical-filter-context" style="display:none; background:#fffdf5; border:1px solid var(--v-yellow); border-radius:8px; padding:10px 15px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--v-deep-blue);"></div>
 
         <!-- SAFETY PROFILE PORTFOLIO CARDS -->
-        <h2 style="margin-top: 30px;">2025 Safety Profile by Portfolio <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Valve to filter the Problem Log)</span></h2>
+        <h2 style="margin-top: 30px;">Selected Period Safety Profile by Portfolio <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Valve to filter the Problem Log)</span></h2>
         <div class="section-dash">—</div>
         <div class="flex-center-cards" id="clinical-valve-cards"></div>
 
-        <!-- 2025 CRITICAL CASES ENGINE (PROBLEM LOG) -->
-        <h2 style="margin-top: 40px;">2025 Critical Cases Intelligence Log <span id="clinical-log-counter" style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);"></span></h2>
+        <!-- SELECTED PERIOD CRITICAL CASES ENGINE (PROBLEM LOG) -->
+        <h2 style="margin-top: 40px;">Selected Period Critical Cases Intelligence Log <span id="clinical-log-counter" style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);"></span></h2>
         <div class="section-dash">—</div>
         
         <input type="text" id="clinicalSearch" class="ranking-search" placeholder="🔍 Search by severity (e.g., Level 3), hospital, physician or clinical narrative..." oninput="filterClinicalTable()">
@@ -2403,8 +2403,22 @@
 
         if(casesList.length === 0) return;
 
+        // Selected-period context: the entity's cases matching ALL active global filters
+        // (Time Travel years, Country, Distributor, Valve). Instantiated BEFORE the
+        // success-rate calculation so the modal metric reflects the current context.
+        let contextCases = casesList.filter(c => {
+             if (activeYears.length > 0) {
+                 let y = parseInt(c.date.split('/')[2], 10);
+                 if (!activeYears.includes(y)) return false;
+             }
+             if (activeCountryExpanded && c.country !== activeCountryExpanded) return false;
+             if (activeDistFilter && c.dist !== activeDistFilter) return false;
+             if (activeValveFilter && c.valveBase !== activeValveFilter) return false;
+             return true;
+        });
+
         let mName = document.getElementById('modal-person-name');
-        if(mName) mName.innerHTML = `<span style="font-size:24px;">${flag}</span> ${name} ${buildSuccessRateBadge(casesList)}`;
+        if(mName) mName.innerHTML = `<span style="font-size:24px;">${flag}</span> ${name} ${buildSuccessRateBadge(contextCases)}`;
         
         let affiliation = "";
         let nClean = cleanStr(name);
@@ -2480,17 +2494,6 @@
             mixHtml += `<div><img src="${VALVE_IMGS[vName]}" style="height:35px; margin-bottom:5px; display:block; margin: 0 auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"><div class="tech-font" style="font-size:14px; font-weight:800; color:var(--v-blue);">${vCount}</div></div>`;
         });
         document.getElementById('modal-portfolio-mix').innerHTML = mixHtml;
-
-        let contextCases = casesList.filter(c => {
-             if (activeYears.length > 0) {
-                 let y = parseInt(c.date.split('/')[2], 10);
-                 if (!activeYears.includes(y)) return false;
-             }
-             if (activeCountryExpanded && c.country !== activeCountryExpanded) return false;
-             if (activeDistFilter && c.dist !== activeDistFilter) return false;
-             if (activeValveFilter && c.valveBase !== activeValveFilter) return false;
-             return true;
-        });
 
         buildModalContent(contextCases);
     }
@@ -3059,21 +3062,12 @@
         return { isCritical: sev3 || sev2, isPPI: ppi, level: level };
     }
 
-    // The Problem Log is STRICTLY isolated to this year, regardless of the
-    // "Time Travel" year pills selected for the other tabs.
-    const CLINICAL_YEAR = 2025;
-
-    function getCaseYear(c) {
-        let y = parseInt(String(c?.date ?? '').split('/')[2], 10);
-        return isNaN(y) ? null : y;
-    }
-
-    // GLOBAL STATE SYNC: the clinical dataset inherits the global Country and
-    // Distributor filters applied in the Operations module (valve inheritance is
-    // handled separately so all 4 portfolio cards stay visible).
+    // GLOBAL STATE SYNC: the clinical dataset is built natively on processedData
+    // (already scoped to the "Time Travel" active years) and additionally inherits
+    // the global Country and Distributor filters applied in the Operations module
+    // (valve inheritance is handled separately so all 4 portfolio cards stay visible).
     function getClinicalDataset() {
-        return allCasesGlobal.filter(c => {
-            if (getCaseYear(c) !== CLINICAL_YEAR) return false;
+        return processedData.filter(c => {
             if (activeCountryExpanded && c?.country !== activeCountryExpanded) return false;
             if (activeDistFilter && c?.dist !== activeDistFilter) return false;
             return true;
@@ -3124,7 +3118,7 @@
             }
         }
 
-        // --- 1. SAFETY PROFILE PORTFOLIO CARDS (2025) ---
+        // --- 1. SAFETY PROFILE PORTFOLIO CARDS (SELECTED PERIOD) ---
         let effectiveValve = getEffectiveClinicalValve();
         let cardsHtml = '';
         ["Vitae", "PowerX", "Venus A", "Venus P"].forEach(f => {
@@ -3139,7 +3133,7 @@
                 <div class="ops-valve-card clinical-valve-card ${isActive} ${isDimmed}" data-valve="${f}" onclick="toggleClinicalValve('${f}')">
                     <h3 style="font-size:22px; color:var(--v-deep-blue); margin:0;">${f}</h3>
                     <img src="${VALVE_IMGS[f]}" class="ops-valve-img" style="max-height:150px;">
-                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">2025 Volume (Deduplicated)</div>
+                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">Volume (Deduplicated)</div>
                     <div class="tech-font" style="font-size:30px; font-weight:800; color:var(--v-deep-blue); margin-top:5px; line-height: 1;">${st.total}</div>
                     <div class="clinical-rate-row clinical-rate-ppi" style="margin-top:14px;">
                         <span>PPI Rate</span>
@@ -3195,25 +3189,26 @@
             `;
         });
 
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected in the ${CLINICAL_YEAR} clinical narratives for the current filter context. ✅</td></tr>`;
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected in the clinical narratives for the selected period and filter context. ✅</td></tr>`;
 
         filterClinicalTable();
     }
 
     // --- ENTITY SUCCESS RATE BADGE (Drilldown Modal) ---
-    // Computed strictly on the entity's 2025 cases:
+    // Evaluates the provided cases array directly (the caller passes the entity's cases
+    // already scoped to the active global filters: Time Travel years, Country,
+    // Distributor, Valve):
     // ((Total Entity Cases - Entity Critical Cases [Level 2 & 3]) / Total Entity Cases) * 100.
-    // Guards against division by zero: entities with no 2025 activity display "N/A".
-    function buildSuccessRateBadge(casesList) {
+    // Guards against division by zero: entities with no cases in scope display "N/A".
+    function buildSuccessRateBadge(scopedCases) {
         try {
-            let cases2025 = (casesList ?? []).filter(c => getCaseYear(c) === CLINICAL_YEAR);
-            let total = cases2025.length;
+            let total = (scopedCases ?? []).length;
 
             if (total === 0) {
-                return `<span class="badge" style="vertical-align:middle; margin-left:12px; font-size:11px; padding:6px 14px;" title="No ${CLINICAL_YEAR} cases recorded for this entity">${CLINICAL_YEAR} Success Rate: N/A</span>`;
+                return `<span class="badge" style="vertical-align:middle; margin-left:12px; font-size:11px; padding:6px 14px;" title="No cases recorded for this entity in the selected period">Selected Period Success Rate: N/A</span>`;
             }
 
-            let criticalCount = cases2025.filter(c => getClinicalSignals(c?.comment).isCritical).length;
+            let criticalCount = scopedCases.filter(c => getClinicalSignals(c?.comment).isCritical).length;
             let rate = ((total - criticalCount) / total) * 100;
 
             let bg, fg, border;
@@ -3221,7 +3216,7 @@
             else if (rate >= 90) { bg = 'rgba(250, 167, 74, 0.15)'; fg = '#B45309'; border = 'var(--v-yellow)'; }
             else { bg = 'rgba(239, 68, 68, 0.12)'; fg = '#B91C1C'; border = '#EF4444'; }
 
-            return `<span class="badge" style="vertical-align:middle; margin-left:12px; font-size:11px; padding:6px 14px; background:${bg}; color:${fg}; border:1px solid ${border};" title="${criticalCount} critical case(s) [Level 2 & 3] out of ${total} cases in ${CLINICAL_YEAR}">${CLINICAL_YEAR} Success Rate: ${rate.toFixed(1)}%</span>`;
+            return `<span class="badge" style="vertical-align:middle; margin-left:12px; font-size:11px; padding:6px 14px; background:${bg}; color:${fg}; border:1px solid ${border};" title="${criticalCount} critical case(s) [Level 2 & 3] out of ${total} cases in the selected period">Selected Period Success Rate: ${rate.toFixed(1)}%</span>`;
         } catch (err) {
             return '';
         }
@@ -3266,7 +3261,7 @@
             let ctx = [];
             if (effectiveValve) ctx.push(effectiveValve);
             if (q) ctx.push(`"${searchEl.value.trim()}"`);
-            counter.innerText = `(${visible} of ${clinicalCriticalCases.length} cases in ${CLINICAL_YEAR}${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
+            counter.innerText = `(${visible} of ${clinicalCriticalCases.length} cases in the selected period${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
         }
     }
 
