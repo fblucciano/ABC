@@ -1103,8 +1103,17 @@
         let merged = [];
         cases.forEach(c => {
             let match = merged.find(existing => isClinicalNearDuplicate(existing, c));
-            if (match) mergeClinicalMetadata(match, c);
-            else merged.push(c);
+            if (match) {
+                if (c._builtin && !match._builtin) {
+                    mergeClinicalMetadata(c, match);
+                    let idx = merged.indexOf(match);
+                    merged[idx] = c;
+                } else {
+                    mergeClinicalMetadata(match, c);
+                }
+                return;
+            }
+            merged.push(c);
         });
         return merged;
     }
@@ -1167,7 +1176,7 @@
         let n = (typeof BUILTIN_PROBLEM_CASES !== 'undefined') ? BUILTIN_PROBLEM_CASES.length : 0;
         if (n === 0) { el.style.display = 'none'; return; }
         el.style.display = 'block';
-        el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases from the Consolidated LATAM Report are always loaded. Uploading the same case again (serial + date + narrative + team) will <strong>merge</strong>, never duplicate.`;
+        el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases from the Consolidated LATAM Problem Report (38 reported + 5 structured signals + Panama) are always loaded. Uploading the same case again will <strong>merge</strong>, never duplicate.`;
     }
 
     function rebuildAllCasesGlobal() {
@@ -1205,6 +1214,10 @@
 
         allCasesGlobal = consolidateClinicalBySerial(allCasesGlobal);
         allCasesGlobal = dedupeClinicalNearDuplicates(allCasesGlobal);
+        // Guarantee every embedded problem case survives upload merges
+        (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(b => {
+            if (!allCasesGlobal.some(c => c.id && b.id && c.id === b.id)) allCasesGlobal.push(b);
+        });
         updateBuiltinMemoryBanner();
         return builtinCount;
     }
@@ -1235,12 +1248,13 @@
         let dropIdx = new Set();
         bySerial.forEach(group => {
             if (group.length < 2) return;
-            group.sort((a, b) => implantRecordScore(b.c) - implantRecordScore(a.c));
-            let primary = group[0].c;
-            for (let i = 1; i < group.length; i++) {
-                mergeClinicalMetadata(primary, group[i].c);
-                dropIdx.add(group[i].idx);
-            }
+            let primaryEntry = group.find(x => x.c._builtin || x.c._clinicalBuiltin) || group[0];
+            let primary = primaryEntry.c;
+            group.forEach(entry => {
+                if (entry === primaryEntry) return;
+                mergeClinicalMetadata(primary, entry.c);
+                if (!(entry.c._builtin || entry.c._clinicalBuiltin)) dropIdx.add(entry.idx);
+            });
         });
         return cases.filter((_, idx) => !dropIdx.has(idx));
     }
@@ -3702,6 +3716,8 @@
             return valveBase === 'Vitae' ? 2 : 1;
         }
         if (/lockwire/.test(blob)) return 1;
+        if (/structured finding|moderate pvl|paravalvular/.test(blob)) return 1;
+        if (/permanent pacemaker|pace maker/.test(blob)) return 1;
         if (/deployment|migration/.test(blob)) return 2;
         if (/encapsulation|subhandle/.test(blob)) return 1;
         if (/access|navigation/.test(blob)) return 1;
