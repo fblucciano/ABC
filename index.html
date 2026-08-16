@@ -241,6 +241,12 @@
         .trans-btn:disabled { opacity: 0.5; cursor: wait; }
         .trans-result { margin-top: 8px; background: #EEF2FF; border-left: 3px solid var(--v-blue); padding: 10px 12px; font-size: 12px; border-radius: 6px; color: var(--v-deep-blue); line-height: 1.5; }
         .trans-tag { display: block; font-size: 9px; font-weight: 800; color: var(--v-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+
+        /* Sortable clinical table headers */
+        .sortable-th { cursor: pointer; user-select: none; transition: color 0.2s; white-space: nowrap; }
+        .sortable-th:hover { color: var(--v-deep-blue); }
+        .sortable-th.sort-active { color: var(--v-yellow); }
+        .sortable-th .sort-icon { font-size: 10px; margin-left: 4px; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -543,7 +549,16 @@
         <div class="table-wrapper" style="max-height: 650px;">
             <table id="critical-cases-table">
                 <thead>
-                    <tr><th>Date</th><th>Country</th><th>Hospital</th><th>Physician</th><th>Valve</th><th>Serial / Lot</th><th>Severity</th><th style="min-width: 320px;">Clinical Report</th></tr>
+                    <tr>
+                        <th class="sortable-th" data-sort-col="date" onclick="sortClinicalTable('date')">Date <span class="sort-icon" id="sort-icon-date"></span></th>
+                        <th class="sortable-th" data-sort-col="country" onclick="sortClinicalTable('country')">Country <span class="sort-icon" id="sort-icon-country"></span></th>
+                        <th class="sortable-th" data-sort-col="hospital" onclick="sortClinicalTable('hospital')">Hospital <span class="sort-icon" id="sort-icon-hospital"></span></th>
+                        <th class="sortable-th" data-sort-col="physician" onclick="sortClinicalTable('physician')">Physician <span class="sort-icon" id="sort-icon-physician"></span></th>
+                        <th class="sortable-th" data-sort-col="valve" onclick="sortClinicalTable('valve')">Valve <span class="sort-icon" id="sort-icon-valve"></span></th>
+                        <th>Serial / Lot</th>
+                        <th class="sortable-th" data-sort-col="severity" onclick="sortClinicalTable('severity')">Severity <span class="sort-icon" id="sort-icon-severity"></span></th>
+                        <th style="min-width: 320px;">Clinical Report</th>
+                    </tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -792,6 +807,8 @@
     let activeClinicalValve = null;
     let clinicalCriticalCases = [];
     let clinicalExportData = [];
+    let clinicalSortCol = null;       // null | 'date' | 'country' | 'hospital' | 'physician' | 'valve' | 'severity'
+    let clinicalSortMode = 0;         // 0 = default, 1 = desc (L3 first for severity), 2 = asc (L1 first)
 
     // INITIALIZE GOOGLE CHARTS
     google.charts.load('current', {'packages':['corechart']});
@@ -895,11 +912,12 @@
         let vals = new Set();
         try {
             const rowKeys = Object.keys(row ?? {});
-            const candidates = (possibleNames ?? []).map(n => cleanStr(n));
+            // Longest candidates first so "clinical specialist" wins over "clinical"
+            const candidates = (possibleNames ?? []).map(n => cleanStr(n)).filter(Boolean).sort((a, b) => b.length - a.length);
             for (let i = 0; i < rowKeys.length; i++) {
-                let cleanKey = cleanStr(rowKeys[i]);
+                let cleanKey = cleanStr(rowKeys[i]).replace(/[:;]+$/, '');
                 for (let j = 0; j < candidates.length; j++) {
-                    if (candidates[j] && cleanKey.includes(candidates[j])) {
+                    if (cleanKey.includes(candidates[j]) || cleanKey === candidates[j]) {
                         let cellValue = row?.[rowKeys[i]];
                         if (cellValue !== undefined && cellValue !== null && String(cellValue).trim() !== '') vals.add(String(cellValue).trim());
                         if (!joinMultiple && vals.size > 0) return Array.from(vals)[0];
@@ -1475,12 +1493,11 @@
                         };
                         let splitRegex = /\s*[,/&+-]\s*|\s+y\s+|\s+e\s+/i;
                         
-                        let procRawStr = '';
-                        let procKeys = Object.keys(item.row).filter(k => cleanStr(k) === 'proctor name' || cleanStr(k) === 'proctor');
-                        if (procKeys.length > 0) procRawStr = String(item.row[procKeys[0]]);
+                        let procRawStr = getSmartColumnValue(item.row, ['proctor name', 'proctor'], true);
                         
-                        let impRawStr = getSmartColumnValue(item.row, ['implanter','medico','operator'], true);
-                        let specRawStr = getSmartColumnValue(item.row, ['specialist','cs','clinical','especialista'], true);
+                        let impRawStr = getSmartColumnValue(item.row, ['implanter','medico','first operator','operator'], true);
+                        // Crimper = valve assembly specialist in adverse-event exports; Clinical Specialist in implant DBs
+                        let specRawStr = getSmartColumnValue(item.row, ['clinical specialist','crimper','specialist','especialista'], true);
                         
                         let impArr = impRawStr.split(splitRegex).map(stdName).filter(validName);
                         let specArr = specRawStr.split(splitRegex).map(stdName).filter(validName);
@@ -3074,9 +3091,107 @@
         });
     }
 
-    // Local card selection overrides the inherited global valve filter.
+    // Only the Tab 05 card click filters the Problem Log — do NOT inherit the
+    // Operations valve filter, which was hiding rows (e.g. "5 of 7" Vitae cases).
     function getEffectiveClinicalValve() {
-        return activeClinicalValve ?? activeValveFilter ?? null;
+        return activeClinicalValve ?? null;
+    }
+
+    function applyClinicalSort(cases) {
+        if (!clinicalSortCol || clinicalSortMode === 0) {
+            return [...cases].sort((a, b) => b.level - a.level); // default: severity desc
+        }
+        let sorted = [...cases];
+        const dir = clinicalSortMode === 1 ? -1 : 1; // mode 1 = desc, mode 2 = asc
+        if (clinicalSortCol === 'severity') {
+            sorted.sort((a, b) => (a.level - b.level) * dir);
+        } else if (clinicalSortCol === 'date') {
+            sorted.sort((a, b) => {
+                let da = parseDate(a.c?.date), db = parseDate(b.c?.date);
+                let ta = da ? da.getTime() : 0, tb = db ? db.getTime() : 0;
+                return (ta - tb) * dir;
+            });
+        } else {
+            const fieldMap = { country: 'country', hospital: 'hospital', physician: 'implanter', valve: 'valve' };
+            let field = fieldMap[clinicalSortCol] ?? clinicalSortCol;
+            sorted.sort((a, b) => cleanStr(a.c?.[field]).localeCompare(cleanStr(b.c?.[field])) * dir);
+        }
+        return sorted;
+    }
+
+    function updateClinicalSortIcons() {
+        document.querySelectorAll('#critical-cases-table .sortable-th').forEach(th => {
+            th.classList.remove('sort-active');
+            let col = th.getAttribute('data-sort-col');
+            let icon = document.getElementById('sort-icon-' + col);
+            if (icon) icon.textContent = '';
+            if (col === clinicalSortCol && clinicalSortMode > 0) {
+                th.classList.add('sort-active');
+                if (icon) icon.textContent = clinicalSortMode === 1 ? '▼' : '▲';
+            }
+        });
+    }
+
+    // Severity cycle: click 1 → Level 3 first, click 2 → Level 1 first, click 3 → default
+    function sortClinicalTable(col) {
+        if (clinicalSortCol === col) {
+            clinicalSortMode = (clinicalSortMode + 1) % 3;
+            if (clinicalSortMode === 0) clinicalSortCol = null;
+        } else {
+            clinicalSortCol = col;
+            clinicalSortMode = 1; // start with desc (L3 first for severity)
+        }
+        renderClinicalTableBody();
+        filterClinicalTable();
+    }
+
+    function renderClinicalTableBody() {
+        let tBody = document.querySelector('#critical-cases-table tbody');
+        if (!tBody) return;
+
+        const SEV_LABELS = { 1: 'Level 1', 2: 'Level 2', 3: 'Level 3' };
+        let sortedCases = applyClinicalSort(clinicalCriticalCases);
+        clinicalExportData = [];
+
+        let rowsHtml = '';
+        sortedCases.forEach((item, idx) => {
+            let c = item.c;
+            let flag = FLAGS[c.country] || '🌍';
+
+            clinicalExportData.push({
+                "Date": c.date, "Country": c.country, "Hospital": c.hospital,
+                "Physician": c.implanter, "Valve": c.valve, "Serial / Lot": c.serial,
+                "Severity": SEV_LABELS[item.level], "Clinical Report": c.comment
+            });
+
+            rowsHtml += `
+                <tr class="clinical-row" data-valve="${c.valveBase}" data-level="${item.level}">
+                    <td class="tech-font" style="white-space:nowrap; font-size:12px;">${c.date}</td>
+                    <td style="white-space:nowrap;">${flag} ${c.country}</td>
+                    <td style="font-weight:700; color:var(--v-deep-blue);">${escapeHtml(c.hospital)}</td>
+                    <td>${escapeHtml(c.implanter)}</td>
+                    <td style="white-space:nowrap;"><img src="${VALVE_IMGS[c.valveBase]}" style="height:22px; vertical-align:middle; margin-right:6px;"><strong style="color:var(--v-blue);">${escapeHtml(c.valve)}</strong></td>
+                    <td class="tech-font" style="font-size:12px;">${escapeHtml(c.serial)}</td>
+                    <td><span class="sev-badge sev-${item.level}">${SEV_LABELS[item.level]}</span></td>
+                    <td>
+                        <div style="font-size:13px; line-height:1.5; color:var(--v-text-dark);">${escapeHtml(c.comment)}</div>
+                        <div id="clin-trans-${idx}" style="display:none;"></div>
+                        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+                            <select id="clin-lang-${idx}" class="trans-select" onclick="event.stopPropagation()">
+                                <option value="en" selected>🇺🇸 English</option>
+                                <option value="pt">🇧🇷 Português</option>
+                                <option value="es">🇪🇸 Español</option>
+                                <option value="zh-CN">🇨🇳 中文</option>
+                            </select>
+                            <button class="trans-btn" id="clin-btn-${idx}" onclick="translateClinicalComment(${idx})">🌐 AI Translate</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected in the clinical narratives for the selected period and filter context. ✅</td></tr>`;
+        updateClinicalSortIcons();
     }
 
     function renderClinical() {
@@ -3109,7 +3224,6 @@
             let inherited = [];
             if (activeCountryExpanded) inherited.push(`Country: ${activeCountryExpanded}`);
             if (activeDistFilter) inherited.push(`Distributor: ${activeDistFilter}`);
-            if (activeValveFilter) inherited.push(`Valve: ${activeValveFilter}`);
             if (inherited.length > 0) {
                 ctxBox.innerHTML = `🔗 Inherited global filters → ${inherited.join(' &nbsp;|&nbsp; ')} <span style="font-weight:400; color:var(--v-text-mutated);">(set in the Operations module)</span>`;
                 ctxBox.style.display = 'block';
@@ -3118,11 +3232,12 @@
             }
         }
 
-        // --- 1. SAFETY PROFILE PORTFOLIO CARDS (SELECTED PERIOD) ---
+        // --- 1. SAFETY PROFILE PORTFOLIO CARDS (SELECTED PERIOD) — same layout as Operations tab ---
         let effectiveValve = getEffectiveClinicalValve();
         let cardsHtml = '';
         ["Vitae", "PowerX", "Venus A", "Venus P"].forEach(f => {
             let st = famStats[f];
+            if (st.total === 0 && effectiveValve && effectiveValve !== f) return;
             let ppiRate = st.total > 0 ? ((st.ppi / st.total) * 100).toFixed(1) + '%' : '—';
             let successRate = st.total > 0 ? (((st.total - st.critical) / st.total) * 100).toFixed(1) + '%' : '—';
 
@@ -3131,66 +3246,21 @@
 
             cardsHtml += `
                 <div class="ops-valve-card clinical-valve-card ${isActive} ${isDimmed}" data-valve="${f}" onclick="toggleClinicalValve('${f}')">
-                    <h3 style="font-size:22px; color:var(--v-deep-blue); margin:0;">${f}</h3>
-                    <img src="${VALVE_IMGS[f]}" class="ops-valve-img" style="max-height:150px;">
-                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">Volume (Deduplicated)</div>
-                    <div class="tech-font" style="font-size:30px; font-weight:800; color:var(--v-deep-blue); margin-top:5px; line-height: 1;">${st.total}</div>
-                    <div class="clinical-rate-row clinical-rate-ppi" style="margin-top:14px;">
-                        <span>PPI Rate</span>
-                        <span class="tech-font" style="font-size:15px;">${ppiRate}</span>
-                    </div>
-                    <div class="clinical-rate-row clinical-rate-success">
-                        <span>Success Rate</span>
-                        <span class="tech-font" style="font-size:15px;">${successRate}</span>
-                    </div>
+                    <h3 style="font-size:24px; color:var(--v-deep-blue); margin:0;">${f}</h3>
+                    <img src="${VALVE_IMGS[f]}" class="ops-valve-img">
+                    <div style="font-size:11px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">Volume</div>
+                    <div class="tech-font" style="font-size:28px; font-weight:800; color:var(--v-yellow); margin-top:5px; line-height: 1;">${st.total}</div>
+                    <div style="font-size:11px; font-weight:800; color:#EA580C; text-transform:uppercase; margin-top:14px;">PPI Rate</div>
+                    <div class="tech-font" style="font-size:18px; font-weight:800; color:#EA580C; margin-top:4px; line-height:1;">${ppiRate}</div>
+                    <div style="font-size:11px; font-weight:800; color:#059669; text-transform:uppercase; margin-top:10px;">Success Rate</div>
+                    <div class="tech-font" style="font-size:18px; font-weight:800; color:#059669; margin-top:4px; line-height:1;">${successRate}</div>
                 </div>
             `;
         });
         cardsContainer.innerHTML = cardsHtml;
 
         // --- 2. CRITICAL CASES INTELLIGENCE LOG ---
-        clinicalCriticalCases.sort((a, b) => b.level - a.level);
-
-        const SEV_LABELS = { 1: 'Level 1', 2: 'Level 2', 3: 'Level 3' };
-        let rowsHtml = '';
-        clinicalCriticalCases.forEach((item, idx) => {
-            let c = item.c;
-            let flag = FLAGS[c.country] || '🌍';
-
-            clinicalExportData.push({
-                "Date": c.date, "Country": c.country, "Hospital": c.hospital,
-                "Physician": c.implanter, "Valve": c.valve, "Serial / Lot": c.serial,
-                "Severity": SEV_LABELS[item.level], "Clinical Report": c.comment
-            });
-
-            rowsHtml += `
-                <tr class="clinical-row" data-valve="${c.valveBase}">
-                    <td class="tech-font" style="white-space:nowrap; font-size:12px;">${c.date}</td>
-                    <td style="white-space:nowrap;">${flag} ${c.country}</td>
-                    <td style="font-weight:700; color:var(--v-deep-blue);">${escapeHtml(c.hospital)}</td>
-                    <td>${escapeHtml(c.implanter)}</td>
-                    <td style="white-space:nowrap;"><img src="${VALVE_IMGS[c.valveBase]}" style="height:22px; vertical-align:middle; margin-right:6px;"><strong style="color:var(--v-blue);">${escapeHtml(c.valve)}</strong></td>
-                    <td class="tech-font" style="font-size:12px;">${escapeHtml(c.serial)}</td>
-                    <td><span class="sev-badge sev-${item.level}">${SEV_LABELS[item.level]}</span></td>
-                    <td>
-                        <div style="font-size:13px; line-height:1.5; color:var(--v-text-dark);">${escapeHtml(c.comment)}</div>
-                        <div id="clin-trans-${idx}" style="display:none;"></div>
-                        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-                            <select id="clin-lang-${idx}" class="trans-select" onclick="event.stopPropagation()">
-                                <option value="en" selected>🇺🇸 English</option>
-                                <option value="pt">🇧🇷 Português</option>
-                                <option value="es">🇪🇸 Español</option>
-                                <option value="zh-CN">🇨🇳 中文</option>
-                            </select>
-                            <button class="trans-btn" id="clin-btn-${idx}" onclick="translateClinicalComment(${idx})">🌐 AI Translate</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected in the clinical narratives for the selected period and filter context. ✅</td></tr>`;
-
+        renderClinicalTableBody();
         filterClinicalTable();
     }
 
@@ -3227,26 +3297,28 @@
     // Only card classes and row visibility are touched, so any AI translations already
     // rendered inside the table rows are preserved.
     function toggleClinicalValve(vName) {
-        if (getEffectiveClinicalValve() === vName) activeClinicalValve = null;
+        if (activeClinicalValve === vName) activeClinicalValve = null;
         else activeClinicalValve = vName;
 
-        let effectiveValve = getEffectiveClinicalValve();
         document.querySelectorAll('.clinical-valve-card').forEach(card => {
             let v = card.getAttribute('data-valve');
-            card.classList.toggle('active-valve', effectiveValve === v);
-            card.classList.toggle('dimmed', !!effectiveValve && effectiveValve !== v);
+            card.classList.toggle('active-valve', activeClinicalValve === v);
+            card.classList.toggle('dimmed', !!activeClinicalValve && activeClinicalValve !== v);
         });
 
         filterClinicalTable();
     }
 
-    // --- 4. REAL-TIME SEARCH + CROSSED FILTERS ---
-    // Instantly hides/shows rows as the user types; combined with the valve family filter.
+    // --- 4. REAL-TIME SEARCH + VALVE CARD FILTER ---
     function filterClinicalTable() {
         let searchEl = document.getElementById('clinicalSearch');
         let q = cleanStr(searchEl?.value ?? '');
         let effectiveValve = getEffectiveClinicalValve();
         let visible = 0;
+
+        let contextTotal = effectiveValve
+            ? clinicalCriticalCases.filter(item => item.c.valveBase === effectiveValve).length
+            : clinicalCriticalCases.length;
 
         document.querySelectorAll('#critical-cases-table tbody tr.clinical-row').forEach(row => {
             let matchValve = !effectiveValve || row.getAttribute('data-valve') === effectiveValve;
@@ -3261,7 +3333,7 @@
             let ctx = [];
             if (effectiveValve) ctx.push(effectiveValve);
             if (q) ctx.push(`"${searchEl.value.trim()}"`);
-            counter.innerText = `(${visible} of ${clinicalCriticalCases.length} cases in the selected period${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
+            counter.innerText = `(${visible} of ${contextTotal} cases in the selected period${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
         }
     }
 
