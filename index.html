@@ -260,8 +260,8 @@
     <div id="drop-zone">
         <div style="font-size: 50px; margin-bottom: 15px;">📥</div>
         <div style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">Drag & Drop LATAM Database</div>
-        <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv)</div>
-        <input type="file" id="startup-file-input" accept=".xlsx, .xls, .csv" multiple style="display: none;" />
+        <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv, .txt)</div>
+        <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display: none;" />
     </div>
 </div>
 
@@ -895,12 +895,59 @@
     // source Case ID, so genuinely distinct same-day procedures (e.g. two identical valves
     // implanted at the same center with missing serials) are still preserved.
     function buildDedupKey(serial, hospital, dateStr, physician, valve, caseId) {
-        let s = cleanStr(serial).replace(/[^a-z0-9]/g, '');
-        if (['na', 'n/a', 'nan', 'none', 'null', '0', ''].includes(s)) s = '';
+        let s = normalizeSerialKey(serial);
         let base = cleanStr(hospital) + '|' + cleanStr(dateStr);
         if (s) return 'sn:' + s + '|' + base;
         let cid = cleanStr(caseId ?? '');
         return 'fb:' + base + '|' + cleanStr(physician) + '|' + cleanStr(valve) + (cid ? '|' + cid : '');
+    }
+
+    function normalizeSerialKey(serial) {
+        let s = cleanStr(serial).replace(/[^a-z0-9]/g, '');
+        return ['na', 'n/a', 'nan', 'none', 'null', '0', ''].includes(s) ? '' : s;
+    }
+
+    function implantRecordScore(c) {
+        let s = 0;
+        if (c?.dist && !String(c.dist).toLowerCase().includes('venus direct')) s += 3;
+        if (c?.proctor && c.proctor !== 'N/A') s += 2;
+        if (c?.specialist && c.specialist !== 'N/A') s += 1;
+        if (c?.implanter && c.implanter !== 'N/A') s += 1;
+        return s;
+    }
+
+    // When implant DB and complications export disagree on hospital/date spelling,
+    // merge clinical narrative onto the implant row by valve serial and drop the shadow row
+    // so volumes are not double-counted in Tab 05.
+    function consolidateClinicalBySerial(cases) {
+        let bySerial = new Map();
+        cases.forEach((c, idx) => {
+            let sn = normalizeSerialKey(c.serial);
+            if (!sn) return;
+            if (!bySerial.has(sn)) bySerial.set(sn, []);
+            bySerial.get(sn).push({ c, idx });
+        });
+
+        let dropIdx = new Set();
+        bySerial.forEach(group => {
+            if (group.length < 2) return;
+            group.sort((a, b) => implantRecordScore(b.c) - implantRecordScore(a.c));
+            let primary = group[0].c;
+            for (let i = 1; i < group.length; i++) {
+                let other = group[i].c;
+                if (other.comment) {
+                    primary.comment = primary.comment
+                        ? (primary.comment.includes(other.comment) ? primary.comment : primary.comment + ' | ' + other.comment)
+                        : other.comment;
+                }
+                if (other.severityLabel && (!primary.severityLabel || other.severityLabel.length > primary.severityLabel.length)) {
+                    primary.severityLabel = other.severityLabel;
+                }
+                if (other.survival && !primary.survival) primary.survival = other.survival;
+                dropIdx.add(group[i].idx);
+            }
+        });
+        return cases.filter((_, idx) => !dropIdx.has(idx));
     }
     
     // --- ROBUST FUZZY COLUMN MATCHER ---
@@ -1470,8 +1517,12 @@
                         let sz = getSmartColumnValue(item.row, ['size','tamanho']); 
                         // Flexible serial mapping: "Serial N°" / "Valve Serial Number" / "Valve Lot Number:" / "LOT N°"
                         let serial = getSmartColumnValue(item.row, ['serial','sn','lot n','lote']);
-                        // Clinical narrative / adverse event report ("Complications/Comments:" etc.) - fuels Tab 05
-                        let comment = getSmartColumnValue(item.row, ['complica','comment','coment','observa','relato','event description','descri','notes','remark','feedback'], true);
+                        // Clinical narrative / adverse-event fields (Tab 05)
+                        let comment = getSmartColumnValue(item.row, ['complication','complica','comment','coment','observa','relato','event description','descri','notes','remark','feedback','narrative'], true);
+                        let severityLabel = getSmartColumnValue(item.row, ['severity','severidade','risk level']);
+                        let survival = getSmartColumnValue(item.row, ['survival','sobrevida','patient outcome','outcome']);
+                        let clusterIssue = getSmartColumnValue(item.row, ['cluster','top issue','issue type']);
+                        if (!comment && clusterIssue) comment = clusterIssue;
                         
                         let vStr = String(valveRaw).toUpperCase(); 
                         let vName = 'Venus A';
@@ -1570,7 +1621,7 @@
                             if (rawDateStr) dateStr = rawDateStr;
                         }
                         
-                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A', comment: comment || '' };
+                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A', comment: comment || '', severityLabel: severityLabel || '', survival: survival || '' };
                         
                         // GLOBAL DEDUPLICATION KEY: Serial Number + Hospital + Date
                         // (falls back to Physician + Valve + source Case ID when the source has no serial)
@@ -1585,22 +1636,27 @@
             });
 
             // --- GLOBAL DEDUPLICATION ENGINE ---
-            // A record is only admitted into the global database ONCE. If its unique key
-            // (Serial + Hospital + Date) was already registered — within the same file or
-            // across different source files — the duplicate row is silently ignored. This
-            // protects implant volumes and prevents the same clinical event from appearing
-            // twice in the Critical Cases Log.
+            // Unique key: Serial + Hospital + Date. When a second file carries the same
+            // procedure (e.g. implant DB + complications export), we MERGE the clinical
+            // narrative / severity instead of discarding the row outright.
             allCasesGlobal = [];
-            let seenDedupKeys = new Set();
+            let dedupMap = new Map();
             Object.values(fileUploads).forEach(arr => {
                 arr.forEach(c => {
-                    if (c.dedupKey) {
-                        if (seenDedupKeys.has(c.dedupKey)) return; // duplicate -> skip
-                        seenDedupKeys.add(c.dedupKey);
+                    if (!c.dedupKey) { allCasesGlobal.push(c); return; }
+                    if (dedupMap.has(c.dedupKey)) {
+                        let existing = dedupMap.get(c.dedupKey);
+                        if (c.comment) existing.comment = existing.comment ? existing.comment + ' | ' + c.comment : c.comment;
+                        if (c.severityLabel) existing.severityLabel = c.severityLabel;
+                        if (c.survival) existing.survival = c.survival;
+                        return;
                     }
+                    dedupMap.set(c.dedupKey, c);
                     allCasesGlobal.push(c);
                 });
             });
+
+            allCasesGlobal = consolidateClinicalBySerial(allCasesGlobal);
 
             extractFilters(); 
             processData();
@@ -2099,6 +2155,25 @@
         drawRank(gProcMap, 'rank-proctors', 'Proctor'); 
     }
 
+    function getTrailingMonthlyRunRate(monthCounts, endMonth, ytdTotal) {
+        let windowMonths = [];
+        for (let m = Math.max(1, endMonth - 2); m <= endMonth; m++) windowMonths.push(m);
+        let values = windowMonths.map(m => monthCounts[m] || 0);
+
+        // Exclude a sharp end-month dip (e.g. incomplete August) from the run-rate window
+        if (windowMonths.length >= 2) {
+            let lastVal = monthCounts[endMonth] || 0;
+            let priorVals = windowMonths.filter(m => m !== endMonth).map(m => monthCounts[m] || 0);
+            let priorAvg = priorVals.reduce((a, b) => a + b, 0) / priorVals.length;
+            if (priorAvg > 0 && lastVal < priorAvg * 0.6) {
+                values = priorVals;
+            }
+        }
+
+        let sum = values.reduce((a, b) => a + b, 0);
+        return values.length > 0 ? Math.round(sum / values.length) : Math.round(ytdTotal / Math.max(endMonth, 1));
+    }
+
     function renderTrendChart() {
         if(!chartsLoaded || !google || !google.visualization) return;
 
@@ -2189,10 +2264,20 @@
         }
         
         let monthsPassed = maxMonthActive || 1;
-        let runRatePerMonth = Math.round(totalPrimary / monthsPassed);
-        let remainingUnits = targetUnits - totalPrimary; if(remainingUnits < 0) remainingUnits = 0;
-        let remainingMonths = 12 - monthsPassed; if(remainingMonths < 1) remainingMonths = 1;
+        let totalPrimaryYTD = 0;
+        for (let m = 1; m <= monthsPassed; m++) totalPrimaryYTD += (monthCountsPrimary[m] || 0);
+
+        // Trailing 3-month average avoids a single weak month (e.g. August dip) distorting the run-rate
+        let runRatePerMonth = getTrailingMonthlyRunRate(monthCountsPrimary, monthsPassed, totalPrimaryYTD);
+        let remainingUnits = targetUnits - totalPrimaryYTD; if (remainingUnits < 0) remainingUnits = 0;
+        let remainingMonths = 12 - monthsPassed; if (remainingMonths < 1) remainingMonths = 1;
         let targetPerMonth = Math.round(remainingUnits / remainingMonths);
+
+        // Surface target gap risk in the chart title when required pace exceeds current run-rate
+        if (showForecastLines && targetPerMonth > runRatePerMonth) {
+            let gapPct = runRatePerMonth > 0 ? Math.round(((targetPerMonth / runRatePerMonth) - 1) * 100) : 100;
+            chartTitle += ` | ⚠ Target Gap: need ${targetPerMonth}/mo vs ${runRatePerMonth}/mo run-rate (+${gapPct}%)`;
+        }
 
         let dataTable = [];
         let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -2244,8 +2329,9 @@
 
                 let row = [monthNames[m-1], hc, ttC, lblC, hp, ttP, lblP];
                 if (showForecastLines) {
-                    if (m < maxMonthActive) row.push(null, null, null, null);
-                    else if (m === maxMonthActive) row.push(hp, '', hp, '');
+                    // Forecast lines start after the last closed month so a weak final bar
+                    // (e.g. August dip) does not visually drag the trajectory down.
+                    if (m <= maxMonthActive) row.push(null, null, null, null);
                     else row.push(runRatePerMonth, String(runRatePerMonth), targetPerMonth, String(targetPerMonth));
                 }
                 dataTable.push(row);
@@ -2273,8 +2359,7 @@
                 let row = [monthNames[m-1], hp, ttP, ann];
 
                 if (showForecastLines) {
-                    if (m < maxMonthActive) row.push(null, null, null, null);
-                    else if (m === maxMonthActive) row.push(hp, '', hp, '');
+                    if (m <= maxMonthActive) row.push(null, null, null, null);
                     else row.push(runRatePerMonth, String(runRatePerMonth), targetPerMonth, String(targetPerMonth));
                 }
                 dataTable.push(row);
@@ -3059,24 +3144,45 @@
     // Level 3 (Critical Outcome) ... death / óbito / fatal
     // Level 2 (Major Adversity) .... embolization, migration, valve-in-valve, second valve
     // Level 1 (Conduction Event) ... PPI / permanent pacemaker
-    const CLINICAL_SEV3_RE = /(obito|death|faleceu|falecimento|fatal|exitus|deceased)/;
-    const CLINICAL_SEV2_RE = /(emboliza|embolism|embolic|migrou|migracao|migracion|migrat|valve[\s-]*in[\s-]*valve|\bviv\b|second valve|segunda valvula|2nd valve)/;
-    const CLINICAL_PPI_RE = /(marcapasso|marca[\s-]*passo|marcapaso|pacemaker|pace[\s-]*maker|\bppi\b|\bmp\s+definitivo\b)/;
+    const CLINICAL_SEV3_RE = /(obito|death|faleceu|falecimento|fatal|exitus|deceased|did not survive)/;
+    const CLINICAL_SEV2_RE = /(emboliza|embolism|embolic|migrou|migrat|migrated|dissec|dissect|parada|cardiac arrest|valve[\s-]*in[\s-]*valve|\bviv\b|second valve|segunda valvula|2nd valve|interrup|abort|rescue|severe)/;
+    const CLINICAL_PPI_RE = /(marcapasso|marca[\s-]*passo|marcapaso|pacemaker|pace[\s-]*maker|\bppi\b|\bmp\s+definitivo\b|bre\s*pos|post[\s-]*dilat)/;
 
     function escapeHtml(str) {
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // Severity classifier: case-insensitive and accent-insensitive (cleanStr strips
-    // diacritics). When a narrative hits multiple levels, the HIGHEST severity wins.
-    function getClinicalSignals(comment) {
-        let t = cleanStr(comment ?? '');
-        if (!t) return { isCritical: false, isPPI: false, level: 0 };
+    // Reads pre-classified Severity column (e.g. "Level 2 - Major (Severe/Rescue)")
+    function parseSeverityLabel(label) {
+        let t = cleanStr(label ?? '');
+        if (!t) return 0;
+        let m = t.match(/level\s*(\d)/);
+        if (m) return parseInt(m[1], 10);
+        if (/(critical|fatal|death|obito)/.test(t)) return 3;
+        if (/(major|severe|rescue)/.test(t)) return 2;
+        if (/(minor|technical|ppi|pacemaker)/.test(t)) return 1;
+        return 0;
+    }
+
+    // Severity classifier: narrative regex + optional pre-classified Severity column.
+    // When both exist, the HIGHEST level wins.
+    function getClinicalSignals(caseObj) {
+        let comment = typeof caseObj === 'object' ? (caseObj?.comment ?? '') : String(caseObj ?? '');
+        let severityLabel = typeof caseObj === 'object' ? (caseObj?.severityLabel ?? '') : '';
+        let survival = typeof caseObj === 'object' ? (caseObj?.survival ?? '') : '';
+        let t = cleanStr(comment);
+        let levelFromLabel = parseSeverityLabel(severityLabel);
+        let surv = cleanStr(survival);
+        if (surv && /(no|fatal|death|obito)/.test(surv) && !/(yes|survived|sobrev)/.test(surv)) {
+            levelFromLabel = Math.max(levelFromLabel, 3);
+        }
+        if (!t && !levelFromLabel) return { isCritical: false, isPPI: false, level: 0 };
         let sev3 = CLINICAL_SEV3_RE.test(t);
         let sev2 = CLINICAL_SEV2_RE.test(t);
         let ppi = CLINICAL_PPI_RE.test(t);
-        let level = sev3 ? 3 : (sev2 ? 2 : (ppi ? 1 : 0));
-        return { isCritical: sev3 || sev2, isPPI: ppi, level: level };
+        let levelFromText = sev3 ? 3 : (sev2 ? 2 : (ppi ? 1 : 0));
+        let level = Math.max(levelFromLabel, levelFromText);
+        return { isCritical: level >= 2, isPPI: level === 1 || ppi, level: level };
     }
 
     // GLOBAL STATE SYNC: the clinical dataset is built natively on processedData
@@ -3190,7 +3296,7 @@
             `;
         });
 
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected in the clinical narratives for the selected period and filter context. ✅</td></tr>`;
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected for the selected period. If you have a separate <strong>Complications / Problem Log</strong> file, upload it together with the implant database — clinical narratives will merge automatically by Serial + Hospital + Date. ✅</td></tr>`;
         updateClinicalSortIcons();
     }
 
@@ -3212,7 +3318,7 @@
             if (!famStats[f]) return;
             famStats[f].total++;
 
-            let sig = getClinicalSignals(c.comment);
+            let sig = getClinicalSignals(c);
             if (sig.isPPI) famStats[f].ppi++;
             if (sig.isCritical) famStats[f].critical++;
             if (sig.level > 0) clinicalCriticalCases.push({ c: c, level: sig.level });
@@ -3278,7 +3384,7 @@
                 return `<span class="badge" style="vertical-align:middle; margin-left:12px; font-size:11px; padding:6px 14px;" title="No cases recorded for this entity in the selected period">Selected Period Success Rate: N/A</span>`;
             }
 
-            let criticalCount = scopedCases.filter(c => getClinicalSignals(c?.comment).isCritical).length;
+            let criticalCount = scopedCases.filter(c => getClinicalSignals(c).isCritical).length;
             let rate = ((total - criticalCount) / total) * 100;
 
             let bg, fg, border;
