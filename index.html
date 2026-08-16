@@ -4920,7 +4920,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         el.style.color = ok ? '#065f46' : '#92400e';
         el.innerHTML = ok
             ? `✅ <strong>Reconciliation match:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} master cases (per LATAM Case Reconciliation Report).`
-            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. Upload all 3 source files (Cases LATAM CSV + Implant Data 2026 + Procedures LATAM 2026) for the full reconciled register.`;
+            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. <span style="font-weight:500;">Operations counts implant uploads only — the ${getEmbeddedProblemCases().length} embedded problem cases affect Clinical Excellence, not this total.</span>`;
     }
 
     function getImplantVolumeData() {
