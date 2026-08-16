@@ -2121,9 +2121,9 @@ const BUILTIN_IMPLANTS_2025 = [
     "valve": "Venus A L26",
     "valveBase": "Venus A",
     "serial": "26A00000242120",
-    "implanter": "Humberto Juárez",
-    "specialist": "N/A",
-    "proctor": "False"
+    "implanter": "Jorge Baccaro",
+    "specialist": "Fabio Silva",
+    "proctor": "Jorge Baccaro"
   },
   {
     "date": "24/07/2025",
@@ -2253,9 +2253,9 @@ const BUILTIN_IMPLANTS_2025 = [
     "valve": "Venus A L23",
     "valveBase": "Venus A",
     "serial": "23A00000241065",
-    "implanter": "Pedro Echeverria",
-    "specialist": "N/A",
-    "proctor": "False"
+    "implanter": "Jorge Baccaro",
+    "specialist": "Job Huiskamp",
+    "proctor": "Jorge Baccaro"
   },
   {
     "date": "25/07/2025",
@@ -2265,9 +2265,9 @@ const BUILTIN_IMPLANTS_2025 = [
     "valve": "Venus A L26",
     "valveBase": "Venus A",
     "serial": "26A00000240303",
-    "implanter": "Pedro Echeverria",
-    "specialist": "N/A",
-    "proctor": "False"
+    "implanter": "Jorge Baccaro",
+    "specialist": "Frederico Blanco",
+    "proctor": "Jorge Baccaro"
   },
   {
     "date": "25/08/2025",

@@ -1128,7 +1128,7 @@ const BUILTIN_IMPLANTS_2026 = [
     "valveBase": "PowerX",
     "serial": "32AB1000250160",
     "implanter": "Jorge Baccaro, Gastón Pozzi",
-    "specialist": "Frederico",
+    "specialist": "Frederico Blanco",
     "proctor": "N/A",
     "_sourceCaseId": "MC-2026-105"
   },
