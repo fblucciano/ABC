@@ -12,6 +12,7 @@
     
     <!-- LIBRARIES -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="latam-builtin-implants-2025.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -268,7 +269,7 @@
     <label id="drop-zone" for="startup-file-input">
         <div style="font-size: 50px; margin-bottom: 15px;">📥</div>
         <div style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">Drag & Drop LATAM Database</div>
-        <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv, .txt)</div>
+        <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv) — 2026: Implant Data + Procedures LATAM</div>
     </label>
     <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple />
 </div>
@@ -1652,7 +1653,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         "armando juarez": "Armando Juarez",
         "jose luis colin ortiz": "Jose Luis Colin Ortiz", "jose luis colin": "Jose Luis Colin Ortiz",
         "carlos zabal": "Carlos Zabal", "zabal": "Carlos Zabal",
+        "fabio luciano da silva": "Fabio Silva", "fábio luciano da silva": "Fabio Silva", "fabio luciano": "Fabio Silva", "fábio luciano": "Fabio Silva",
         "fabio silva": "Fabio Silva", "fábio silva": "Fabio Silva", "da silva fabio": "Fabio Silva", "fabio": "Fabio Silva", "fábio": "Fabio Silva",
+        "ariane sanchez nunes salles": "Ariane Sanchez", "ariane nunes salles": "Ariane Sanchez",
         "jian wang": "Jian Wang", "jian": "Jian Wang",
         "jose kleberth tenorio": "José Kleberth Tenório", "kleberth": "José Kleberth Tenório", 
         "lucas esteves": "Lucas Estevão", "lucas estevao": "Lucas Estevão",
@@ -1765,6 +1768,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let fileUploads = {}; 
     let builtinClinicalFingerprints = new Set();
     const BUILTIN_REGISTRY_KEY = '__builtin_problem_report__';
+    const BASELINE_2025_KEY = '__builtin_implants_2025__';
     
     // Arrays for EXCEL Export
     let proctorFinanceDataExport = [];
@@ -2196,6 +2200,55 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return fileUploads[BUILTIN_REGISTRY_KEY].length;
     }
 
+    function hasEmbeddedBaseline2025() {
+        return typeof BUILTIN_IMPLANTS_2025 !== 'undefined' && BUILTIN_IMPLANTS_2025.length > 0;
+    }
+
+    function isCasesLatamSummaryFilename(name) {
+        return /cases[\s_.-]*latam/i.test(String(name ?? ''));
+    }
+
+    function buildCaseFromBaseline2025(raw) {
+        let c = Object.assign({}, raw);
+        c.implanter = normalizePersonList(c.implanter || 'N/A');
+        c.specialist = normalizePersonList(c.specialist || 'N/A');
+        c.proctor = normalizePersonList(c.proctor || 'N/A');
+        c.hospital = stdHosp(c.hospital, c.implanter);
+        c.country = anchorCountryFromHospital(c.hospital, c.country);
+        c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, 'baseline2025');
+        c._baseline2025 = true;
+        return c;
+    }
+
+    function ensureBuiltinImplants2025() {
+        if (!hasEmbeddedBaseline2025()) return [];
+        return BUILTIN_IMPLANTS_2025.map(buildCaseFromBaseline2025);
+    }
+
+    // Cases LATAM CSV is a summary export: 2025 rows become fixed baseline; 2026 rows overlap Implant+Procedures.
+    function getUploadVolumeContext(parsedFiles) {
+        let hasBaseline2025 = hasEmbeddedBaseline2025();
+        let has2026PrimarySources = parsedFiles.some(res => {
+            if (isCasesLatamSummaryFilename(res.filename)) return false;
+            return (res.validCases || []).some(c => getCaseYear(c) === 2026);
+        });
+        return { hasBaseline2025, has2026PrimarySources };
+    }
+
+    function shouldIncludeUploadVolumeRow(caseObj, sourceName, ctx) {
+        let year = getCaseYear(caseObj);
+        if (isCasesLatamSummaryFilename(sourceName)) {
+            if (ctx.hasBaseline2025) return false;
+            if (year === 2026 && ctx.has2026PrimarySources) return false;
+        }
+        if (ctx.hasBaseline2025 && year === 2025) return false;
+        return true;
+    }
+
+    function filterUploadVolumeCases(validCases, sourceName, ctx) {
+        return validCases.filter(c => shouldIncludeUploadVolumeRow(c, sourceName, ctx));
+    }
+
     function updateBuiltinMemoryBanner() {
         let el = document.getElementById('builtin-memory-banner');
         if (!el) return;
@@ -2221,33 +2274,40 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         allCasesGlobal = [];
         let dedupMap = new Map();
 
-        // Implant volume = user uploads only. Embedded problem registry is clinical memory (Tab 05), not Operations volume.
-        Object.entries(fileUploads).forEach(([sourceName, arr]) => {
-            if (sourceName === BUILTIN_REGISTRY_KEY) return;
-            arr.forEach(raw => {
-                let c = raw;
-                c._uploadSource = sourceName;
+        const pushVolumeCase = (raw, sourceName) => {
+            let c = raw;
+            if (sourceName) c._uploadSource = sourceName;
 
-                let nearBuiltin = findClinicalNearDuplicateInList(builtinPool, c);
-                if (nearBuiltin) {
-                    c = preferImplantRecordOverBuiltin(c, nearBuiltin);
-                }
+            let nearBuiltin = findClinicalNearDuplicateInList(builtinPool, c);
+            if (nearBuiltin) {
+                c = preferImplantRecordOverBuiltin(c, nearBuiltin);
+            }
 
-                let nearDup = findClinicalNearDuplicateInList(allCasesGlobal, c);
-                if (nearDup) {
-                    mergeClinicalMetadata(nearDup, c);
-                    return;
-                }
-                if (!c.dedupKey) {
-                    allCasesGlobal.push(c);
-                    return;
-                }
-                if (dedupMap.has(c.dedupKey)) {
-                    mergeClinicalMetadata(dedupMap.get(c.dedupKey), c);
-                    return;
-                }
-                dedupMap.set(c.dedupKey, c);
+            let nearDup = findClinicalNearDuplicateInList(allCasesGlobal, c);
+            if (nearDup) {
+                mergeClinicalMetadata(nearDup, c);
+                return;
+            }
+            if (!c.dedupKey) {
                 allCasesGlobal.push(c);
+                return;
+            }
+            if (dedupMap.has(c.dedupKey)) {
+                mergeClinicalMetadata(dedupMap.get(c.dedupKey), c);
+                return;
+            }
+            dedupMap.set(c.dedupKey, c);
+            allCasesGlobal.push(c);
+        };
+
+        // Fixed 2025 master register (253 cases) — never changes after embed.
+        ensureBuiltinImplants2025().forEach(c => pushVolumeCase(c, BASELINE_2025_KEY));
+
+        // 2026+ volume = user uploads only. Embedded problem registry is clinical memory (Tab 05), not Operations volume.
+        Object.entries(fileUploads).forEach(([sourceName, arr]) => {
+            if (sourceName === BUILTIN_REGISTRY_KEY || sourceName === BASELINE_2025_KEY) return;
+            arr.forEach(raw => {
+                pushVolumeCase(raw, sourceName);
             });
         });
 
@@ -3193,7 +3253,12 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                     } catch(rowErr) {}
                 });
 
-                fileUploads[res.filename] = validCases;
+                res.validCases = validCases;
+            });
+
+            let volumeCtx = getUploadVolumeContext(results);
+            results.forEach((res) => {
+                fileUploads[res.filename] = filterUploadVolumeCases(res.validCases || [], res.filename, volumeCtx);
             });
 
             // --- GLOBAL DEDUPLICATION ENGINE ---
@@ -4882,10 +4947,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return !!(c?._builtin || c?._clinicalBuiltin);
     }
 
-    // Pure embedded rows (no matching implant upload) — excluded from Operations volume counts
-    // Operations / S&OP implant volume — user uploads only (never embedded problem-report rows)
+    // Operations / S&OP implant volume — embedded 2025 baseline + user uploads (never problem-report rows)
     function isOperationsVolumeCase(c) {
-        return !!(c?._uploadSource);
+        return !!(c?._baseline2025 || c?._uploadSource);
     }
 
     function isStandaloneEmbeddedCase(c) {
@@ -4920,7 +4984,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         el.style.color = ok ? '#065f46' : '#92400e';
         el.innerHTML = ok
             ? `✅ <strong>Reconciliation match:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} master cases (per LATAM Case Reconciliation Report).`
-            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. <span style="font-weight:500;">Operations counts implant uploads only — the ${getEmbeddedProblemCases().length} embedded problem cases affect Clinical Excellence, not this total.</span>`;
+            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. <span style="font-weight:500;">2025 = ${hasEmbeddedBaseline2025() ? BUILTIN_IMPLANTS_2025.length + ' embedded baseline' : 'Cases LATAM CSV'} · 2026 = Implant Data + Procedures only (Cases LATAM 2026 rows are skipped when xlsx sources are present).</span>`;
     }
 
     function getImplantVolumeData() {
