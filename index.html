@@ -2204,8 +2204,40 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return typeof BUILTIN_IMPLANTS_2025 !== 'undefined' && BUILTIN_IMPLANTS_2025.length > 0;
     }
 
+    // Cases LATAM CSV: 253 rows for 2025 (now embedded) + 18 partial 2026 rows that must NEVER
+    // be counted — authoritative 2026 volume comes from Implant Data + Procedures xlsx only.
     function isCasesLatamSummaryFilename(name) {
         return /cases[\s_.-]*latam/i.test(String(name ?? ''));
+    }
+
+    function isCasesLatamSummaryRow(caseObj) {
+        let rawId = String(caseObj?._sourceCaseId || caseObj?._caseId || '').trim();
+        return /^latam case 20\d{2}/i.test(rawId);
+    }
+
+    function isCasesLatamSummaryFile(res) {
+        if (isCasesLatamSummaryFilename(res?.filename)) return true;
+        let sample = (res?.validCases || []).slice(0, 5);
+        return sample.length > 0 && sample.every(isCasesLatamSummaryRow);
+    }
+
+    function getUploadVolumeContext(parsedFiles) {
+        let hasBaseline2025 = hasEmbeddedBaseline2025();
+        return { hasBaseline2025 };
+    }
+
+    function shouldIncludeUploadVolumeRow(caseObj, sourceName, ctx, isCasesLatamFile) {
+        let year = getCaseYear(caseObj);
+        if (isCasesLatamFile || isCasesLatamSummaryRow(caseObj)) {
+            if (ctx.hasBaseline2025) return false;
+            if (year === 2026) return false;
+        }
+        if (ctx.hasBaseline2025 && year === 2025) return false;
+        return true;
+    }
+
+    function filterUploadVolumeCases(validCases, sourceName, ctx, isCasesLatamFile) {
+        return validCases.filter(c => shouldIncludeUploadVolumeRow(c, sourceName, ctx, isCasesLatamFile));
     }
 
     function buildCaseFromBaseline2025(raw) {
@@ -2223,30 +2255,6 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     function ensureBuiltinImplants2025() {
         if (!hasEmbeddedBaseline2025()) return [];
         return BUILTIN_IMPLANTS_2025.map(buildCaseFromBaseline2025);
-    }
-
-    // Cases LATAM CSV is a summary export: 2025 rows become fixed baseline; 2026 rows overlap Implant+Procedures.
-    function getUploadVolumeContext(parsedFiles) {
-        let hasBaseline2025 = hasEmbeddedBaseline2025();
-        let has2026PrimarySources = parsedFiles.some(res => {
-            if (isCasesLatamSummaryFilename(res.filename)) return false;
-            return (res.validCases || []).some(c => getCaseYear(c) === 2026);
-        });
-        return { hasBaseline2025, has2026PrimarySources };
-    }
-
-    function shouldIncludeUploadVolumeRow(caseObj, sourceName, ctx) {
-        let year = getCaseYear(caseObj);
-        if (isCasesLatamSummaryFilename(sourceName)) {
-            if (ctx.hasBaseline2025) return false;
-            if (year === 2026 && ctx.has2026PrimarySources) return false;
-        }
-        if (ctx.hasBaseline2025 && year === 2025) return false;
-        return true;
-    }
-
-    function filterUploadVolumeCases(validCases, sourceName, ctx) {
-        return validCases.filter(c => shouldIncludeUploadVolumeRow(c, sourceName, ctx));
     }
 
     function updateBuiltinMemoryBanner() {
@@ -3248,6 +3256,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                         // (falls back to Physician + Valve + source Case ID when the source has no serial)
                         let sourceCaseId = getSmartColumnValue(item.row, ['id', 'form id', 'formid', 'latam case', 'case id', 'caseid', 'case n']);
                         caseObj.dedupKey = buildDedupKey(caseObj.serial, hosp, dateStr, caseObj.implanter, valveFullName, sourceCaseId);
+                        if (sourceCaseId) caseObj._sourceCaseId = sourceCaseId;
                         validCases.push(caseObj);
                         
                     } catch(rowErr) {}
@@ -3257,9 +3266,28 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             });
 
             let volumeCtx = getUploadVolumeContext(results);
+            let csvSkipNote = '';
             results.forEach((res) => {
-                fileUploads[res.filename] = filterUploadVolumeCases(res.validCases || [], res.filename, volumeCtx);
+                let isCasesLatam = isCasesLatamSummaryFile(res);
+                let before = (res.validCases || []).length;
+                let filtered = filterUploadVolumeCases(res.validCases || [], res.filename, volumeCtx, isCasesLatam);
+                if (isCasesLatam && before > filtered.length) {
+                    let skipped = before - filtered.length;
+                    if (volumeCtx.hasBaseline2025) {
+                        csvSkipNote = `ℹ️ Cases LATAM CSV: all ${before} rows skipped — 2025 baseline (${BUILTIN_IMPLANTS_2025.length} cases) is embedded. Upload Implant Data + Procedures for 2026 volume.`;
+                    } else {
+                        csvSkipNote = `ℹ️ Cases LATAM CSV: ${skipped} row(s) with year 2026 ignored (partial export). Operations 2026 comes from Implant Data + Procedures xlsx only.`;
+                    }
+                }
+                fileUploads[res.filename] = filtered;
             });
+            if (csvSkipNote && errAlert) {
+                errAlert.innerText = csvSkipNote;
+                errAlert.style.display = 'block';
+                errAlert.style.background = '#eff6ff';
+                errAlert.style.borderColor = '#93c5fd';
+                errAlert.style.color = '#1e40af';
+            }
 
             // --- GLOBAL DEDUPLICATION ENGINE ---
             rebuildAllCasesGlobal();
@@ -4984,7 +5012,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         el.style.color = ok ? '#065f46' : '#92400e';
         el.innerHTML = ok
             ? `✅ <strong>Reconciliation match:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} master cases (per LATAM Case Reconciliation Report).`
-            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. <span style="font-weight:500;">2025 = ${hasEmbeddedBaseline2025() ? BUILTIN_IMPLANTS_2025.length + ' embedded baseline' : 'Cases LATAM CSV'} · 2026 = Implant Data + Procedures only (Cases LATAM 2026 rows are skipped when xlsx sources are present).</span>`;
+            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. <span style="font-weight:500;">2025 = ${hasEmbeddedBaseline2025() ? BUILTIN_IMPLANTS_2025.length + ' embedded' : 'Cases LATAM CSV'} · 2026 = Implant Data + Procedures only (Cases LATAM 2026 rows are always blocked).</span>`;
     }
 
     function getImplantVolumeData() {
