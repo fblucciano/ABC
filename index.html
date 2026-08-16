@@ -245,7 +245,7 @@
 </head>
 <body>
 
-<!-- TELA DE BOAS VINDAS (DRAG & DROP) -->
+<!-- WELCOME SCREEN (DRAG & DROP) -->
 <div id="startup-screen">
     <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech" style="max-width: 250px; margin-bottom: 20px;">
     <h1 style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 38px; margin-bottom: 5px;">LATAM Intelligence OS</h1>
@@ -526,18 +526,19 @@
     <div id="tab-clinical" class="tab-content">
         <h2>Clinical Excellence & Device Safety</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database (unique key: Serial Number + Hospital + Date). Success Rate = ((Total − Critical Cases) / Total) × 100.</p>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database (unique key: Serial Number + Hospital + Date). The Problem Log below is <strong>strictly isolated to 2025 cases</strong> and inherits the global filters (Country / Distributor / Valve) applied in the Operations module. Success Rate = ((Total − Critical Cases) / Total) × 100.</p>
+        <div id="clinical-filter-context" style="display:none; background:#fffdf5; border:1px solid var(--v-yellow); border-radius:8px; padding:10px 15px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--v-deep-blue);"></div>
 
         <!-- SAFETY PROFILE PORTFOLIO CARDS -->
-        <h2 style="margin-top: 30px;">Safety Profile by Portfolio <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Valve to filter the Critical Cases Log)</span></h2>
+        <h2 style="margin-top: 30px;">2025 Safety Profile by Portfolio <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Valve to filter the Problem Log)</span></h2>
         <div class="section-dash">—</div>
         <div class="flex-center-cards" id="clinical-valve-cards"></div>
 
-        <!-- CRITICAL CASES INTELLIGENCE LOG -->
-        <h2 style="margin-top: 40px;">Critical Cases Intelligence Log <span id="clinical-log-counter" style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);"></span></h2>
+        <!-- 2025 CRITICAL CASES ENGINE (PROBLEM LOG) -->
+        <h2 style="margin-top: 40px;">2025 Critical Cases Intelligence Log <span id="clinical-log-counter" style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);"></span></h2>
         <div class="section-dash">—</div>
         
-        <input type="text" id="clinicalSearch" class="ranking-search" placeholder="🔍 Buscar por severidade (ex: Level 3), hospital, médico ou relato..." oninput="filterClinicalTable()">
+        <input type="text" id="clinicalSearch" class="ranking-search" placeholder="🔍 Search by severity (e.g., Level 3), hospital, physician or clinical narrative..." oninput="filterClinicalTable()">
 
         <div class="table-wrapper" style="max-height: 650px;">
             <table id="critical-cases-table">
@@ -871,59 +872,108 @@
     function cleanStr(str) { return str ? String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : ''; }
 
     // --- GLOBAL DEDUPLICATION KEY BUILDER ---
-    // Unique dynamic ID: Device Serial/Lot Number + Hospital + Date.
-    // Sources vary (serial may come from "Valve Serial Number" or "Valve Lot Number:").
-    // When no serial exists at all, we fall back to Physician + Valve + Hospital + Date
-    // so genuinely distinct same-day procedures are still preserved.
-    function buildDedupKey(serial, hospital, dateStr, physician, valve) {
+    // Unique dynamic ID: normalize(Serial/Lot Number) + normalize(Hospital) + normalize(Date).
+    // Sources vary (serial may come from "Serial N°", "Valve Serial Number" or "Valve Lot Number:").
+    // When no serial exists at all, we fall back to Hospital + Date + Physician + Valve +
+    // source Case ID, so genuinely distinct same-day procedures (e.g. two identical valves
+    // implanted at the same center with missing serials) are still preserved.
+    function buildDedupKey(serial, hospital, dateStr, physician, valve, caseId) {
         let s = cleanStr(serial).replace(/[^a-z0-9]/g, '');
         if (['na', 'n/a', 'nan', 'none', 'null', '0', ''].includes(s)) s = '';
         let base = cleanStr(hospital) + '|' + cleanStr(dateStr);
         if (s) return 'sn:' + s + '|' + base;
-        return 'fb:' + base + '|' + cleanStr(physician) + '|' + cleanStr(valve);
+        let cid = cleanStr(caseId ?? '');
+        return 'fb:' + base + '|' + cleanStr(physician) + '|' + cleanStr(valve) + (cid ? '|' + cid : '');
     }
     
-    function getSmartColumnValue(row, possibleNames, joinMultiple = false) {
-        const rowKeys = Object.keys(row); let vals = new Set(); 
-        for (let i = 0; i < rowKeys.length; i++) {
-            let cleanKey = cleanStr(rowKeys[i]);
-            for (let j = 0; j < possibleNames.length; j++) {
-                if (cleanKey.includes(possibleNames[j].toLowerCase())) {
-                    let cellValue = row[rowKeys[i]];
-                    if (cellValue !== undefined && cellValue !== null && String(cellValue).trim() !== '') vals.add(String(cellValue).trim());
-                    if (!joinMultiple && vals.size > 0) return Array.from(vals)[0]; 
-                    break;
+    // --- ROBUST FUZZY COLUMN MATCHER ---
+    // Source files never guarantee exact column names ("Serial N°" vs "Valve Serial Number"
+    // vs "Valve Lot Number:"). Headers and candidates are both normalized (lowercase,
+    // trimmed, accents stripped) before substring matching. Never throws: a malformed row
+    // simply yields an empty string.
+    function fuzzyColumnMatcher(row, possibleNames, joinMultiple = false) {
+        let vals = new Set();
+        try {
+            const rowKeys = Object.keys(row ?? {});
+            const candidates = (possibleNames ?? []).map(n => cleanStr(n));
+            for (let i = 0; i < rowKeys.length; i++) {
+                let cleanKey = cleanStr(rowKeys[i]);
+                for (let j = 0; j < candidates.length; j++) {
+                    if (candidates[j] && cleanKey.includes(candidates[j])) {
+                        let cellValue = row?.[rowKeys[i]];
+                        if (cellValue !== undefined && cellValue !== null && String(cellValue).trim() !== '') vals.add(String(cellValue).trim());
+                        if (!joinMultiple && vals.size > 0) return Array.from(vals)[0];
+                        break;
+                    }
                 }
             }
-        }
+        } catch (err) { /* defensive: a broken row must never crash the parse loop */ }
         return Array.from(vals).join(', ');
     }
+    const getSmartColumnValue = fuzzyColumnMatcher; // backwards-compatible alias for existing call sites
 
-    function parseDate(dateVal) {
-        if (!dateVal) return null;
-        let strVal = String(dateVal).trim();
-        let numVal = Number(strVal.split(',')[0]);
-        
-        if (!isNaN(numVal) && numVal > 25000) {
-            return new Date(Math.round((numVal - 25569) * 86400 * 1000));
-        }
-        
-        let parts = strVal.split(/[\/\-]/);
-        if (parts.length === 3) {
-            if (parts[2].length === 4) { 
-                let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10); let p2 = parseInt(parts[2], 10);
-                let d, m;
-                if (p1 > 12) { d = p1; m = p0; } else { d = p0; m = p1; }
-                let dateObj = new Date(p2, m - 1, d);
-                if (!isNaN(dateObj.getTime())) return dateObj;
-            } else if (parts[0].length === 4) { 
-                let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10); let p2 = parseInt(parts[2], 10);
-                let d = new Date(p0, p1 - 1, p2);
-                if (!isNaN(d.getTime())) return d;
+    // --- DATE PARSING ENGINE ---
+    // Handles: native Date objects (XLSX cellDates), Excel numeric serials (e.g. 45201),
+    // and delimited strings (DD/MM/YYYY, MM/DD/YYYY, MM-DD-YYYY, YYYY-MM-DD).
+    // `formatHint` ('DMY' | 'MDY' | null) is detected once per file to disambiguate
+    // values like "1/7/2025" that are valid in both conventions.
+    function parseDate(dateVal, formatHint = null) {
+        try {
+            if (!dateVal) return null;
+            // Duck-typed Date check (also covers Date objects created in another realm)
+            if (dateVal instanceof Date || Object.prototype.toString.call(dateVal) === '[object Date]') {
+                return isNaN(dateVal.getTime()) ? null : dateVal;
             }
-        }
-        let fallback = new Date(strVal);
-        if (!isNaN(fallback.getTime())) return fallback;
+
+            let strVal = String(dateVal).trim();
+            let numVal = Number(strVal.split(',')[0]);
+
+            if (!isNaN(numVal) && numVal > 25000) {
+                return new Date(Math.round((numVal - 25569) * 86400 * 1000));
+            }
+
+            let parts = strVal.split(/[\/\-]/);
+            if (parts.length === 3) {
+                if (parts[2].length === 4) {
+                    let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10); let p2 = parseInt(parts[2], 10);
+                    let d, m;
+                    if (p1 > 12) { d = p1; m = p0; }        // second slot cannot be a month -> MDY
+                    else if (p0 > 12) { d = p0; m = p1; }   // first slot cannot be a month -> DMY
+                    else if (formatHint === 'MDY') { d = p1; m = p0; }
+                    else { d = p0; m = p1; }                // default convention: DMY
+                    let dateObj = new Date(p2, m - 1, d);
+                    if (!isNaN(dateObj.getTime())) return dateObj;
+                } else if (parts[0].length === 4) {
+                    let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10); let p2 = parseInt(parts[2], 10);
+                    let d = new Date(p0, p1 - 1, p2);
+                    if (!isNaN(d.getTime())) return d;
+                }
+            }
+            let fallback = new Date(strVal);
+            if (!isNaN(fallback.getTime())) return fallback;
+        } catch (err) { /* defensive: never let a malformed date crash the loop */ }
+        return null;
+    }
+
+    // Scans an entire file to decide whether ambiguous slash/dash dates follow the
+    // DD/MM/YYYY or MM/DD/YYYY convention (majority of unambiguous evidence wins).
+    function detectDateFormat(rawData) {
+        let dmyEvidence = 0, mdyEvidence = 0;
+        (rawData ?? []).forEach(row => {
+            try {
+                let raw = fuzzyColumnMatcher(row, ['date', 'data', 'procedure']);
+                let parts = String(raw ?? '').trim().split(/[\/\-]/);
+                if (parts.length === 3 && parts[2]?.length === 4) {
+                    let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10);
+                    if (!isNaN(p0) && !isNaN(p1)) {
+                        if (p0 > 12 && p1 <= 12) dmyEvidence++;
+                        if (p1 > 12 && p0 <= 12) mdyEvidence++;
+                    }
+                }
+            } catch (err) { /* skip malformed rows */ }
+        });
+        if (mdyEvidence > dmyEvidence) return 'MDY';
+        if (dmyEvidence > mdyEvidence) return 'DMY';
         return null;
     }
 
@@ -1348,9 +1398,12 @@
                 let tempYearCounts = {};
                 let parsedRows = [];
                 
+                // File-level date convention detection (e.g. "Cases_Latam" CSV exports use M/D/YYYY)
+                let dateFormatHint = detectDateFormat(rawData);
+                
                 rawData.forEach((row) => {
                     let dateVal = getSmartColumnValue(row, ['date', 'data', 'procedure']);
-                    let dObj = parseDate(dateVal);
+                    let dObj = parseDate(dateVal, dateFormatHint);
                     let rowYear = null;
                     if (dObj) { rowYear = dObj.getFullYear(); }
                     parsedRows.push({ row, dObj, rowYear });
@@ -1394,12 +1447,13 @@
 
                         let dist = getSmartColumnValue(item.row, ['distributor','dist']) || 'Venus Direct (No Partner)';
                         
-                        let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula']);
+                        // 'select' covers form exports ("PROCEDURES LATAM") where the product lives in a "Select" question column
+                        let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula', 'select']);
                         let sz = getSmartColumnValue(item.row, ['size','tamanho']); 
-                        // Flexible serial mapping: "Valve Serial Number" OR "Valve Lot Number:" (safety/complaint databases)
-                        let serial = getSmartColumnValue(item.row, ['serial','sn','lot number','valve lot','lote']);
-                        // Clinical narrative / adverse event report (fuels Tab 05 - Clinical Excellence)
-                        let comment = getSmartColumnValue(item.row, ['comment','coment','observa','relato','event description','descri','complaint','notes','remark','feedback'], true);
+                        // Flexible serial mapping: "Serial N°" / "Valve Serial Number" / "Valve Lot Number:" / "LOT N°"
+                        let serial = getSmartColumnValue(item.row, ['serial','sn','lot n','lote']);
+                        // Clinical narrative / adverse event report ("Complications/Comments:" etc.) - fuels Tab 05
+                        let comment = getSmartColumnValue(item.row, ['complica','comment','coment','observa','relato','event description','descri','notes','remark','feedback'], true);
                         
                         let vStr = String(valveRaw).toUpperCase(); 
                         let vName = 'Venus A';
@@ -1432,8 +1486,8 @@
                         let specArr = specRawStr.split(splitRegex).map(stdName).filter(validName);
                         let procArr = procRawStr.split(splitRegex).map(stdName).filter(validName);
 
-                        // --- REGRA CLÍNICA DA VENUS P ---
-                        // Se for Venus P, o Proctor obrigatoriamente atuou na montagem técnica da válvula (Especialista)
+                        // --- VENUS P CLINICAL RULE ---
+                        // For Venus P, the Proctor necessarily acted on the technical valve assembly (Specialist role)
                         if (vName === 'Venus P') {
                             procArr.forEach(p => {
                                 if (!specArr.includes(p)) {
@@ -1502,8 +1556,9 @@
                         let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A', comment: comment || '' };
                         
                         // GLOBAL DEDUPLICATION KEY: Serial Number + Hospital + Date
-                        // (falls back to Physician + Valve when the source has no serial column)
-                        caseObj.dedupKey = buildDedupKey(caseObj.serial, hosp, dateStr, caseObj.implanter, valveFullName);
+                        // (falls back to Physician + Valve + source Case ID when the source has no serial)
+                        let sourceCaseId = getSmartColumnValue(item.row, ['case id', 'caseid', 'case n', 'id']);
+                        caseObj.dedupKey = buildDedupKey(caseObj.serial, hosp, dateStr, caseObj.implanter, valveFullName, sourceCaseId);
                         validCases.push(caseObj);
                         
                     } catch(rowErr) {}
@@ -2349,7 +2404,7 @@
         if(casesList.length === 0) return;
 
         let mName = document.getElementById('modal-person-name');
-        if(mName) mName.innerHTML = `<span style="font-size:24px;">${flag}</span> ${name}`;
+        if(mName) mName.innerHTML = `<span style="font-size:24px;">${flag}</span> ${name} ${buildSuccessRateBadge(casesList)}`;
         
         let affiliation = "";
         let nClean = cleanStr(name);
@@ -2992,8 +3047,10 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    // Severity classifier: case-insensitive and accent-insensitive (cleanStr strips
+    // diacritics). When a narrative hits multiple levels, the HIGHEST severity wins.
     function getClinicalSignals(comment) {
-        let t = cleanStr(comment);
+        let t = cleanStr(comment ?? '');
         if (!t) return { isCritical: false, isPPI: false, level: 0 };
         let sev3 = CLINICAL_SEV3_RE.test(t);
         let sev2 = CLINICAL_SEV2_RE.test(t);
@@ -3002,21 +3059,47 @@
         return { isCritical: sev3 || sev2, isPPI: ppi, level: level };
     }
 
+    // The Problem Log is STRICTLY isolated to this year, regardless of the
+    // "Time Travel" year pills selected for the other tabs.
+    const CLINICAL_YEAR = 2025;
+
+    function getCaseYear(c) {
+        let y = parseInt(String(c?.date ?? '').split('/')[2], 10);
+        return isNaN(y) ? null : y;
+    }
+
+    // GLOBAL STATE SYNC: the clinical dataset inherits the global Country and
+    // Distributor filters applied in the Operations module (valve inheritance is
+    // handled separately so all 4 portfolio cards stay visible).
+    function getClinicalDataset() {
+        return allCasesGlobal.filter(c => {
+            if (getCaseYear(c) !== CLINICAL_YEAR) return false;
+            if (activeCountryExpanded && c?.country !== activeCountryExpanded) return false;
+            if (activeDistFilter && c?.dist !== activeDistFilter) return false;
+            return true;
+        });
+    }
+
+    // Local card selection overrides the inherited global valve filter.
+    function getEffectiveClinicalValve() {
+        return activeClinicalValve ?? activeValveFilter ?? null;
+    }
+
     function renderClinical() {
         let cardsContainer = document.getElementById('clinical-valve-cards');
         let tBody = document.querySelector('#critical-cases-table tbody');
         if (!cardsContainer || !tBody) return;
 
-        // Reset the family filter if data changed underneath it
         clinicalCriticalCases = [];
         clinicalExportData = [];
 
         let famStats = {};
         ["Vitae", "PowerX", "Venus A", "Venus P"].forEach(f => famStats[f] = { total: 0, ppi: 0, critical: 0 });
 
-        // processedData is already deduplicated at ingestion (Serial + Hospital + Date key)
-        processedData.forEach(c => {
-            let f = c.valveBase;
+        // allCasesGlobal is already deduplicated at ingestion (Serial + Hospital + Date key)
+        let clinicalData = getClinicalDataset();
+        clinicalData.forEach(c => {
+            let f = c?.valveBase;
             if (!famStats[f]) return;
             famStats[f].total++;
 
@@ -3026,21 +3109,37 @@
             if (sig.level > 0) clinicalCriticalCases.push({ c: c, level: sig.level });
         });
 
-        // --- 1. SAFETY PROFILE PORTFOLIO CARDS ---
+        // Inherited-filter context banner
+        let ctxBox = document.getElementById('clinical-filter-context');
+        if (ctxBox) {
+            let inherited = [];
+            if (activeCountryExpanded) inherited.push(`Country: ${activeCountryExpanded}`);
+            if (activeDistFilter) inherited.push(`Distributor: ${activeDistFilter}`);
+            if (activeValveFilter) inherited.push(`Valve: ${activeValveFilter}`);
+            if (inherited.length > 0) {
+                ctxBox.innerHTML = `🔗 Inherited global filters → ${inherited.join(' &nbsp;|&nbsp; ')} <span style="font-weight:400; color:var(--v-text-mutated);">(set in the Operations module)</span>`;
+                ctxBox.style.display = 'block';
+            } else {
+                ctxBox.style.display = 'none';
+            }
+        }
+
+        // --- 1. SAFETY PROFILE PORTFOLIO CARDS (2025) ---
+        let effectiveValve = getEffectiveClinicalValve();
         let cardsHtml = '';
         ["Vitae", "PowerX", "Venus A", "Venus P"].forEach(f => {
             let st = famStats[f];
             let ppiRate = st.total > 0 ? ((st.ppi / st.total) * 100).toFixed(1) + '%' : '—';
             let successRate = st.total > 0 ? (((st.total - st.critical) / st.total) * 100).toFixed(1) + '%' : '—';
 
-            let isActive = activeClinicalValve === f ? 'active-valve' : '';
-            let isDimmed = (activeClinicalValve && activeClinicalValve !== f) ? 'dimmed' : '';
+            let isActive = effectiveValve === f ? 'active-valve' : '';
+            let isDimmed = (effectiveValve && effectiveValve !== f) ? 'dimmed' : '';
 
             cardsHtml += `
                 <div class="ops-valve-card clinical-valve-card ${isActive} ${isDimmed}" data-valve="${f}" onclick="toggleClinicalValve('${f}')">
                     <h3 style="font-size:22px; color:var(--v-deep-blue); margin:0;">${f}</h3>
                     <img src="${VALVE_IMGS[f]}" class="ops-valve-img" style="max-height:150px;">
-                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">Total Volume (Deduplicated)</div>
+                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">2025 Volume (Deduplicated)</div>
                     <div class="tech-font" style="font-size:30px; font-weight:800; color:var(--v-deep-blue); margin-top:5px; line-height: 1;">${st.total}</div>
                     <div class="clinical-rate-row clinical-rate-ppi" style="margin-top:14px;">
                         <span>PPI Rate</span>
@@ -3096,33 +3195,66 @@
             `;
         });
 
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected in the clinical narratives for the selected period. ✅</td></tr>`;
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="8" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected in the ${CLINICAL_YEAR} clinical narratives for the current filter context. ✅</td></tr>`;
 
         filterClinicalTable();
     }
 
+    // --- ENTITY SUCCESS RATE BADGE (Drilldown Modal) ---
+    // Computed strictly on the entity's 2025 cases:
+    // ((Total Entity Cases - Entity Critical Cases [Level 2 & 3]) / Total Entity Cases) * 100.
+    // Guards against division by zero: entities with no 2025 activity display "N/A".
+    function buildSuccessRateBadge(casesList) {
+        try {
+            let cases2025 = (casesList ?? []).filter(c => getCaseYear(c) === CLINICAL_YEAR);
+            let total = cases2025.length;
+
+            if (total === 0) {
+                return `<span class="badge" style="vertical-align:middle; margin-left:12px; font-size:11px; padding:6px 14px;" title="No ${CLINICAL_YEAR} cases recorded for this entity">${CLINICAL_YEAR} Success Rate: N/A</span>`;
+            }
+
+            let criticalCount = cases2025.filter(c => getClinicalSignals(c?.comment).isCritical).length;
+            let rate = ((total - criticalCount) / total) * 100;
+
+            let bg, fg, border;
+            if (rate > 95) { bg = 'rgba(5, 150, 105, 0.12)'; fg = '#059669'; border = '#10B981'; }
+            else if (rate >= 90) { bg = 'rgba(250, 167, 74, 0.15)'; fg = '#B45309'; border = 'var(--v-yellow)'; }
+            else { bg = 'rgba(239, 68, 68, 0.12)'; fg = '#B91C1C'; border = '#EF4444'; }
+
+            return `<span class="badge" style="vertical-align:middle; margin-left:12px; font-size:11px; padding:6px 14px; background:${bg}; color:${fg}; border:1px solid ${border};" title="${criticalCount} critical case(s) [Level 2 & 3] out of ${total} cases in ${CLINICAL_YEAR}">${CLINICAL_YEAR} Success Rate: ${rate.toFixed(1)}%</span>`;
+        } catch (err) {
+            return '';
+        }
+    }
+
     // --- 3. VALVE FAMILY FILTER (Portfolio Cards) ---
+    // A card click sets a local override on top of the inherited global valve filter.
+    // Only card classes and row visibility are touched, so any AI translations already
+    // rendered inside the table rows are preserved.
     function toggleClinicalValve(vName) {
-        if (activeClinicalValve === vName) activeClinicalValve = null;
+        if (getEffectiveClinicalValve() === vName) activeClinicalValve = null;
         else activeClinicalValve = vName;
 
+        let effectiveValve = getEffectiveClinicalValve();
         document.querySelectorAll('.clinical-valve-card').forEach(card => {
             let v = card.getAttribute('data-valve');
-            card.classList.toggle('active-valve', activeClinicalValve === v);
-            card.classList.toggle('dimmed', !!activeClinicalValve && activeClinicalValve !== v);
+            card.classList.toggle('active-valve', effectiveValve === v);
+            card.classList.toggle('dimmed', !!effectiveValve && effectiveValve !== v);
         });
 
         filterClinicalTable();
     }
 
-    // --- 4. REAL-TIME SEARCH ("Lupa de Busca") + CROSSED FILTERS ---
+    // --- 4. REAL-TIME SEARCH + CROSSED FILTERS ---
+    // Instantly hides/shows rows as the user types; combined with the valve family filter.
     function filterClinicalTable() {
         let searchEl = document.getElementById('clinicalSearch');
-        let q = cleanStr(searchEl ? searchEl.value : '');
+        let q = cleanStr(searchEl?.value ?? '');
+        let effectiveValve = getEffectiveClinicalValve();
         let visible = 0;
 
         document.querySelectorAll('#critical-cases-table tbody tr.clinical-row').forEach(row => {
-            let matchValve = !activeClinicalValve || row.getAttribute('data-valve') === activeClinicalValve;
+            let matchValve = !effectiveValve || row.getAttribute('data-valve') === effectiveValve;
             let matchText = !q || cleanStr(row.innerText).includes(q);
             let show = matchValve && matchText;
             row.style.display = show ? '' : 'none';
@@ -3132,9 +3264,9 @@
         let counter = document.getElementById('clinical-log-counter');
         if (counter) {
             let ctx = [];
-            if (activeClinicalValve) ctx.push(activeClinicalValve);
+            if (effectiveValve) ctx.push(effectiveValve);
             if (q) ctx.push(`"${searchEl.value.trim()}"`);
-            counter.innerText = `(${visible} of ${clinicalCriticalCases.length} cases${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
+            counter.innerText = `(${visible} of ${clinicalCriticalCases.length} cases in ${CLINICAL_YEAR}${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
         }
     }
 
@@ -3147,24 +3279,25 @@
         if (!item || !box || !langSel) return;
 
         let target = langSel.value;
-        let langLabel = langSel.options[langSel.selectedIndex].text;
+        let langLabel = langSel.options[langSel.selectedIndex]?.text ?? target;
+        let originalBtnLabel = btn?.innerText ?? '🌐 AI Translate';
 
         box.style.display = 'block';
         box.innerHTML = `<div class="trans-result"><span class="trans-tag">🤖 AI Translator</span><em>Translating clinical narrative…</em></div>`;
-        if (btn) btn.disabled = true;
+        if (btn) { btn.disabled = true; btn.innerText = 'Translating...'; }
 
         try {
-            let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(item.c.comment)}`;
+            let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(item.c?.comment ?? '')}`;
             let res = await fetch(url);
             if (!res.ok) throw new Error('Service error ' + res.status);
             let data = await res.json();
-            let translated = (data && data[0] ? data[0] : []).map(seg => seg && seg[0] ? seg[0] : '').join('');
+            let translated = (data?.[0] ?? []).map(seg => seg?.[0] ?? '').join('');
             if (!translated) throw new Error('Empty translation');
             box.innerHTML = `<div class="trans-result"><span class="trans-tag">🤖 AI Translator → ${escapeHtml(langLabel)}</span>${escapeHtml(translated)}</div>`;
         } catch (err) {
-            box.innerHTML = `<div class="trans-result" style="border-left-color:#EF4444; background:#FEF2F2; color:#991B1B;"><span class="trans-tag" style="color:#991B1B;">🤖 AI Translator</span>Translation service unavailable (check internet connection). Original text is shown above.</div>`;
+            box.innerHTML = `<div class="trans-result" style="border-left-color:#EF4444; background:#FEF2F2; color:#991B1B;"><span class="trans-tag" style="color:#991B1B;">🤖 AI Translator</span>Translation service unavailable (${escapeHtml(err?.message ?? 'network error')}). Original narrative remains above.</div>`;
         } finally {
-            if (btn) btn.disabled = false;
+            if (btn) { btn.disabled = false; btn.innerText = originalBtnLabel; }
         }
     }
 </script>
