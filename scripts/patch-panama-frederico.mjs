@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Panama 2025: Jorge Baccaro as implanter/proctor; Venus specialists per case.
- * Normalize Frederico → Frederico Blanco (single Venus specialist identity).
+ * Panama 2025: local Panamanian implanters + Venus clinical specialists.
+ * Jorge Baccaro (Corrientes, Argentina) is NOT involved in Panama cases.
  */
 import fs from 'fs';
 import path from 'path';
@@ -11,17 +11,29 @@ import { fileURLToPath } from 'url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const PANAMA_BY_SERIAL = {
-    '26A00000242120': { specialist: 'Fabio Silva' },
-    '23A00000241065': { specialist: 'Job Huiskamp' },
-    '26A00000240303': { specialist: 'Frederico Blanco' }
+    '26A00000242120': {
+        implanter: 'Humberto Juárez',
+        proctor: 'False',
+        specialist: 'Fabio Silva'
+    },
+    '23A00000241065': {
+        implanter: 'Pedro Echeverria',
+        proctor: 'False',
+        specialist: 'Job Huiskamp'
+    },
+    '26A00000240303': {
+        implanter: 'Pedro Echeverria',
+        proctor: 'False',
+        specialist: 'Frederico Blanco'
+    }
 };
 
 function patchPanamaCase(c) {
     if (c.country !== 'Panama') return false;
     const rule = PANAMA_BY_SERIAL[c.serial];
     if (!rule) return false;
-    c.implanter = 'Jorge Baccaro';
-    c.proctor = 'Jorge Baccaro';
+    c.implanter = rule.implanter;
+    c.proctor = rule.proctor;
     c.specialist = rule.specialist;
     return true;
 }
@@ -93,8 +105,8 @@ patchArrayFile('latam-builtin-problems.js', 'BUILTIN_PROBLEM_CASES', c => {
     if (c.id === 'PANAMA-2025-01' || (c.country === 'Panama' && c.serial === '26A00000242120')) {
         c.hospital = 'Ciudad de la Salud';
         c.dist = 'GPM Medical';
-        c.implanter = 'Jorge Baccaro';
-        c.proctor = 'Jorge Baccaro';
+        c.implanter = 'Jaime Dutary, Pedro Echeverria';
+        c.proctor = 'False';
         c.specialist = 'Fabio Silva, Job Huiskamp';
         changed = true;
     }
@@ -128,8 +140,8 @@ if (pStart >= 0) {
                     if (c.id === 'PANAMA-2025-01' || (c.country === 'Panama' && c.serial === '26A00000242120')) {
                         c.hospital = 'Ciudad de la Salud';
                         c.dist = 'GPM Medical';
-                        c.implanter = 'Jorge Baccaro';
-                        c.proctor = 'Jorge Baccaro';
+                        c.implanter = 'Jaime Dutary, Pedro Echeverria';
+                        c.proctor = 'False';
                         c.specialist = 'Fabio Silva, Job Huiskamp';
                     }
                     normalizeFredericoSpecialist(c);

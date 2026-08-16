@@ -296,15 +296,15 @@ for (const row of loadCsv(implantCsv)) {
     });
 }
 
-// Panama overrides (business rules from prior turn)
-const PANAMA = {
-    '26A00000242120': { implanter: 'Jorge Baccaro', proctor: 'Jorge Baccaro', specialist: 'Fabio Silva' },
-    '23A00000241065': { implanter: 'Jorge Baccaro', proctor: 'Jorge Baccaro', specialist: 'Job Huiskamp' },
-    '26A00000240303': { implanter: 'Jorge Baccaro', proctor: 'Jorge Baccaro', specialist: 'Frederico Blanco' }
+// Panama: Venus clinical specialists only (implanters are local — see Cases_Latam CSV)
+const PANAMA_SPECIALISTS = {
+    '26A00000242120': 'Fabio Silva',
+    '23A00000241065': 'Job Huiskamp',
+    '26A00000240303': 'Frederico Blanco'
 };
-for (const [serial, patch] of Object.entries(PANAMA)) {
-    const cur = canonical.get(serial) || {};
-    canonical.set(serial, { ...cur, ...patch, hospital: cur.hospital || 'Ciudad de la Salud' });
+for (const [serial, specialist] of Object.entries(PANAMA_SPECIALISTS)) {
+    const cur = canonical.get(serial);
+    if (cur) cur.specialist = specialist;
 }
 
 // Collect alias candidates
