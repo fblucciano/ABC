@@ -43,7 +43,8 @@
         /* STARTUP DRAG & DROP SCREEN */
         #startup-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--v-deep-blue); color: white; position: fixed; width: 100%; top: 0; left: 0; z-index: 99999999; }
         #startup-screen.drag-active #drop-zone { border-color: var(--v-yellow); background: rgba(250,167,74,0.1); transform: translateY(-5px); }
-        #drop-zone { border: 2px dashed rgba(255,255,255,0.4); padding: 60px 120px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02); margin-top: 20px; pointer-events: auto;}
+        #drop-zone { display: block; border: 2px dashed rgba(255,255,255,0.4); padding: 60px 120px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02); margin-top: 20px; }
+        #startup-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         #drop-zone:hover, #drop-zone.dragover { border-color: var(--v-yellow); background: rgba(250,167,74,0.1); transform: translateY(-5px);}
         
         /* FULL SCREEN CONTAINER APP */
@@ -264,13 +265,12 @@
     <h1 style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 38px; margin-bottom: 5px;">LATAM Intelligence OS</h1>
     <p style="opacity: 0.7; margin-bottom: 40px; font-size: 18px;">Client-side Secure Analytics Engine</p>
     
-    <div id="drop-zone">
+    <label id="drop-zone" for="startup-file-input">
         <div style="font-size: 50px; margin-bottom: 15px;">📥</div>
         <div style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">Drag & Drop LATAM Database</div>
         <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv, .txt)</div>
-    </div>
-    <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display: none;" />
-    <button type="button" class="year-pill" onclick="enterWithBuiltinProblems()" style="margin-top: 24px; font-size: 12px; padding: 10px 18px; cursor: pointer;">📋 Continue without uploading data</button>
+    </label>
+    <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple />
 </div>
 
 <div class="container" id="main-app" style="display: none;">
@@ -873,7 +873,6 @@
             if (files && files.length > 0) handleFiles(files);
         });
 
-        dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             if (e.target.files?.length) handleFiles(e.target.files);
             e.target.value = '';
@@ -1772,7 +1771,7 @@
                     if (keys.some(k => k.includes('hospital'))) score += 50;
                     if (keys.some(k => k.includes('case id') || k.includes('caseid'))) score += 30;
                     if (keys.some(k => k.includes('proctor'))) score += 20;
-                    if (keys.some(k => k.includes('date implant') || k.includes('valve type') || k.includes('complications')) score += 25;
+                    if (keys.some(k => k.includes('date implant') || k.includes('valve type') || k.includes('complications'))) score += 25;
                 }
                 if (score > bestScore) { bestScore = score; best = name; }
             });
