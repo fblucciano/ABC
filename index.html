@@ -2217,29 +2217,25 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function rebuildAllCasesGlobal() {
         let builtinCount = ensureBuiltinProblemRegistry();
+        const builtinPool = fileUploads[BUILTIN_REGISTRY_KEY] || [];
         allCasesGlobal = [];
         let dedupMap = new Map();
 
-        // 1) Canonical embedded registry first — app "memory" anchor
-        (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(c => {
-            dedupMap.set(c.dedupKey, c);
-            allCasesGlobal.push(c);
-        });
-
-        // 2) User uploads merge into memory; near-duplicates are absorbed
+        // Implant volume = user uploads only. Embedded problem registry is clinical memory (Tab 05), not Operations volume.
         Object.entries(fileUploads).forEach(([sourceName, arr]) => {
             if (sourceName === BUILTIN_REGISTRY_KEY) return;
-            arr.forEach(c => {
+            arr.forEach(raw => {
+                let c = raw;
                 c._uploadSource = sourceName;
+
+                let nearBuiltin = findClinicalNearDuplicateInList(builtinPool, c);
+                if (nearBuiltin) {
+                    c = preferImplantRecordOverBuiltin(c, nearBuiltin);
+                }
+
                 let nearDup = findClinicalNearDuplicateInList(allCasesGlobal, c);
                 if (nearDup) {
-                    if (isBuiltinClinicalRow(nearDup) && !isBuiltinClinicalRow(c)) {
-                        let replacement = preferImplantRecordOverBuiltin(c, nearDup);
-                        replaceCaseInList(allCasesGlobal, nearDup, replacement);
-                        replaceCaseInDedupMap(dedupMap, nearDup, replacement);
-                    } else {
-                        mergeClinicalMetadata(nearDup, c);
-                    }
+                    mergeClinicalMetadata(nearDup, c);
                     return;
                 }
                 if (!c.dedupKey) {
@@ -2247,14 +2243,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                     return;
                 }
                 if (dedupMap.has(c.dedupKey)) {
-                    let existing = dedupMap.get(c.dedupKey);
-                    if (isBuiltinClinicalRow(existing) && !isBuiltinClinicalRow(c)) {
-                        let replacement = preferImplantRecordOverBuiltin(c, existing);
-                        replaceCaseInList(allCasesGlobal, existing, replacement);
-                        replaceCaseInDedupMap(dedupMap, existing, replacement);
-                    } else {
-                        mergeClinicalMetadata(existing, c);
-                    }
+                    mergeClinicalMetadata(dedupMap.get(c.dedupKey), c);
                     return;
                 }
                 dedupMap.set(c.dedupKey, c);
@@ -2264,12 +2253,6 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
         allCasesGlobal = consolidateClinicalBySerial(allCasesGlobal);
         allCasesGlobal = dedupeClinicalNearDuplicates(allCasesGlobal);
-        // Guarantee unmatched embedded problem cases survive upload merges
-        (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(b => {
-            if (!allCasesGlobal.some(c => (c.id && b.id && c.id === b.id) || c._builtinId === b.id)) {
-                allCasesGlobal.push(b);
-            }
-        });
         updateBuiltinMemoryBanner();
         return builtinCount;
     }
@@ -3268,6 +3251,10 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             let y = getCaseYear(r);
             if (y !== null) ys.add(y);
         });
+        getEmbeddedProblemCases().forEach(r => {
+            let y = getCaseYear(r);
+            if (y !== null) ys.add(y);
+        });
 
         // Keep Time Travel aligned with normalized years (DD/MM/YY → 2026, not 26)
         activeYears = activeYears.map(y => normalizeYear(y)).filter(y => y !== null);
@@ -3319,7 +3306,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     function processData() {
         try {
             processedData = allCasesGlobal.filter(c => {
-                if (isStandaloneEmbeddedCase(c)) return false;
+                if (!isOperationsVolumeCase(c)) return false;
                 if (activeYears.length === 0) return true;
                 let y = getCaseYear(c);
                 return y !== null && activeYears.includes(y);
@@ -3344,6 +3331,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             hybridPhysicians = new Set();
             
             allCasesGlobal.forEach(c => {
+                if (!isOperationsVolumeCase(c)) return;
                 let imps = String(c.implanter).split(', ');
                 let specs = String(c.specialist).split(', ');
                 
@@ -4895,6 +4883,11 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     }
 
     // Pure embedded rows (no matching implant upload) — excluded from Operations volume counts
+    // Operations / S&OP implant volume — user uploads only (never embedded problem-report rows)
+    function isOperationsVolumeCase(c) {
+        return !!(c?._uploadSource);
+    }
+
     function isStandaloneEmbeddedCase(c) {
         return !!(c?._builtin) && !c?._clinicalBuiltin;
     }
@@ -4932,7 +4925,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function getImplantVolumeData() {
         return allCasesGlobal.filter(c => {
-            if (isStandaloneEmbeddedCase(c)) return false;
+            if (!isOperationsVolumeCase(c)) return false;
             if (activeYears.length > 0) {
                 let y = getCaseYear(c);
                 if (y === null || !activeYears.includes(y)) return false;
@@ -4982,9 +4975,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         // Authoritative embedded Problem Report — year-scoped only (not hidden by Ops geo filters)
         getEmbeddedProblemCases().forEach(c => add(c, 1, passYear));
 
-        // Upload-sourced complications inherit Operations country / distributor filters
+        // Upload-sourced complications (merged clinical metadata on implant rows)
         allCasesGlobal.forEach(c => {
-            if (isStandaloneEmbeddedCase(c)) return;
+            if (!isOperationsVolumeCase(c)) return;
             if (c._builtinId) return; // already represented by embedded registry
             let sig = getClinicalSignals(c);
             if (sig.level > 0) add(c, sig.level, passOpsFilters);
