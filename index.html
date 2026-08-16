@@ -933,6 +933,7 @@
             primary.severityLabel = donor.severityLabel;
         }
         if (donor.survival) primary.survival = donor.survival;
+        if (donor.clusterIssue && !primary.clusterIssue) primary.clusterIssue = donor.clusterIssue;
         mergePersonField(primary, donor, 'specialist');
         mergePersonField(primary, donor, 'implanter');
     }
@@ -1573,7 +1574,7 @@
                         let clusterIssue = getSmartColumnValue(item.row, ['cluster','top issue','issue type']);
                         if (!comment && clusterIssue) comment = clusterIssue;
                         
-                        let vStr = String(valveRaw).toUpperCase(); 
+                        let vStr = String(valveRaw).toUpperCase();
                         let vName = 'Venus A';
                         if (vStr.includes('POWERX')) vName = 'PowerX'; 
                         else if (vStr.includes('VITAE')) vName = 'Vitae'; 
@@ -1668,7 +1669,7 @@
                             if (rawDateStr) dateStr = rawDateStr;
                         }
                         
-                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A', comment: comment || '', severityLabel: severityLabel || '', survival: survival || '' };
+                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A', comment: comment || '', severityLabel: severityLabel || '', survival: survival || '', clusterIssue: clusterIssue || '' };
                         
                         // GLOBAL DEDUPLICATION KEY: Serial Number + Hospital + Date
                         // (falls back to Physician + Valve + source Case ID when the source has no serial)
@@ -3232,20 +3233,44 @@
     const CLINICAL_SEV3_RE = /(obito|death|faleceu|falecimento|fatal|exitus|deceased|did not survive)/;
     const CLINICAL_SEV2_RE = /(emboliza|embolism|embolic|migrou|migrat|migrated|dissec|dissect|parada|cardiac arrest|valve[\s-]*in[\s-]*valve|\bviv\b|second valve|segunda valvula|2nd valve|interrup|abort|rescue|severe)/;
     const CLINICAL_PPI_RE = /(marcapasso|marca[\s-]*passo|marcapaso|pacemaker|pace[\s-]*maker|\bppi\b|\bmp\s+definitivo\b|bre\s*pos|post[\s-]*dilat)/;
-    const CLINICAL_CLUSTER_ONLY_RE = /^(balloon issues|access\s*&\s*navigation|lockwire issues|deployment\s*&\s*migration|deployment and migration|encapsulation\s*&\s*subhandle|unclassified\s*\/\s*multi[\s-]*factor|unclassified)$/i;
+    const CLINICAL_BALLOON_RE = /(balloon|balao|balão|ballon|ruptur|subhandle|encapsul|inflation device|dog-bone)/i;
+    const CLINICAL_BENIGN_CLUSTER_RE = /^(unclassified\s*\/\s*multi[\s-]*factor|unclassified)$/i;
     const SEVERITY_WEIGHTS = { 1: 0.25, 2: 0.65, 3: 1.0 };
+
+    function getClusterCategoryLevel(caseObj) {
+        let valveBase = caseObj?.valveBase ?? '';
+        let blob = cleanStr([caseObj?.comment, caseObj?.clusterIssue, caseObj?.severityLabel].filter(Boolean).join(' '));
+        if (!blob) return 0;
+
+        // Vitae balloon issues are a top safety priority — always at least Level 2
+        if (CLINICAL_BALLOON_RE.test(blob)) {
+            return valveBase === 'Vitae' ? 2 : 1;
+        }
+        if (/lockwire/.test(blob)) return 1;
+        if (/deployment|migration/.test(blob)) return 2;
+        if (/encapsulation|subhandle/.test(blob)) return 1;
+        if (/access|navigation/.test(blob)) return 1;
+
+        // Named issue category without narrative still counts as Level 1
+        if (/balloon issues|lockwire issues|deployment|encapsulation|access/.test(blob) && blob.length < 80) {
+            return valveBase === 'Vitae' && /balloon/.test(blob) ? 2 : 1;
+        }
+        return 0;
+    }
 
     function isSubstantiveClinicalNarrative(text) {
         let t = String(text ?? '').trim();
-        if (!t || t.length < 15) return false;
-        if (CLINICAL_CLUSTER_ONLY_RE.test(t)) return false;
+        if (!t) return false;
+        if (CLINICAL_BENIGN_CLUSTER_RE.test(t)) return false;
+        if (CLINICAL_BALLOON_RE.test(t)) return true;
+        if (t.length < 12 && !/lockwire|deployment|migration|encapsulation|access/i.test(t)) return false;
         return true;
     }
 
     function narrativeSuggestsAdverseEvent(text) {
         let t = cleanStr(text);
         if (!t) return false;
-        return CLINICAL_SEV3_RE.test(t) || CLINICAL_SEV2_RE.test(t) || CLINICAL_PPI_RE.test(t);
+        return CLINICAL_SEV3_RE.test(t) || CLINICAL_SEV2_RE.test(t) || CLINICAL_PPI_RE.test(t) || CLINICAL_BALLOON_RE.test(t);
     }
 
     function computeSuccessRateMetrics(cases) {
@@ -3303,12 +3328,13 @@
         let levelFromText = 0;
         if (t && (isSubstantiveClinicalNarrative(comment) || narrativeSuggestsAdverseEvent(comment))) {
             let sev3 = CLINICAL_SEV3_RE.test(t);
-            let sev2 = CLINICAL_SEV2_RE.test(t);
+            let sev2 = CLINICAL_SEV2_RE.test(t) || (caseObj?.valveBase === 'Vitae' && CLINICAL_BALLOON_RE.test(t));
             let ppi = CLINICAL_PPI_RE.test(t);
-            levelFromText = sev3 ? 3 : (sev2 ? 2 : (ppi ? 1 : 0));
+            levelFromText = sev3 ? 3 : (sev2 ? 2 : (ppi ? 1 : (CLINICAL_BALLOON_RE.test(t) ? 1 : 0)));
         }
 
-        let level = Math.max(levelFromLabel, levelFromText);
+        let levelFromCluster = getClusterCategoryLevel(caseObj);
+        let level = Math.max(levelFromLabel, levelFromText, levelFromCluster);
         if (level === 0) return { isCritical: false, isPPI: false, level: 0 };
 
         let ppi = CLINICAL_PPI_RE.test(t);
@@ -3541,9 +3567,20 @@
         if (!ctx) return;
         let { entityLabel, role, flag, metrics } = ctx;
 
+        // Snapshot the profile view so we can restore the Success Rate badge screen
+        window.drilldownModalSnapshot = {
+            nameHTML: document.getElementById('modal-person-name')?.innerHTML ?? '',
+            roleHTML: document.getElementById('modal-person-role')?.innerHTML ?? '',
+            yoyHTML: document.getElementById('modal-yoy-stats')?.innerHTML ?? '',
+            mixHTML: document.getElementById('modal-portfolio-mix')?.innerHTML ?? '',
+            contextCases: ctx.allCases ?? []
+        };
+
+        let backBtn = `<button class="year-pill" onclick="event.stopPropagation(); restoreDrilldownProfile()" style="font-size:10px; padding:4px 12px; margin-left:12px; cursor:pointer;">← Back to Profile</button>`;
+
         let mName = document.getElementById('modal-person-name');
         if (mName) {
-            mName.innerHTML = `<span style="font-size:24px;">${flag}</span> ${escapeHtml(entityLabel)} <span class="badge" style="background:#fee2e2; color:#b91c1c; margin-left:10px; font-size:11px;">Adverse Event Audit</span>`;
+            mName.innerHTML = `<span style="font-size:24px;">${flag}</span> ${escapeHtml(entityLabel)} <span class="badge" style="background:#fee2e2; color:#b91c1c; margin-left:10px; font-size:11px;">Adverse Event Audit</span>${backBtn}`;
         }
 
         let mRole = document.getElementById('modal-person-role');
@@ -3552,8 +3589,8 @@
         }
 
         document.getElementById('modal-yoy-stats').innerHTML = metrics.adverse > 0
-            ? `<div style="font-size:11px; margin-top:8px; color:#9a3412; font-weight:700;">Reviewing ${metrics.adverse} adverse case(s) with country, hospital, serial, severity level and clinical narrative.</div>`
-            : `<div style="font-size:11px; margin-top:8px; color:#059669; font-weight:700;">No classified adverse events for this entity in the active filter context.</div>`;
+            ? `<div style="font-size:11px; margin-top:8px; color:#9a3412; font-weight:700;">Reviewing ${metrics.adverse} adverse case(s). Vitae balloon events are always tracked as major (Level 2+). Click <strong>Back to Profile</strong> to return to the full procedure log.</div>`
+            : `<div style="font-size:11px; margin-top:8px; color:#059669; font-weight:700;">No classified adverse events for this entity in the active filter context. Click <strong>Back to Profile</strong> to return.</div>`;
 
         document.getElementById('modal-portfolio-mix').innerHTML = '';
 
@@ -3564,6 +3601,21 @@
             document.getElementById('modal-detail-list').innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events (Level 1–3) linked to <strong>${escapeHtml(entityLabel)}</strong> in the selected period with current filters.</div>`;
             document.getElementById('drilldown-modal').classList.add('active');
         }
+    }
+
+    function restoreDrilldownProfile() {
+        let snap = window.drilldownModalSnapshot;
+        if (!snap) return;
+
+        let mName = document.getElementById('modal-person-name');
+        let mRole = document.getElementById('modal-person-role');
+        if (mName) mName.innerHTML = snap.nameHTML;
+        if (mRole) mRole.innerHTML = snap.roleHTML;
+        document.getElementById('modal-yoy-stats').innerHTML = snap.yoyHTML;
+        document.getElementById('modal-portfolio-mix').innerHTML = snap.mixHTML;
+
+        buildModalContent(snap.contextCases);
+        window.drilldownModalSnapshot = null;
     }
 
     // --- 3. VALVE FAMILY FILTER (Portfolio Cards) ---
