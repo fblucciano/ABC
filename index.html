@@ -224,6 +224,41 @@
         .sop-table td { padding: 15px 10px; text-align: center; border-bottom: 1px solid var(--v-border); background: #fff; color: var(--v-deep-blue); font-weight: bold;}
         .sop-table tr:hover td { background: #f8fafc; }
         .sop-table .total-col { background: #fffdf5; color: var(--v-yellow); font-weight: bold; border-left: 2px solid var(--v-border); font-size: 16px;}
+
+        /* CLINICAL EXCELLENCE & DEVICE SAFETY (TAB 05) */
+        .clinical-valve-card { flex: 1; max-width: 25%; min-width: 230px; box-sizing: border-box; background: #f8fafc; border: 1px solid var(--v-border); border-radius: 12px; padding: 25px 18px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
+        .clinical-valve-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.06); border-color: var(--v-blue); }
+        .clinical-valve-card.active-valve { background: #ffffff; border-color: var(--v-yellow); box-shadow: 0 15px 30px rgba(250, 167, 74, 0.15); transform: translateY(-5px); }
+        .clinical-valve-card.active-valve::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--v-yellow); }
+        .clinical-valve-card.dimmed { opacity: 0.4; filter: grayscale(80%); }
+        .clinical-valve-card.no-data { opacity: 0.5; cursor: default; }
+        .clinical-valve-img { max-height: 130px; width: 100%; object-fit: contain; margin: 15px 0; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); transition: 0.3s; }
+        .clinical-valve-card:hover .clinical-valve-img { transform: scale(1.05); }
+        .clinical-metric { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid var(--v-border); border-radius: 6px; padding: 9px 12px; margin-top: 8px; }
+        .clinical-metric-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--v-text-mutated); }
+        .clinical-metric-value { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; }
+        .clinical-ppi { color: #EA580C; }
+        .clinical-success { color: #059669; }
+
+        .sev-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        .sev-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .sev-3 { background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; }
+        .sev-2 { background: #FFEDD5; color: #C2410C; border: 1px solid #FED7AA; }
+        .sev-1 { background: #DBEAFE; color: #1D4ED8; border: 1px solid #BFDBFE; }
+        .sev-tags { font-size: 9px; font-weight: 700; color: var(--v-text-mutated); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; display: block; }
+
+        .report-chip { display: inline-flex; align-items: center; gap: 10px; max-width: 320px; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--v-border); background: #f8fafc; color: var(--v-deep-blue); font-size: 12px; font-weight: 600; cursor: help; transition: 0.2s; }
+        .report-chip:hover { background: #fff; border-color: var(--v-yellow); box-shadow: 0 6px 14px rgba(0,0,0,0.06); }
+        .report-chip-icon { color: var(--v-yellow); font-size: 14px; line-height: 1; }
+        .report-chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        #clinical-tooltip { position: fixed; display: none; z-index: 10000000; width: 420px; max-width: 90vw; background: #ffffff; border: 1px solid var(--v-border); border-top: 4px solid var(--v-yellow); border-radius: 10px; box-shadow: 0 20px 45px rgba(23, 20, 52, 0.18); padding: 18px 20px; pointer-events: none; }
+        #clinical-tooltip .ct-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--v-text-mutated); margin-bottom: 6px; }
+        #clinical-tooltip .ct-body { font-size: 13px; line-height: 1.55; color: var(--v-deep-blue); }
+        #clinical-tooltip .ct-original { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--v-border); }
+        #clinical-tooltip .ct-original-body { font-size: 11px; line-height: 1.5; color: var(--v-text-mutated); font-style: italic; }
+
+        .clinical-empty { padding: 45px 20px; text-align: center; color: var(--v-text-mutated); font-size: 13px; }
     </style>
 </head>
 <body>
@@ -267,6 +302,7 @@
         <button class="tab-btn" onclick="switchTab('tab-geo', event)">02. Geo-Intelligence</button>
         <button class="tab-btn" onclick="switchTab('tab-finance', event)">03. Proctor Finance</button>
         <button class="tab-btn" onclick="switchTab('tab-sop', event)">04. S&OP & Future</button>
+        <button class="tab-btn" onclick="switchTab('tab-clinical', event)">05. Clinical Excellence</button>
     </div>
 
     <!-- GLOBAL ACTION BAR -->
@@ -502,6 +538,40 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- TAB 5: CLINICAL EXCELLENCE & DEVICE SAFETY -->
+    <div id="tab-clinical" class="tab-content">
+        <h2>Clinical Excellence & Device Safety</h2>
+        <div class="section-dash">—</div>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance built directly from the procedural field reports of the active selection. Safety signals are extracted from case comments, graded by severity, and normalized per valve family. <strong>Click a valve family to isolate its critical case log.</strong></p>
+
+        <!-- 1. PORTFOLIO SAFETY PROFILE -->
+        <h2 style="margin-top: 40px;">Portfolio Safety Profile <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Valve Family to filter the log below)</span></h2>
+        <div class="section-dash">—</div>
+        <div class="flex-center-cards" id="clinical-valve-cards"></div>
+
+        <!-- 2. CRITICAL CASES INTELLIGENCE LOG -->
+        <h2 style="margin-top: 40px;">Critical Cases Intelligence Log <span id="clinical-log-context" style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);"></span></h2>
+        <div class="section-dash">—</div>
+        <div class="table-wrapper" style="max-height: 620px;">
+            <table id="clinical-cases-table">
+                <thead>
+                    <tr><th style="width: 110px;">Date</th><th>Location</th><th>Product</th><th style="width: 190px;">Severity</th><th>Report</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CLINICAL REPORT TOOLTIP -->
+<div id="clinical-tooltip">
+    <div class="ct-label">Field Report — English (auto-translated)</div>
+    <div class="ct-body" id="clinical-tooltip-report"></div>
+    <div class="ct-original" id="clinical-tooltip-original-wrap">
+        <div class="ct-label">Original Entry</div>
+        <div class="ct-original-body" id="clinical-tooltip-original"></div>
     </div>
 </div>
 
@@ -741,6 +811,10 @@
     let activeSOPValve = null; 
     let activeSOPDistributor = null;
     let showForecastLines = true;
+
+    // Clinical Excellence & Device Safety Engine
+    let activeClinicalValve = null;
+    let clinicalCasesExport = [];
 
     // INITIALIZE GOOGLE CHARTS
     google.charts.load('current', {'packages':['corechart']});
@@ -1433,7 +1507,9 @@
                             if (rawDateStr) dateStr = rawDateStr;
                         }
                         
-                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A' };
+                        let commentRaw = getSmartColumnValue(item.row, ['coment','comment','observ','obs','relato','intercorren','complicac','complicat','ocorren','occurren','remark','note','feedback','descricao'], true);
+
+                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A', comment: commentRaw || '' };
                         validCases.push(caseObj);
                         
                     } catch(rowErr) {}
@@ -1482,6 +1558,10 @@
         } else if (activeTabId === 'tab-sop') {
             filename = "LATAM_12Month_Forecast_Schedule";
             ws = XLSX.utils.json_to_sheet(currentSopExportData);
+            
+        } else if (activeTabId === 'tab-clinical') {
+            filename = "LATAM_Clinical_Safety_Log";
+            ws = XLSX.utils.json_to_sheet(clinicalCasesExport);
         }
 
         if (ws) {
@@ -1610,6 +1690,7 @@
             renderTrendChart();
             renderGeo(); 
             renderProctorFinance(); 
+            renderClinical();
             
             activeSOPCountry = activeCountryExpanded;
             activeSOPDistributor = null;
@@ -1638,6 +1719,7 @@
         if(t) t.classList.add('active');
         
         activeTabId = tabId;
+        hideClinicalReport();
 
         let opsTarget = document.getElementById('ops-target-container');
         if (opsTarget) opsTarget.style.display = tabId === 'tab-ops' ? 'block' : 'none';
@@ -2555,6 +2637,369 @@
     function updateFee(id) { 
         let inEl = document.getElementById(id);
         if(inEl) { proctorFeeDB[id] = Number(inEl.value) || 0; renderProctorFinance(); }
+    }
+
+    // --- 5. CLINICAL EXCELLENCE & DEVICE SAFETY ENGINE ---
+    // All lexicons are matched against accent-stripped lowercase text.
+    // A trailing "*" marks a stem (prefix match), everything else is whole-word.
+    const CLINICAL_FAMILIES = ["Vitae", "PowerX", "Venus A", "Venus P"];
+
+    const CLIN_NEGATIONS = ['sem obito','sem obitos','sem mortalidade','sem embolizacao','sem migracao','sem necessidade de marcapasso','sem indicacao de marcapasso','sem marcapasso','nao necessitou de marcapasso','nao necessitou marcapasso','sin marcapaso','sin complicaciones','sem complicacoes','sem complicacao','sem intercorrencias','sem intercorrencia','sem complicacoes maiores','no complications','no complication','no pacemaker','without complications'];
+
+    const CLIN_GENERIC = ['procedimento realizado com sucesso','implante realizado com sucesso','realizado com sucesso','com sucesso','sucesso','success*','exitoso','exito','uneventful','nada a relatar','sem observacoes','tudo certo','tudo ok','ok','normal','none','nenhuma','nenhum','caso','procedimento','procedimiento','implante','realizado','realizada','paciente','bem','alta','hospitalar','dia','dias','seguinte','apos','despues','antes','sem','com','sin','con','de','da','do','dos','das','no','na','em','ao','aos','e','o','a','os','as','um','uma','se','que','por','para','foi','pelo','pela','tudo','muito','bom','boa','the','and','with','without','patient','case','was','procedure','implant','performed'];
+
+    const CLIN_PPI = ['marcapasso*','marca passo','marcapaso*','pacemaker','pace maker','ppi','ppm','bavt','bav total','bloqueio av total','bloqueio atrioventricular total','bloqueo av completo','complete av block','total av block','third degree av block','estimulacion definitiva','mp definitivo','pacing definitivo'];
+    const CLIN_DEATH = ['obito*','death','died','deceased','falec*','falleci*','morte','mortalidade','exitus'];
+    const CLIN_ARREST = ['parada cardiorrespiratoria','parada cardio respiratoria','parada cardiaca','paro cardiorrespiratorio','paro cardiaco','cardiac arrest','cardiorespiratory arrest','pcr','rcp','assistolia','asistolia','ressuscitacao','reanimacao','reanimacion'];
+    const CLIN_EMBOLIZATION = ['emboliz*','migrou','migrac*','migration','migrated','aorta descendente','descending aorta','desalojou','desprendeu','deslocou','deslocamento da valvula','pop out'];
+    const CLIN_SECOND_VALVE = ['viv','valve in valve','valvula em valvula','valve em valve','second valve','segunda valvula','segunda protese','outra valvula','nova valvula','tav in tav','tavi in tavi'];
+    const CLIN_BALLOON = ['ruptura do balao','ruptura de balao','ruptura balao','rotura del balon','rotura de balon','balao rompeu','balao estourou','rompimento do balao','balloon rupture','ruptured balloon'];
+    // Relevant-but-lighter findings: keeps a short note in the log instead of discarding it as generic.
+    const CLIN_MINOR_HINTS = ['sangramento','hemorragia','hematoma','tamponamento','derrame pericardico','avc','stroke','acidente vascular','insuficiencia','regurgitacao','regurgitation','leak','vazamento','paravalvar','gradiente','arritmia','fibrilacao','taquicardia','bradicardia','hipotensao','choque','conversao cirurgica','dissec*','diseccion','perfurac*','oclusao','obstrucao','isquemia','transfusao','pseudoaneurisma','fistula','complicac*','intercorrenc*','reintervenc*','uti','nefropatia','infecc*'];
+
+    function buildClinRegex(list) {
+        let parts = list.slice().sort((a,b) => b.length - a.length).map(p => {
+            let isStem = p.charAt(p.length - 1) === '*';
+            let core = (isStem ? p.slice(0, -1) : p).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return isStem ? core : core + '\\b';
+        });
+        return '\\b(?:' + parts.join('|') + ')';
+    }
+
+    const CLIN_RE_NEGATION = new RegExp(buildClinRegex(CLIN_NEGATIONS), 'g');
+    const CLIN_RE_GENERIC = new RegExp(buildClinRegex(CLIN_GENERIC), 'g');
+    const CLIN_RE_PPI = new RegExp(buildClinRegex(CLIN_PPI));
+    const CLIN_RE_DEATH = new RegExp(buildClinRegex(CLIN_DEATH));
+    const CLIN_RE_ARREST = new RegExp(buildClinRegex(CLIN_ARREST));
+    const CLIN_RE_EMBOLIZATION = new RegExp(buildClinRegex(CLIN_EMBOLIZATION));
+    const CLIN_RE_SECOND_VALVE = new RegExp(buildClinRegex(CLIN_SECOND_VALVE));
+    const CLIN_RE_BALLOON = new RegExp(buildClinRegex(CLIN_BALLOON));
+    const CLIN_RE_MINOR = new RegExp(buildClinRegex(CLIN_MINOR_HINTS));
+
+    // PT/ES -> EN clinical glossary used to render the field reports in English.
+    const CLINICAL_GLOSSARY_CORE = {
+        'parada cardiorrespiratoria': 'cardiorespiratory arrest', 'paro cardiorrespiratorio': 'cardiorespiratory arrest', 'parada cardiaca': 'cardiac arrest', 'paro cardiaco': 'cardiac arrest',
+        'bloqueio atrioventricular total': 'complete AV block', 'bloqueio av total': 'complete AV block', 'bloqueo av completo': 'complete AV block', 'bav total': 'complete AV block', 'bavt': 'complete AV block (BAVT)',
+        'marcapasso definitivo': 'permanent pacemaker', 'marcapasso provisorio': 'temporary pacemaker', 'marcapasso': 'pacemaker', 'marcapaso': 'pacemaker', 'marca passo': 'pacemaker',
+        'valvula em valvula': 'valve-in-valve', 'segunda valvula': 'second valve', 'outra valvula': 'another valve', 'nova valvula': 'new valve', 'segunda protese': 'second prosthesis',
+        'valvula': 'valve', 'valvulas': 'valves', 'protese': 'prosthesis', 'valvar': 'valvular', 'paravalvar': 'paravalvular',
+        'obito': 'death', 'obitos': 'deaths', 'faleceu': 'died', 'falecimento': 'death', 'falecido': 'deceased', 'fallecio': 'died', 'fallecimiento': 'death', 'morte': 'death', 'mortalidade': 'mortality',
+        'embolizacao': 'embolization', 'embolizada': 'embolized', 'embolizado': 'embolized', 'embolizou': 'embolized', 'migracao': 'migration', 'migrou': 'migrated', 'deslocou': 'displaced', 'desprendeu': 'detached',
+        'aorta descendente': 'descending aorta', 'aorta ascendente': 'ascending aorta', 'aorta': 'aorta', 'anel aortico': 'aortic annulus', 'anel': 'annulus',
+        'ruptura do balao': 'balloon rupture', 'ruptura de balao': 'balloon rupture', 'rotura del balon': 'balloon rupture', 'balao rompeu': 'balloon ruptured', 'balao estourou': 'balloon burst', 'balao': 'balloon', 'balon': 'balloon',
+        'sangramento': 'bleeding', 'hemorragia': 'hemorrhage', 'hematoma': 'hematoma', 'tamponamento': 'tamponade', 'derrame pericardico': 'pericardial effusion',
+        'insuficiencia renal': 'renal failure', 'insuficiencia aortica': 'aortic regurgitation', 'insuficiencia cardiaca': 'heart failure', 'insuficiencia': 'insufficiency',
+        'refluxo': 'regurgitation', 'regurgitacao': 'regurgitation', 'vazamento': 'leak', 'gradiente': 'gradient', 'estenose': 'stenosis',
+        'acidente vascular cerebral': 'stroke', 'avc': 'stroke', 'isquemia': 'ischemia', 'infarto': 'infarction',
+        'conversao cirurgica': 'surgical conversion', 'cirurgia': 'surgery', 'cirurgico': 'surgical', 'cirugia': 'surgery',
+        'dissecao': 'dissection', 'diseccion': 'dissection', 'perfuracao': 'perforation', 'perforacion': 'perforation', 'oclusao': 'occlusion', 'obstrucao': 'obstruction',
+        'coronaria': 'coronary', 'coronariana': 'coronary', 'arritmia': 'arrhythmia', 'fibrilacao atrial': 'atrial fibrillation', 'taquicardia': 'tachycardia', 'bradicardia': 'bradycardia',
+        'hipotensao': 'hypotension', 'hipertensao': 'hypertension', 'choque cardiogenico': 'cardiogenic shock', 'choque': 'shock',
+        'acesso femoral': 'femoral access', 'acesso': 'access', 'puncao': 'puncture', 'transfusao': 'transfusion', 'pseudoaneurisma': 'pseudoaneurysm', 'fistula': 'fistula', 'infeccao': 'infection', 'nefropatia': 'nephropathy',
+        'reintervencao': 'reintervention', 'reinternacao': 'readmission', 'internacao': 'hospitalization', 'alta hospitalar': 'hospital discharge', 'uti': 'ICU',
+        'intercorrencia': 'complication', 'intercorrencias': 'complications', 'complicacao': 'complication', 'complicacoes': 'complications', 'evolucao': 'outcome', 'evoluiu': 'progressed',
+        'procedimento': 'procedure', 'implante': 'implantation', 'implantada': 'implanted', 'implantado': 'implanted', 'realizado': 'performed', 'realizada': 'performed', 'sucesso': 'success',
+        'paciente': 'patient', 'medico': 'physician', 'hospital': 'hospital', 'sala': 'room', 'equipe': 'team',
+        'necessitou': 'required', 'necessidade': 'need', 'houve': 'there was', 'apresentou': 'presented', 'evoluindo': 'progressing', 'permaneceu': 'remained', 'recebeu': 'received', 'foi': 'was', 'apos': 'after', 'durante': 'during', 'antes': 'before',
+        'sem': 'without', 'com': 'with', 'sin': 'without', 'con': 'with', 'nao': 'not', 'que': 'that', 'para': 'to', 'de': 'of', 'em': 'in', 'dias': 'days', 'dia': 'day', 'horas': 'hours', 'primeira': 'first', 'primeiro': 'first', 'segunda': 'second', 'segundo': 'second',
+        'viv': 'valve-in-valve', 'rcp': 'CPR', 'pcr': 'cardiorespiratory arrest', 'taponamiento cardiaco': 'cardiac tamponade', 'taponamiento': 'tamponade', 'cardiaco': 'cardiac', 'cardiaca': 'cardiac', 'cardiogenico': 'cardiogenic',
+        'no dia seguinte ao procedimento': 'on the day after the procedure', 'no dia seguinte': 'on the following day', 'antes da alta': 'before discharge', 'apos a alta': 'after discharge', 'pos operatorio': 'postoperative',
+        'procedimiento': 'procedure', 'se realizo': 'was performed', 'se implanto': 'was implanted', 'realizo': 'performed', 'implanto': 'implanted', 'fue': 'was', 'otra': 'another', 'otro': 'another',
+        'revertida': 'reversed', 'revertido': 'reversed', 'recebeu': 'received', 'recibio': 'received', 'resolvido': 'resolved', 'resolvida': 'resolved', 'resuelto': 'resolved',
+        'compressao manual': 'manual compression', 'compressao': 'compression', 'repercussao': 'repercussion', 'hemodinamica': 'hemodynamic', 'hemodinamico': 'hemodynamic',
+        'insuflacao': 'inflation', 'sistema de entrega': 'delivery system', 'sistema': 'system', 'entrega': 'delivery', 'troca': 'exchange',
+        'necessaria': 'required', 'necessario': 'required', 'necesario': 'required', 'necesaria': 'required', 'necessitando': 'requiring', 'requiriendo': 'requiring',
+        'transitorio': 'transient', 'transitoria': 'transient', 'definitivo': 'permanent', 'provisorio': 'temporary', 'seguinte': 'following', 'leve': 'mild', 'moderado': 'moderate', 'grave': 'severe',
+        'bem': 'well', 'depois': 'after', 'despues': 'after', 'estavel': 'stable', 'melhora': 'improvement', 'piora': 'worsening',
+        'marca passo definitivo': 'permanent pacemaker', 'marca passo provisorio': 'temporary pacemaker', 'marcapaso definitivo': 'permanent pacemaker', 'alta': 'discharge',
+        'repercussao hemodinamica': 'hemodynamic repercussion', 'leak paravalvar': 'paravalvular leak', 'refluxo paravalvar': 'paravalvular regurgitation', 'insuficiencia paravalvar': 'paravalvular insufficiency',
+        'sangramento leve': 'mild bleeding', 'complicacao vascular': 'vascular complication', 'derrame': 'effusion',
+        '1o': '1st', '2o': '2nd', '3o': '3rd', '4o': '4th', '5o': '5th'
+    };
+
+    // Function words that are also valid English are only translated when the entry is detected as PT/ES.
+    const CLINICAL_GLOSSARY_LATIN = {
+        'do': 'of the', 'da': 'of the', 'dos': 'of the', 'das': 'of the', 'no': 'in the', 'na': 'in the', 'nos': 'in the', 'nas': 'in the',
+        'ao': 'to the', 'aos': 'to the', 'a': 'the', 'o': 'the', 'as': 'the', 'os': 'the', 'e': 'and', 'y': 'and', 'ou': 'or',
+        'um': 'a', 'uma': 'a', 'un': 'a', 'una': 'a', 'el': 'the', 'la': 'the', 'los': 'the', 'las': 'the', 'del': 'of the', 'al': 'to the',
+        'por': 'due to', 'pelo': 'by the', 'pela': 'by the', 'lo': 'the', 'su': 'its'
+    };
+
+    const CLIN_RE_LATIN_MARKERS = new RegExp(buildClinRegex(['nao','sem','com','sin','con','paciente','valvula','procedimento','procedimiento','realizado','realizada','realizo','durante','foi','fue','houve','que','uma','pelo','pela','apos','despues','ao','aos','del','otra','otro','marcapasso','marcapaso','obito','falec*','falleci*','balao','balon','cirurgia','sangramento','emboliz*','migrou','intercorrenc*']));
+
+    const buildGlossaryRules = (dict) => Object.keys(dict).sort((a,b) => b.length - a.length).map(k => ({
+        re: new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g'),
+        en: dict[k]
+    }));
+
+    const CLINICAL_RULES_CORE = buildGlossaryRules(CLINICAL_GLOSSARY_CORE);
+    const CLINICAL_RULES_FULL = buildGlossaryRules(Object.assign({}, CLINICAL_GLOSSARY_LATIN, CLINICAL_GLOSSARY_CORE));
+
+    function normClinical(txt) {
+        return cleanStr(txt).replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function translateClinicalReport(raw) {
+        if (!raw) return '';
+        let txt = String(raw).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[-_]+/g, ' ');
+        let rules = CLIN_RE_LATIN_MARKERS.test(txt) ? CLINICAL_RULES_FULL : CLINICAL_RULES_CORE;
+        rules.forEach(rule => { txt = txt.replace(rule.re, rule.en); });
+        txt = txt.replace(/\s+([,.;:!?])/g, '$1').replace(/\s+/g, ' ').trim();
+        return txt.replace(/(^|[.!?;]\s+)([a-z])/g, (m, sep, chr) => sep + chr.toUpperCase());
+    }
+
+    // Turns a raw field comment into a safety signal, or null when it carries no relevant finding.
+    function analyzeClinicalComment(rawComment) {
+        let base = normClinical(rawComment);
+        if (!base) return null;
+
+        let scan = base.replace(CLIN_RE_NEGATION, ' ').replace(/\s+/g, ' ').trim();
+
+        let isPPI = CLIN_RE_PPI.test(scan);
+        let isDeath = CLIN_RE_DEATH.test(scan);
+        let isArrest = CLIN_RE_ARREST.test(scan);
+        let isEmbolized = CLIN_RE_EMBOLIZATION.test(scan);
+        let isSecondValve = CLIN_RE_SECOND_VALVE.test(scan);
+        let isBalloonRupture = CLIN_RE_BALLOON.test(scan);
+        let hasMinorHint = CLIN_RE_MINOR.test(scan);
+
+        let isFailure = isDeath || isEmbolized || isSecondValve;
+        let isFlagged = isFailure || isPPI || isArrest || isBalloonRupture || hasMinorHint;
+
+        if (!isFlagged) {
+            let residue = scan.replace(CLIN_RE_GENERIC, ' ').replace(/[^a-z0-9]/g, '');
+            if (residue.length < 4) return null;
+        }
+
+        let level = 1;
+        if (isDeath || isArrest) level = 3;
+        else if (isPPI || isBalloonRupture || isEmbolized || isSecondValve) level = 2;
+
+        let tags = [];
+        if (isDeath) tags.push('Death');
+        if (isArrest) tags.push('Cardiac Arrest');
+        if (isPPI) tags.push('Pacemaker / AV Block');
+        if (isBalloonRupture) tags.push('Balloon Rupture');
+        if (isEmbolized) tags.push('Embolization / Migration');
+        if (isSecondValve) tags.push('Valve-in-Valve');
+        if (tags.length === 0) tags.push('Reported Occurrence');
+
+        return { level: level, isFailure: isFailure, isPPI: isPPI, tags: tags };
+    }
+
+    // Same geographic/partner scope as the rest of the OS, but never constrained by the Operations valve filter.
+    function getClinicalScopeData() {
+        return processedData.filter(c => {
+            if (activeCountryExpanded && c.country !== activeCountryExpanded) return false;
+            if (activeDistFilter && c.dist !== activeDistFilter) return false;
+            return true;
+        });
+    }
+
+    function toggleClinicalValve(vName) {
+        if (activeClinicalValve === vName) activeClinicalValve = null;
+        else activeClinicalValve = vName;
+        renderClinical();
+    }
+
+    function escapeClinicalAttr(str) {
+        return String(str === undefined || str === null ? '' : str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function getValveBadgeStyle(vBase) {
+        if (vBase === 'Venus A') return 'background-color:#E0F2FE; color:#0369A1; border:1px solid #BAE6FD;';
+        if (vBase === 'Venus P') return 'background-color:#F3E8FF; color:#7E22CE; border:1px solid #E9D5FF;';
+        if (vBase === 'PowerX') return 'background-color:#DCFCE7; color:#15803D; border:1px solid #BBF7D0;';
+        if (vBase === 'Vitae') return 'background-color:#FEE2E2; color:#B91C1C; border:1px solid #FECACA;';
+        return 'background-color:#E2E8F0; color:#334155; border:1px solid #CBD5E1;';
+    }
+
+    let clinicalTooltipAnchor = null;
+
+    function positionClinicalTooltip() {
+        let tip = document.getElementById('clinical-tooltip');
+        if (!tip || !clinicalTooltipAnchor) return;
+
+        let anchor = clinicalTooltipAnchor.getBoundingClientRect();
+        let box = tip.getBoundingClientRect();
+
+        let top = anchor.bottom + 12;
+        if (top + box.height > window.innerHeight - 12) top = Math.max(12, anchor.top - box.height - 12);
+        let left = anchor.left;
+        if (left + box.width > window.innerWidth - 15) left = Math.max(12, window.innerWidth - box.width - 15);
+
+        tip.style.top = top + 'px';
+        tip.style.left = left + 'px';
+    }
+
+    function showClinicalReport(el) {
+        let tip = document.getElementById('clinical-tooltip');
+        if (!tip || !el) return;
+
+        let translated = el.getAttribute('data-report') || '';
+        let original = el.getAttribute('data-original') || '';
+
+        document.getElementById('clinical-tooltip-report').textContent = translated;
+        let origWrap = document.getElementById('clinical-tooltip-original-wrap');
+        if (original && normClinical(original) !== normClinical(translated)) {
+            document.getElementById('clinical-tooltip-original').textContent = original;
+            origWrap.style.display = 'block';
+        } else {
+            origWrap.style.display = 'none';
+        }
+
+        clinicalTooltipAnchor = el;
+        tip.style.display = 'block';
+        positionClinicalTooltip();
+    }
+
+    function hideClinicalReport() {
+        clinicalTooltipAnchor = null;
+        let tip = document.getElementById('clinical-tooltip');
+        if (tip) tip.style.display = 'none';
+    }
+
+    // The report box is fixed-positioned, so it must follow its row when the log or the page scrolls.
+    window.addEventListener('scroll', () => {
+        if (!clinicalTooltipAnchor) return;
+        if (!document.body.contains(clinicalTooltipAnchor)) hideClinicalReport();
+        else positionClinicalTooltip();
+    }, true);
+
+    function renderClinical() {
+        let scopeData = getClinicalScopeData();
+        clinicalCasesExport = [];
+
+        // 1. PORTFOLIO SAFETY PROFILE
+        let stats = {};
+        CLINICAL_FAMILIES.forEach(v => stats[v] = { total: 0, ppi: 0, failures: 0 });
+
+        let analyzed = [];
+        scopeData.forEach(c => {
+            let vBase = CLINICAL_FAMILIES.includes(c.valveBase) ? c.valveBase : null;
+            if (vBase) stats[vBase].total++;
+
+            let signal = c.comment ? analyzeClinicalComment(c.comment) : null;
+            if (signal && vBase) {
+                if (signal.isPPI) stats[vBase].ppi++;
+                if (signal.isFailure) stats[vBase].failures++;
+            }
+            if (signal) analyzed.push({ c: c, signal: signal });
+        });
+
+        let cardsHtml = '';
+        CLINICAL_FAMILIES.forEach(v => {
+            let s = stats[v];
+            let hasData = s.total > 0;
+            let ppiRate = hasData ? ((s.ppi / s.total) * 100).toFixed(1) : null;
+            let successRate = hasData ? (((s.total - s.failures) / s.total) * 100).toFixed(1) : null;
+
+            let isActive = activeClinicalValve === v ? 'active-valve' : '';
+            let isDimmed = (activeClinicalValve && activeClinicalValve !== v) ? 'dimmed' : '';
+            let noData = hasData ? '' : 'no-data';
+            let clickHandler = hasData ? ` onclick="toggleClinicalValve('${v}')"` : '';
+
+            cardsHtml += `
+                <div class="clinical-valve-card ${isActive} ${isDimmed} ${noData}"${clickHandler}>
+                    <h3 style="font-size:22px; color:var(--v-deep-blue); margin:0;">${v}</h3>
+                    <img src="${VALVE_IMGS[v]}" class="clinical-valve-img">
+                    <div style="font-size:10px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase; letter-spacing:0.5px;">Volume Evaluated</div>
+                    <div class="tech-font" style="font-size:26px; font-weight:800; color:var(--v-deep-blue); line-height:1; margin-top:4px;">${s.total}</div>
+                    <div class="clinical-metric">
+                        <span class="clinical-metric-label">PPI Rate</span>
+                        <span class="clinical-metric-value clinical-ppi">${hasData ? ppiRate + '%' : '—'}</span>
+                    </div>
+                    <div class="clinical-metric">
+                        <span class="clinical-metric-label">Success Rate</span>
+                        <span class="clinical-metric-value clinical-success">${hasData ? successRate + '%' : '—'}</span>
+                    </div>
+                    <div style="font-size:9px; font-weight:700; color:var(--v-text-mutated); text-transform:uppercase; letter-spacing:0.5px; margin-top:10px;">
+                        ${hasData ? `${s.ppi} pacemaker · ${s.failures} procedural failure${s.failures === 1 ? '' : 's'}` : 'No cases in current selection'}
+                    </div>
+                </div>
+            `;
+        });
+
+        let cardsContainer = document.getElementById('clinical-valve-cards');
+        if (cardsContainer) cardsContainer.innerHTML = cardsHtml;
+
+        // 2. CRITICAL CASES INTELLIGENCE LOG
+        let logRows = analyzed.filter(item => !activeClinicalValve || item.c.valveBase === activeClinicalValve);
+
+        const dateKey = (dStr) => {
+            let p = String(dStr).split('/');
+            if (p.length !== 3) return 0;
+            return (parseInt(p[2], 10) || 0) * 10000 + (parseInt(p[1], 10) || 0) * 100 + (parseInt(p[0], 10) || 0);
+        };
+        logRows.sort((a, b) => (b.signal.level - a.signal.level) || (dateKey(b.c.date) - dateKey(a.c.date)));
+
+        let rowsHtml = '';
+        logRows.forEach(item => {
+            let c = item.c;
+            let sev = item.signal;
+
+            let sevLabel = sev.level === 3 ? 'Level 3 · Critical' : (sev.level === 2 ? 'Level 2 · Major' : 'Level 1 · Minor');
+            let flag = FLAGS[c.country] || '🌍';
+            let size = String(c.valve || '').replace(c.valveBase, '').trim() || '—';
+            let translated = translateClinicalReport(c.comment);
+            let preview = translated.length > 68 ? translated.substring(0, 68).trim() + '…' : translated;
+
+            rowsHtml += `<tr>
+                <td class="tech-font" style="font-size:13px; font-weight:700; color:var(--v-deep-blue); white-space:nowrap;">${c.date}</td>
+                <td>
+                    <strong style="color:var(--v-deep-blue); font-size:14px;">${c.hospital}</strong>
+                    <div style="font-size:12px; color:var(--v-text-mutated); margin-top:4px;">${flag} ${c.country}</div>
+                    <div style="font-size:10px; font-weight:800; color:var(--v-blue); text-transform:uppercase; letter-spacing:0.5px; margin-top:4px;">${c.dist}</div>
+                </td>
+                <td>
+                    <span style="font-size:11px; font-weight:800; padding:4px 10px; border-radius:12px; ${getValveBadgeStyle(c.valveBase)}">${c.valveBase}</span>
+                    <div class="tech-font" style="font-size:13px; font-weight:700; color:var(--v-deep-blue); margin-top:6px;">${size}</div>
+                    <div class="tech-font" style="font-size:10px; color:var(--v-text-mutated); margin-top:4px;">SN ${c.serial}</div>
+                </td>
+                <td>
+                    <span class="sev-badge sev-${sev.level}">${sevLabel}</span>
+                    <span class="sev-tags">${sev.tags.join(' · ')}</span>
+                </td>
+                <td>
+                    <div class="report-chip" data-report="${escapeClinicalAttr(translated)}" data-original="${escapeClinicalAttr(c.comment)}" onmouseenter="showClinicalReport(this)" onmouseleave="hideClinicalReport()">
+                        <span class="report-chip-icon">📄</span>
+                        <span class="report-chip-text">${escapeClinicalAttr(preview)}</span>
+                    </div>
+                </td>
+            </tr>`;
+
+            clinicalCasesExport.push({
+                "Date": c.date,
+                "Country": c.country,
+                "Hospital": c.hospital,
+                "Distributor": c.dist,
+                "Valve Family": c.valveBase,
+                "Valve Size": size,
+                "Serial Number": c.serial,
+                "Severity": sevLabel,
+                "Findings": sev.tags.join(' | '),
+                "Procedural Failure": sev.isFailure ? "YES" : "NO",
+                "Pacemaker / AV Block": sev.isPPI ? "YES" : "NO",
+                "Report (EN)": translated,
+                "Original Report": c.comment
+            });
+        });
+
+        let tbody = document.querySelector('#clinical-cases-table tbody');
+        if (tbody) {
+            tbody.innerHTML = rowsHtml || `<tr><td colspan="5" class="clinical-empty">No reported occurrences for this selection. Upload a database containing a comments / observations column to populate the safety log.</td></tr>`;
+        }
+
+        let ctxEl = document.getElementById('clinical-log-context');
+        if (ctxEl) {
+            let scopeLabel = activeClinicalValve ? activeClinicalValve : 'All Families';
+            let critical = logRows.filter(r => r.signal.level === 3).length;
+            ctxEl.innerText = `(${logRows.length} reported occurrences | ${scopeLabel}${critical > 0 ? ` | ${critical} critical` : ''})`;
+        }
+
+        hideClinicalReport();
     }
 
     function selectSOPCountry(cName) {
