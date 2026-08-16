@@ -5571,7 +5571,8 @@ if (typeof window !== 'undefined') {
         .tech-font { font-family: 'Space Mono', monospace; }
         
         /* STARTUP DRAG & DROP SCREEN */
-        #startup-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--v-deep-blue); color: white; position: fixed; width: 100%; top: 0; left: 0; z-index: 99999999; }
+        /* Startup overlay skipped when embedded baselines ship with the page */
+        #startup-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--v-deep-blue); color: white; position: fixed; width: 100%; top: 0; left: 0; z-index: 99999999; }
         #startup-screen.drag-active #drop-zone { border-color: var(--v-yellow); background: rgba(250,167,74,0.1); transform: translateY(-5px); }
         #drop-zone { display: block; border: 2px dashed rgba(255,255,255,0.4); padding: 60px 120px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02); margin-top: 20px; }
         #startup-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -5801,10 +5802,10 @@ if (typeof window !== 'undefined') {
         <div style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">444 implant cases + 44 clinical problem cases pre-loaded</div>
         <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">Optional: drop xlsx to merge live updates</div>
     </label>
-    <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple />
 </div>
 
-<div class="container" id="main-app" style="display: none;">
+<div class="container" id="main-app" style="display: flex;">
+    <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" aria-hidden="true" tabindex="-1" />
     <div class="header-section">
         <div>
             <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech" class="logo">
@@ -7783,6 +7784,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             if (e.target.files?.length) handleFiles(e.target.files);
             e.target.value = '';
         });
+
+        // Hidden file input lives in #main-app; keep change handler even when startup overlay is skipped.
+        if (!document.getElementById('startup-file-input')) return;
     }
 
     // --- 3. HELPER FUNCTIONS ---
@@ -11318,12 +11322,20 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function bootApp() {
         initStartupUpload();
-        rebuildAllCasesGlobal();
-        if (allCasesGlobal.length > 0) {
-            document.getElementById('startup-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
+        try {
+            rebuildAllCasesGlobal();
+        } catch (err) {
+            console.error('LATAM OS boot rebuild failed:', err);
+        }
+        const hasEmbedded = hasEmbeddedBaseline2025() || hasEmbeddedBaseline2026()
+            || (typeof BUILTIN_PROBLEM_CASES !== 'undefined' && BUILTIN_PROBLEM_CASES.length > 0);
+        if (hasEmbedded || allCasesGlobal.length > 0) {
+            const startup = document.getElementById('startup-screen');
+            const main = document.getElementById('main-app');
+            if (startup) startup.style.display = 'none';
+            if (main) main.style.display = 'flex';
             extractFilters();
-            processData();
+            if (allCasesGlobal.length > 0) processData();
         }
     }
 
