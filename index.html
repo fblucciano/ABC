@@ -224,6 +224,28 @@
         .sop-table td { padding: 15px 10px; text-align: center; border-bottom: 1px solid var(--v-border); background: #fff; color: var(--v-deep-blue); font-weight: bold;}
         .sop-table tr:hover td { background: #f8fafc; }
         .sop-table .total-col { background: #fffdf5; color: var(--v-yellow); font-weight: bold; border-left: 2px solid var(--v-border); font-size: 16px;}
+
+        /* CLINICAL EXCELLENCE & DEVICE SAFETY */
+        .severity-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        .severity-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .sev-3 { background: #FEE2E2; color: #991B1B; }
+        .sev-3 .severity-dot { background: #EF4444; }
+        .sev-2 { background: #FFEDD5; color: #C2410C; }
+        .sev-2 .severity-dot { background: var(--v-yellow); }
+        .sev-1 { background: #DBEAFE; color: #1D4ED8; }
+        .sev-1 .severity-dot { background: #3B82F6; }
+
+        .report-tooltip-wrap { position: relative; display: inline-flex; align-items: center; gap: 6px; cursor: help; padding: 8px 14px; border: 1px solid var(--v-border); border-radius: 6px; background: #f8fafc; font-size: 12px; font-weight: 700; color: var(--v-blue); transition: 0.2s; }
+        .report-tooltip-wrap:hover { background: var(--v-deep-blue); color: #fff; border-color: var(--v-deep-blue); }
+        .report-tooltip-wrap .tooltip-box { visibility: hidden; opacity: 0; position: absolute; bottom: calc(100% + 12px); right: 0; transform: translateY(4px); width: 320px; background: var(--v-deep-blue); color: #fff; padding: 16px 18px; border-radius: 10px; font-size: 12px; font-weight: 400; line-height: 1.6; text-transform: none; letter-spacing: normal; box-shadow: 0 15px 35px rgba(0,0,0,0.3); z-index: 999999; transition: 0.2s ease; pointer-events: none; }
+        .report-tooltip-wrap:hover .tooltip-box { visibility: visible; opacity: 1; transform: translateY(0); }
+        .report-tooltip-wrap .tooltip-box::after { content: ''; position: absolute; top: 100%; right: 16px; border-width: 7px; border-style: solid; border-color: var(--v-deep-blue) transparent transparent transparent; }
+        .report-tooltip-wrap .tooltip-box .tt-label { color: var(--v-yellow); font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+        .report-tooltip-wrap .tooltip-box .tt-original { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 10px; color: rgba(255,255,255,0.55); font-style: italic; }
+
+        .clinical-mini-metric { text-align: center; flex: 1; }
+        .clinical-mini-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .clinical-mini-value { font-size: 19px; font-weight: 800; font-family: 'Space Mono', monospace; line-height: 1.2; }
     </style>
 </head>
 <body>
@@ -267,6 +289,7 @@
         <button class="tab-btn" onclick="switchTab('tab-geo', event)">02. Geo-Intelligence</button>
         <button class="tab-btn" onclick="switchTab('tab-finance', event)">03. Proctor Finance</button>
         <button class="tab-btn" onclick="switchTab('tab-sop', event)">04. S&OP & Future</button>
+        <button class="tab-btn" onclick="switchTab('tab-clinical', event)">05. Clinical Excellence</button>
     </div>
 
     <!-- GLOBAL ACTION BAR -->
@@ -502,6 +525,29 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- TAB 5: CLINICAL EXCELLENCE & DEVICE SAFETY -->
+    <div id="tab-clinical" class="tab-content">
+        <h2>Clinical Excellence & Device Safety</h2>
+        <div class="section-dash">—</div>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Portfolio-wide safety surveillance across the implanted valve population. <strong>PPI Rate</strong> tracks pacemaker/CAVB dependency, while <strong>Success Rate</strong> excludes critical procedural failures (death, embolization/migration, valve-in-valve). Connected live to the global filter engine (Year, Country & Distributor).</p>
+
+        <h2 style="margin-top: 40px;">Portfolio Safety Profile <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Valve Family to isolate the log below)</span></h2>
+        <div class="section-dash">—</div>
+        <div class="flex-center-cards" id="clinical-valve-cards"></div>
+
+        <h2 style="margin-top: 40px;">Critical Cases Intelligence Log <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Relevant intercurrences only — hover REPORT to read the translated summary)</span></h2>
+        <div class="section-dash">—</div>
+
+        <div class="table-wrapper">
+            <table id="clinical-cases-table">
+                <thead>
+                    <tr><th>Date</th><th>Location</th><th>Product</th><th>Severity</th><th>Report</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -741,6 +787,7 @@
     let activeSOPValve = null; 
     let activeSOPDistributor = null;
     let showForecastLines = true;
+    let activeClinicalValve = null;
 
     // INITIALIZE GOOGLE CHARTS
     google.charts.load('current', {'packages':['corechart']});
@@ -1247,6 +1294,170 @@
         return floors;
     }
 
+    // --- 3.5 CLINICAL EXCELLENCE & DEVICE SAFETY ENGINE ---
+
+    // Death / cardiac arrest -> Level 3 (Red) + counts as procedural FAILURE
+    const CLIN_DEATH_KEYS = ['obito', 'death', 'deceased', 'falleci', 'fallecido', 'fallecimento', 'parada cardiorrespirator', 'parada cardiaca', 'cardiac arrest', 'pcr'];
+    // Pacemaker / complete AV block -> Level 2 (Orange) + drives the PPI Rate (does NOT count as a failure)
+    const CLIN_PPI_KEYS = ['marcapasso', 'marca-passo', 'marca passo', 'pacemaker', 'bavt', 'bav total', 'av block', 'bloqueio atrioventricular total', 'complete heart block', 'chb', 'ppi'];
+    // Balloon rupture -> Level 2 (Orange)
+    const CLIN_BALLOON_KEYS = ['ruptura de balao', 'ruptura do balao', 'balao rompeu', 'balao estourou', 'balloon rupture', 'balloon burst'];
+    // Embolization / migration -> Level 2 (Orange) + counts as procedural FAILURE
+    const CLIN_EMBO_KEYS = ['emboliz', 'migrou', 'migrada', 'migrado', 'migração', 'migracao', 'migrated', 'aorta descendente', 'descending aorta'];
+    // Second valve / valve-in-valve implant -> counts as procedural FAILURE (severity handled as Level 2)
+    const CLIN_VIV_KEYS = ['valve-in-valve', 'valve in valve', 'viv', 'segunda valvula', 'segunda válvula', 'outra valvula', 'outra válvula', 'second valve'];
+    // Generic "all good" mentions - ignored unless a real critical keyword above is also present
+    const CLIN_GENERIC_OK_KEYS = ['sem complicac', 'no complication', 'uneventful', 'success', 'sucesso', 'sem intercorren', 'without complication', 'no adverse', 'sem eventos', 'bem sucedid', 'satisfactor'];
+
+    function clinCleanText(str) { return cleanStr(str); }
+
+    function clinHasKeyword(text, keys) {
+        let c = clinCleanText(text);
+        if (!c) return false;
+        return keys.some(k => c.includes(k));
+    }
+
+    // Success Rate formula: ((Total - Failures) / Total) * 100
+    function isClinicalFailure(comment) {
+        return clinHasKeyword(comment, CLIN_DEATH_KEYS) || clinHasKeyword(comment, CLIN_EMBO_KEYS) || clinHasKeyword(comment, CLIN_VIV_KEYS);
+    }
+
+    // Returns 3 (red), 2 (orange), 1 (blue), or null (no relevant intercurrence - excluded from the log)
+    function getReportSeverity(comment) {
+        let c = clinCleanText(comment);
+        if (!c || c.length < 3 || ['-', 'n/a', 'na', 'none', '0'].includes(c)) return null;
+
+        if (clinHasKeyword(comment, CLIN_DEATH_KEYS)) return 3;
+        if (clinHasKeyword(comment, CLIN_PPI_KEYS) || clinHasKeyword(comment, CLIN_BALLOON_KEYS) || clinHasKeyword(comment, CLIN_EMBO_KEYS) || clinHasKeyword(comment, CLIN_VIV_KEYS)) return 2;
+
+        // No critical/moderate keyword found - only keep it if it's not just a generic "all clear" note
+        if (clinHasKeyword(comment, CLIN_GENERIC_OK_KEYS)) return null;
+
+        return 1;
+    }
+
+    function getSeverityBadgeHTML(level) {
+        if (level === 3) return `<span class="severity-badge sev-3"><span class="severity-dot"></span>Level 3 · Critical</span>`;
+        if (level === 2) return `<span class="severity-badge sev-2"><span class="severity-dot"></span>Level 2 · Moderate</span>`;
+        return `<span class="severity-badge sev-1"><span class="severity-dot"></span>Level 1 · Minor</span>`;
+    }
+
+    // Lightweight PT/ES -> EN glossary for a quick-scan translation of the raw clinical report (fully client-side, no external API).
+    const CLIN_TRANSLATE_DICT = [
+        [/\bobito\b|\bóbito\b/gi, 'death'], [/\bfalleci[oó]?\b/gi, 'deceased'], [/\bfallecimento\b/gi, 'death'],
+        [/parada cardiorrespirat[oó]ria/gi, 'cardiac arrest'], [/parada card[ií]aca/gi, 'cardiac arrest'], [/\bpcr\b/gi, 'cardiac arrest (PCR)'],
+        [/marca[\s-]?passo/gi, 'pacemaker'], [/\bbavt\b/gi, 'complete AV block (CAVB)'], [/bloqueio atrioventricular total/gi, 'complete AV block'],
+        [/ruptura de bal[aã]o/gi, 'balloon rupture'], [/ruptura do bal[aã]o/gi, 'balloon rupture'], [/estouro do bal[aã]o/gi, 'balloon rupture'],
+        [/emboliza[cç][aã]o/gi, 'embolization'], [/embolizou/gi, 'embolized'], [/migrou/gi, 'migrated'], [/migra[cç][aã]o/gi, 'migration'],
+        [/aorta descendente/gi, 'descending aorta'], [/segunda v[aá]lvula/gi, 'second valve'], [/outra v[aá]lvula/gi, 'another valve'],
+        [/implante valv[ao] em valv[ao]/gi, 'valve-in-valve implant'],
+        [/sem complica[cç][aã]o/gi, 'no complication'], [/sem intercorr[eê]ncias?/gi, 'no intercurrence'], [/sucesso/gi, 'success'],
+        [/paciente/gi, 'patient'], [/procedimento/gi, 'procedure'], [/hospital/gi, 'hospital'], [/sangramento/gi, 'bleeding'],
+        [/hematoma/gi, 'hematoma'], [/tamponamento/gi, 'tamponade'], [/estenose/gi, 'stenosis'], [/insufici[eê]ncia/gi, 'insufficiency'],
+        [/\balta\b/gi, 'discharged'], [/est[aá]vel/gi, 'stable'], [/dissec[cç][aã]o/gi, 'dissection'], [/convers[aã]o cir[uú]rgica/gi, 'surgical conversion'],
+        [/reinterven[cç][aã]o/gi, 're-intervention'], [/acesso vascular/gi, 'vascular access'], [/av[cç]\b/gi, 'stroke'],
+        [/arritmia/gi, 'arrhythmia'], [/febre/gi, 'fever'], [/\bleve\b/gi, 'mild'], [/\bimplante\b/gi, 'implant'], [/v[aá]lvula/gi, 'valve']
+    ];
+
+    function translateReportToEnglish(comment) {
+        if (!comment) return '<em style="opacity:0.6;">No report text available.</em>';
+        let translated = String(comment);
+        CLIN_TRANSLATE_DICT.forEach(([regex, repl]) => { translated = translated.replace(regex, repl); });
+        return translated;
+    }
+
+    function toggleClinicalValveFilter(valveName) {
+        if (activeClinicalValve === valveName) activeClinicalValve = null; else activeClinicalValve = valveName;
+        renderClinical();
+    }
+
+    function renderClinical() {
+        let baseData = fullyFilteredData;
+        let families = ["Vitae", "PowerX", "Venus A", "Venus P"];
+
+        let cardsHtml = '';
+        families.forEach(fam => {
+            let famCases = baseData.filter(c => c.valveBase === fam);
+            let total = famCases.length;
+            if (total === 0) return;
+
+            let ppiCount = famCases.filter(c => clinHasKeyword(c.comment, CLIN_PPI_KEYS)).length;
+            let failCount = famCases.filter(c => isClinicalFailure(c.comment)).length;
+            let successRate = (((total - failCount) / total) * 100).toFixed(1);
+            let ppiRate = ((ppiCount / total) * 100).toFixed(1);
+
+            let isActive = activeClinicalValve === fam ? 'active-valve' : '';
+            let isDimmed = (activeClinicalValve && activeClinicalValve !== fam) ? 'dimmed' : '';
+
+            cardsHtml += `
+                <div class="ops-valve-card ${isActive} ${isDimmed}" onclick="toggleClinicalValveFilter('${fam}')">
+                    <h3 style="font-size:22px; color:var(--v-deep-blue); margin:0;">${fam}</h3>
+                    <img src="${VALVE_IMGS[fam]}" class="ops-valve-img" style="max-height:150px;">
+                    <div style="font-size:11px; font-weight:800; color:var(--v-text-mutated); text-transform:uppercase;">Volume Evaluated</div>
+                    <div class="tech-font" style="font-size:26px; font-weight:800; color:var(--v-deep-blue); margin-top:2px; line-height:1;">${total}</div>
+                    <div style="display:flex; justify-content:space-around; margin-top:18px; gap:10px; border-top:1px solid var(--v-border); padding-top:15px;">
+                        <div class="clinical-mini-metric">
+                            <div class="clinical-mini-label" style="color:var(--v-yellow);">PPI Rate</div>
+                            <div class="clinical-mini-value" style="color:var(--v-yellow);">${ppiRate}%</div>
+                        </div>
+                        <div class="clinical-mini-metric">
+                            <div class="clinical-mini-label" style="color:#059669;">Success Rate</div>
+                            <div class="clinical-mini-value" style="color:#059669;">${successRate}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        let cardContainer = document.getElementById('clinical-valve-cards');
+        if (cardContainer) cardContainer.innerHTML = cardsHtml || `<div style="color:var(--v-text-mutated); font-size:13px; padding: 20px 0;">No clinical data available for the current filter selection.</div>`;
+
+        let logCases = baseData.filter(c => {
+            if (activeClinicalValve && c.valveBase !== activeClinicalValve) return false;
+            return getReportSeverity(c.comment) !== null;
+        });
+
+        logCases.sort((a, b) => getReportSeverity(b.comment) - getReportSeverity(a.comment));
+
+        let rowsHtml = '';
+        if (logCases.length === 0) {
+            rowsHtml = `<tr><td colspan="5" style="text-align:center; color:var(--v-text-mutated); padding:40px;">No critical or relevant intercurrences found for the current filter selection.</td></tr>`;
+        } else {
+            logCases.forEach(c => {
+                let sev = getReportSeverity(c.comment);
+                let flag = FLAGS[c.country] || '🌍';
+                let translated = translateReportToEnglish(c.comment);
+                let originalEscaped = String(c.comment).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+                rowsHtml += `<tr>
+                    <td class="tech-font" style="font-weight:700; color:var(--v-deep-blue); white-space:nowrap;">${c.date}</td>
+                    <td>
+                        <div style="font-weight:700; color:var(--v-deep-blue);">${c.hospital}</div>
+                        <div style="font-size:11px; color:var(--v-text-mutated); margin-top:2px;">${flag} ${c.country} · ${c.dist}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:700; color:var(--v-blue);">${c.valveBase} ${c.size !== 'N/A' ? c.size : ''}</div>
+                        <div style="font-size:11px; color:var(--v-text-mutated); font-family:'Space Mono', monospace; margin-top:2px;">SN: ${c.serial}</div>
+                    </td>
+                    <td>${getSeverityBadgeHTML(sev)}</td>
+                    <td>
+                        <div class="report-tooltip-wrap">
+                            📄 View Report
+                            <div class="tooltip-box">
+                                <span class="tt-label">Report (Translated to English)</span>
+                                ${translated}
+                                <span class="tt-original">Original: "${originalEscaped}"</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        let tbody = document.querySelector('#clinical-cases-table tbody');
+        if (tbody) tbody.innerHTML = rowsHtml;
+    }
+
     // --- 4. DATA BUILDER ---
     async function handleFiles(files) {
         if(!files || files.length === 0) return;
@@ -1330,6 +1541,8 @@
                         if (country === 'Unknown' || country === '') return;
 
                         let dist = getSmartColumnValue(item.row, ['distributor','dist']) || 'Venus Direct (No Partner)';
+                        
+                        let comment = getSmartColumnValue(item.row, ['comment','coment','observac','relato','ocorrenc','intercorren','complicac','follow up','followup','outcome','nota','remark'], true);
                         
                         let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula']);
                         let sz = getSmartColumnValue(item.row, ['size','tamanho']); 
@@ -1433,7 +1646,7 @@
                             if (rawDateStr) dateStr = rawDateStr;
                         }
                         
-                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A' };
+                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, size: cleanSz || 'N/A', serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A', comment: comment || '' };
                         validCases.push(caseObj);
                         
                     } catch(rowErr) {}
@@ -1482,6 +1695,26 @@
         } else if (activeTabId === 'tab-sop') {
             filename = "LATAM_12Month_Forecast_Schedule";
             ws = XLSX.utils.json_to_sheet(currentSopExportData);
+            
+        } else if (activeTabId === 'tab-clinical') {
+            filename = "LATAM_Clinical_Excellence_Log";
+            let clinBase = fullyFilteredData.filter(c => {
+                if (activeClinicalValve && c.valveBase !== activeClinicalValve) return false;
+                return getReportSeverity(c.comment) !== null;
+            });
+            let exportData = clinBase.map(c => ({
+                "Date": c.date,
+                "Country": c.country,
+                "Hospital": c.hospital,
+                "Distributor": c.dist,
+                "Valve Family": c.valveBase,
+                "Size": c.size,
+                "Serial Number": c.serial,
+                "Severity Level": getReportSeverity(c.comment),
+                "Report (Original)": c.comment,
+                "Report (Translated EN)": translateReportToEnglish(c.comment).replace(/<[^>]*>/g, '')
+            }));
+            ws = XLSX.utils.json_to_sheet(exportData);
         }
 
         if (ws) {
@@ -1610,6 +1843,7 @@
             renderTrendChart();
             renderGeo(); 
             renderProctorFinance(); 
+            renderClinical();
             
             activeSOPCountry = activeCountryExpanded;
             activeSOPDistributor = null;
