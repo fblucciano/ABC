@@ -224,6 +224,36 @@
         .sop-table td { padding: 15px 10px; text-align: center; border-bottom: 1px solid var(--v-border); background: #fff; color: var(--v-deep-blue); font-weight: bold;}
         .sop-table tr:hover td { background: #f8fafc; }
         .sop-table .total-col { background: #fffdf5; color: var(--v-yellow); font-weight: bold; border-left: 2px solid var(--v-border); font-size: 16px;}
+
+        /* CLINICAL EXCELLENCE & DEVICE SAFETY */
+        .clinical-cards { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: 20px; margin: 25px 0 45px; }
+        .clinical-card { background: #fff; border: 1px solid var(--v-border); border-radius: 12px; padding: 24px; cursor: pointer; position: relative; overflow: hidden; transition: 0.25s ease; text-align: left; }
+        .clinical-card:hover { transform: translateY(-4px); border-color: var(--v-blue); box-shadow: 0 14px 28px rgba(23,20,52,0.08); }
+        .clinical-card.active-clinical { border-color: var(--v-yellow); box-shadow: 0 14px 28px rgba(250,167,74,0.16); }
+        .clinical-card.active-clinical::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--v-yellow); }
+        .clinical-card.dimmed { opacity: 0.45; }
+        .clinical-card-title { margin: 0 0 18px; color: var(--v-deep-blue); font-size: 20px; font-weight: 800; }
+        .clinical-volume { color: var(--v-text-mutated); font-size: 11px; font-weight: 800; letter-spacing: 0.7px; text-transform: uppercase; }
+        .clinical-volume strong { display: block; margin-top: 4px; color: var(--v-deep-blue); font: 800 28px 'Space Mono', monospace; letter-spacing: 0; }
+        .clinical-rates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--v-border); }
+        .clinical-rate { font-size: 10px; font-weight: 800; color: var(--v-text-mutated); text-transform: uppercase; }
+        .clinical-rate strong { display: block; margin-top: 5px; font: 800 20px 'Space Mono', monospace; }
+        .clinical-rate.ppi strong { color: #F97316; }
+        .clinical-rate.success strong { color: #059669; }
+        .clinical-table-wrapper { max-height: 560px; overflow: auto; border: 1px solid var(--v-border); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .clinical-location strong, .clinical-product strong { display: block; color: var(--v-deep-blue); margin-bottom: 4px; }
+        .clinical-meta { display: block; color: var(--v-text-mutated); font-size: 11px; line-height: 1.5; }
+        .severity-badge { display: inline-flex; align-items: center; white-space: nowrap; padding: 6px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .severity-3 { color: #991B1B; background: #FEE2E2; border: 1px solid #FCA5A5; }
+        .severity-2 { color: #9A3412; background: #FFEDD5; border: 1px solid #FDBA74; }
+        .severity-1 { color: #1E40AF; background: #DBEAFE; border: 1px solid #93C5FD; }
+        .clinical-report { position: relative; display: inline-block; max-width: 360px; color: var(--v-blue); border-bottom: 1px dashed var(--v-blue); cursor: help; line-height: 1.45; outline: none; }
+        .clinical-report-tooltip { visibility: hidden; opacity: 0; position: absolute; z-index: 1000; width: 340px; max-width: min(340px, 70vw); left: 0; bottom: calc(100% + 10px); padding: 15px 17px; color: #fff; background: var(--v-deep-blue); border-radius: 8px; box-shadow: 0 12px 30px rgba(23,20,52,0.28); font-size: 12px; font-weight: 400; line-height: 1.55; text-align: left; pointer-events: none; transition: 0.18s ease; }
+        .clinical-report-tooltip::after { content: ''; position: absolute; left: 20px; top: 100%; border: 7px solid transparent; border-top-color: var(--v-deep-blue); }
+        .clinical-report:hover .clinical-report-tooltip, .clinical-report:focus .clinical-report-tooltip { visibility: visible; opacity: 1; }
+        .clinical-empty { padding: 55px 20px; text-align: center; color: var(--v-text-mutated); font-size: 13px; }
+        @media (max-width: 1050px) { .clinical-cards { grid-template-columns: repeat(2, minmax(190px, 1fr)); } }
+        @media (max-width: 600px) { .clinical-cards { grid-template-columns: 1fr; } .clinical-report-tooltip { left: auto; right: 0; } }
     </style>
 </head>
 <body>
@@ -267,6 +297,7 @@
         <button class="tab-btn" onclick="switchTab('tab-geo', event)">02. Geo-Intelligence</button>
         <button class="tab-btn" onclick="switchTab('tab-finance', event)">03. Proctor Finance</button>
         <button class="tab-btn" onclick="switchTab('tab-sop', event)">04. S&OP & Future</button>
+        <button class="tab-btn" onclick="switchTab('tab-clinical', event)">05. Clinical Excellence</button>
     </div>
 
     <!-- GLOBAL ACTION BAR -->
@@ -502,6 +533,34 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- TAB 5: CLINICAL EXCELLENCE & DEVICE SAFETY -->
+    <div id="tab-clinical" class="tab-content">
+        <h2>Clinical Excellence &amp; Device Safety</h2>
+        <div class="section-dash">—</div>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Portfolio-level safety surveillance and critical case intelligence based on the selected reporting period.</p>
+
+        <h2 style="margin-top: 40px;">Portfolio Safety Profile <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click a valve family to filter the intelligence log)</span></h2>
+        <div class="section-dash">—</div>
+        <div id="clinical-valve-cards" class="clinical-cards"></div>
+
+        <h2>Critical Cases Intelligence Log</h2>
+        <div class="section-dash">—</div>
+        <div class="clinical-table-wrapper">
+            <table id="clinical-cases-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Product</th>
+                        <th>Severity</th>
+                        <th>Report</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -740,6 +799,7 @@
     let activeSOPCountry = null; 
     let activeSOPValve = null; 
     let activeSOPDistributor = null;
+    let activeClinicalValve = null;
     let showForecastLines = true;
 
     // INITIALIZE GOOGLE CHARTS
@@ -834,6 +894,70 @@
             }
         }
         return Array.from(vals).join(', ');
+    }
+
+    function getClinicalReportFields(row) {
+        const reportKeyTerms = ['comment', 'coment', 'observ', 'report', 'relat', 'incident', 'intercorr', 'complica', 'outcome', 'resultado'];
+        const englishKeyTerms = ['english', 'ingles', 'translated', 'translation', 'traduz'];
+        let originalReports = new Set();
+        let englishReports = new Set();
+
+        Object.keys(row).forEach(key => {
+            let normalizedKey = cleanStr(key);
+            if (!reportKeyTerms.some(term => normalizedKey.includes(term))) return;
+
+            let value = row[key];
+            if (value === undefined || value === null || String(value).trim() === '') return;
+            let target = englishKeyTerms.some(term => normalizedKey.includes(term)) ? englishReports : originalReports;
+            target.add(String(value).trim());
+        });
+
+        let report = Array.from(originalReports).join(' | ') || Array.from(englishReports).join(' | ');
+        let reportEnglish = Array.from(englishReports).join(' | ') || report;
+        return { report, reportEnglish };
+    }
+
+    function escapeHTML(value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function isClinicalPPI(report) {
+        let text = cleanStr(report);
+        return /\b(pacemaker|marcapasso|marcapasos|bavt|av block|complete heart block|atrioventricular block|bloqueio atrioventricular|bloqueo auriculoventricular)\b/.test(text);
+    }
+
+    function isClinicalFailure(report) {
+        let text = cleanStr(report);
+        return /\b(death|dead|died|obito|falleci\w*|embol\w*|migrou|migrat\w*|viv|second valve|segunda valvula|outra valvula|otra valvula|another valve|valve[\s-]in[\s-]valve)\b/.test(text)
+            || text.includes('aorta descendente')
+            || text.includes('descending aorta');
+    }
+
+    function getClinicalSeverity(report) {
+        let text = cleanStr(report);
+        if (/\b(death|dead|died|obito|falleci\w*|cardiac arrest|cardiorespiratory arrest|parada cardiorrespiratoria|paro cardiorrespiratorio)\b/.test(text)) return 3;
+        if (isClinicalPPI(text)
+            || /\b(embol\w*|migrou|migrat\w*|balloon rupture|ruptured balloon|balao rompeu|ruptura de balao|ruptura del balon)\b/.test(text)
+            || text.includes('aorta descendente')
+            || text.includes('descending aorta')) return 2;
+        return 1;
+    }
+
+    function isRelevantClinicalReport(report) {
+        let text = cleanStr(report);
+        if (!text) return false;
+        if (getClinicalSeverity(text) > 1 || isClinicalFailure(text)) return true;
+
+        let genericOnly = text
+            .replace(/\b(no|without|sem|sin)\s+(complication|complications|complicacao|complicacoes|complicacion|complicaciones|intercorrencia|intercorrencias)\b/g, ' ')
+            .replace(/\b(success|successful|successfully|sucesso|exito|exitoso|exitosamente|procedure|procedimento|procedimiento|case|caso|with|com|and|e|y)\b/g, ' ')
+            .replace(/[^a-z0-9]+/g, '');
+        return genericOnly.length > 2;
     }
 
     function parseDate(dateVal) {
@@ -1432,8 +1556,23 @@
                             let rawDateStr = getSmartColumnValue(item.row, ['date', 'data', 'procedure']);
                             if (rawDateStr) dateStr = rawDateStr;
                         }
-                        
-                        let caseObj = { date: dateStr, hospital: hosp, dist: dist, valve: valveFullName, valveBase: vName, serial: serial || 'N/A', country: country, implanter: impArr.join(', ') || 'N/A', specialist: specArr.join(', ') || 'N/A', proctor: procArr.join(', ') || 'N/A' };
+
+                        let clinicalReports = getClinicalReportFields(item.row);
+                        let caseObj = {
+                            date: dateStr,
+                            hospital: hosp,
+                            dist: dist,
+                            valve: valveFullName,
+                            valveBase: vName,
+                            size: cleanSz || 'N/A',
+                            serial: serial || 'N/A',
+                            country: country,
+                            implanter: impArr.join(', ') || 'N/A',
+                            specialist: specArr.join(', ') || 'N/A',
+                            proctor: procArr.join(', ') || 'N/A',
+                            report: clinicalReports.report,
+                            reportEnglish: clinicalReports.reportEnglish
+                        };
                         validCases.push(caseObj);
                         
                     } catch(rowErr) {}
@@ -1482,6 +1621,24 @@
         } else if (activeTabId === 'tab-sop') {
             filename = "LATAM_12Month_Forecast_Schedule";
             ws = XLSX.utils.json_to_sheet(currentSopExportData);
+        } else if (activeTabId === 'tab-clinical') {
+            filename = "LATAM_Clinical_Safety_Log";
+            let clinicalExportData = processedData
+                .filter(c => !activeClinicalValve || c.valveBase === activeClinicalValve)
+                .filter(c => isRelevantClinicalReport(`${c.report || ''} ${c.reportEnglish || ''}`))
+                .map(c => ({
+                    "Date": c.date,
+                    "Hospital": c.hospital,
+                    "Country": c.country,
+                    "Distributor": c.dist,
+                    "Valve Family": c.valveBase,
+                    "Size": c.size,
+                    "Serial": c.serial,
+                    "Severity": `Level ${getClinicalSeverity(`${c.report || ''} ${c.reportEnglish || ''}`)}`,
+                    "Report": c.report,
+                    "English Translation": c.reportEnglish
+                }));
+            ws = XLSX.utils.json_to_sheet(clinicalExportData);
         }
 
         if (ws) {
@@ -1616,6 +1773,7 @@
             updateSOPTopBarUI();
             updateSOPPriceVisibility();
             renderSOP();
+            renderClinical();
             
             let searchInput = document.getElementById('ranking-search-input');
             if(searchInput && searchInput.value) filterRankings(searchInput.value);
@@ -1628,6 +1786,89 @@
             let errAlert = document.getElementById('error-alert');
             if(errAlert) { errAlert.innerText = "🚨 Processing Error: " + masterErr.message; errAlert.style.display = 'block'; }
         }
+    }
+
+    function renderClinical() {
+        const valveFamilies = ['Vitae', 'PowerX', 'Venus A', 'Venus P'];
+        let cardsContainer = document.getElementById('clinical-valve-cards');
+        let tableBody = document.querySelector('#clinical-cases-table tbody');
+        if (!cardsContainer || !tableBody) return;
+
+        cardsContainer.innerHTML = valveFamilies.map(valveName => {
+            let familyCases = processedData.filter(caseObj => caseObj.valveBase === valveName);
+            let total = familyCases.length;
+            let ppiCases = familyCases.filter(caseObj => isClinicalPPI(`${caseObj.report || ''} ${caseObj.reportEnglish || ''}`)).length;
+            let failedCases = familyCases.filter(caseObj => isClinicalFailure(`${caseObj.report || ''} ${caseObj.reportEnglish || ''}`)).length;
+            let ppiRate = total ? ((ppiCases / total) * 100).toFixed(1) : '0.0';
+            let successRate = total ? (((total - failedCases) / total) * 100).toFixed(1) : '0.0';
+            let activeClass = activeClinicalValve === valveName ? 'active-clinical' : '';
+            let dimmedClass = activeClinicalValve && activeClinicalValve !== valveName ? 'dimmed' : '';
+
+            return `
+                <div class="clinical-card ${activeClass} ${dimmedClass}" role="button" tabindex="0"
+                     onclick="toggleClinicalValve('${valveName}')"
+                     onkeydown="if(event.key === 'Enter' || event.key === ' '){ event.preventDefault(); toggleClinicalValve('${valveName}'); }"
+                     aria-pressed="${activeClinicalValve === valveName}">
+                    <h3 class="clinical-card-title">${valveName}</h3>
+                    <div class="clinical-volume">Evaluated Volume<strong>${total}</strong></div>
+                    <div class="clinical-rates">
+                        <div class="clinical-rate ppi">PPI Rate<strong>${ppiRate}%</strong></div>
+                        <div class="clinical-rate success">Success Rate<strong>${successRate}%</strong></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        let criticalCases = processedData
+            .filter(caseObj => !activeClinicalValve || caseObj.valveBase === activeClinicalValve)
+            .filter(caseObj => isRelevantClinicalReport(`${caseObj.report || ''} ${caseObj.reportEnglish || ''}`))
+            .sort((a, b) => {
+                let toTimestamp = value => {
+                    let parts = String(value).split('/');
+                    if (parts.length !== 3) return 0;
+                    return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime() || 0;
+                };
+                return toTimestamp(b.date) - toTimestamp(a.date);
+            });
+
+        if (criticalCases.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="clinical-empty">No relevant clinical occurrences found for the current selection.</td></tr>`;
+            return;
+        }
+
+        tableBody.innerHTML = criticalCases.map(caseObj => {
+            let clinicalText = `${caseObj.report || ''} ${caseObj.reportEnglish || ''}`;
+            let severity = getClinicalSeverity(clinicalText);
+            let report = caseObj.report || caseObj.reportEnglish || 'N/A';
+            let translatedReport = caseObj.reportEnglish || report;
+            let shortReport = report.length > 105 ? `${report.substring(0, 105).trim()}…` : report;
+
+            return `
+                <tr>
+                    <td class="tech-font" style="white-space:nowrap;">${escapeHTML(caseObj.date)}</td>
+                    <td class="clinical-location">
+                        <strong>${escapeHTML(caseObj.hospital)}</strong>
+                        <span class="clinical-meta">${escapeHTML(caseObj.country)} · ${escapeHTML(caseObj.dist)}</span>
+                    </td>
+                    <td class="clinical-product">
+                        <strong>${escapeHTML(caseObj.valveBase)}</strong>
+                        <span class="clinical-meta">Size: ${escapeHTML(caseObj.size || 'N/A')} · Serial: ${escapeHTML(caseObj.serial)}</span>
+                    </td>
+                    <td><span class="severity-badge severity-${severity}">Level ${severity}</span></td>
+                    <td>
+                        <span class="clinical-report" tabindex="0" aria-label="English report: ${escapeHTML(translatedReport)}">
+                            ${escapeHTML(shortReport)}
+                            <span class="clinical-report-tooltip"><strong style="display:block; color:var(--v-yellow); margin-bottom:6px; text-transform:uppercase; font-size:10px; letter-spacing:0.6px;">English translation</strong>${escapeHTML(translatedReport)}</span>
+                        </span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function toggleClinicalValve(valveName) {
+        activeClinicalValve = activeClinicalValve === valveName ? null : valveName;
+        renderClinical();
     }
 
     function switchTab(tabId, e) {
