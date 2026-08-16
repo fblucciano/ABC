@@ -2026,9 +2026,9 @@
                 let imps = String(c.implanter).split(', ');
                 let specs = String(c.specialist).split(', ');
                 
-                imps.forEach(i => { if(i !== 'N/A') globalImplanters.add(i); });
+                imps.forEach(i => { if(i !== 'N/A' && isValidPersonName(i)) globalImplanters.add(i); });
                 if (c.valveBase === 'Venus P') {
-                    specs.forEach(s => { if(s !== 'N/A') globalVenusPSpecs.add(s); });
+                    specs.forEach(s => { if(s !== 'N/A' && isValidPersonName(s)) globalVenusPSpecs.add(s); });
                 }
             });
             
