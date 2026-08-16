@@ -1178,8 +1178,18 @@
     function updateBuiltinMemoryBanner() {
         let el = document.getElementById('builtin-memory-banner');
         if (!el) return;
-        let n = (typeof BUILTIN_PROBLEM_CASES !== 'undefined') ? BUILTIN_PROBLEM_CASES.length : 0;
-        if (n === 0) { el.style.display = 'none'; return; }
+        let n = getEmbeddedProblemCases().length;
+        if (n === 0) {
+            el.style.display = 'block';
+            el.style.background = '#fef2f2';
+            el.style.borderColor = '#fca5a5';
+            el.style.color = '#991b1b';
+            el.innerHTML = `⚠️ <strong>Embedded Clinical Memory not loaded.</strong> Ensure <code>latam-builtin-problems.js</code> is deployed alongside <code>index.html</code>, then hard-refresh. Problem Log will only show complications found in uploaded files until then.`;
+            return;
+        }
+        el.style.background = '#f5f3ff';
+        el.style.borderColor = '#c4b5fd';
+        el.style.color = '#5b21b6';
         el.style.display = 'block';
         el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases from the Consolidated LATAM Problem Report (38 reported + 5 structured signals + Panama) are always loaded. Uploading the same case again will <strong>merge</strong>, never duplicate.`;
     }
@@ -2211,12 +2221,13 @@
         let ys = new Set();
         
         allCasesGlobal.forEach(r => { 
-            let parts = String(r.date).split('/');
-            if(parts.length === 3) {
-                let yr = parseInt(parts[2], 10);
-                if (!isNaN(yr)) ys.add(yr);
-            }
+            let y = getCaseYear(r);
+            if (y !== null) ys.add(y);
         });
+
+        // Keep Time Travel aligned with normalized years (DD/MM/YY → 2026, not 26)
+        activeYears = activeYears.map(y => normalizeYear(y)).filter(y => y !== null);
+        activeYears = [...new Set(activeYears)];
 
         let yt = document.getElementById('year-toggles');
         if(yt) {
@@ -2225,6 +2236,9 @@
             
             if (activeYears.length === 0 && sortedYears.length > 0) {
                 activeYears = [...sortedYears];
+            } else {
+                activeYears = activeYears.filter(y => ys.has(y));
+                if (activeYears.length === 0 && sortedYears.length > 0) activeYears = [...sortedYears];
             }
             
             sortedYears.forEach(y => {
@@ -2367,6 +2381,7 @@
         if (opsTarget) opsTarget.style.display = tabId === 'tab-ops' ? 'block' : 'none';
 
         if(tabId === 'tab-geo' && leafletMap) { setTimeout(() => leafletMap.invalidateSize(), 100); }
+        if(tabId === 'tab-clinical') renderClinical();
     }
 
     function toggleDistributorFilter(distName) {
@@ -3852,12 +3867,25 @@
         });
     }
 
+    function getEmbeddedProblemCases() {
+        ensureBuiltinProblemRegistry();
+        let source = (typeof BUILTIN_PROBLEM_CASES !== 'undefined' && BUILTIN_PROBLEM_CASES.length)
+            ? BUILTIN_PROBLEM_CASES
+            : (typeof window !== 'undefined' && window.BUILTIN_PROBLEM_CASES?.length ? window.BUILTIN_PROBLEM_CASES : null);
+        if (source?.length) return source.map(buildCaseFromBuiltin);
+        return fileUploads[BUILTIN_REGISTRY_KEY] || [];
+    }
+
     function getClinicalProblemLog() {
-        const pass = (c) => {
+        const passYear = (c) => {
             if (activeYears.length > 0) {
                 let y = getCaseYear(c);
                 if (y === null || !activeYears.includes(y)) return false;
             }
+            return true;
+        };
+        const passOpsFilters = (c) => {
+            if (!passYear(c)) return false;
             if (activeCountryExpanded && c?.country !== activeCountryExpanded) return false;
             if (activeDistFilter && c?.dist !== activeDistFilter) return false;
             return true;
@@ -3865,8 +3893,8 @@
 
         let rows = [];
         let seen = new Set();
-        const add = (c, minLevel) => {
-            if (!c || !pass(c)) return;
+        const add = (c, minLevel, passFn) => {
+            if (!c || !passFn(c)) return;
             let key = c.id ? ('id:' + c.id) : ('dk:' + (c.dedupKey || `${c.date}|${c.hospital}|${c.serial}`));
             if (seen.has(key)) return;
             seen.add(key);
@@ -3875,14 +3903,14 @@
             if (level > 0) rows.push({ c, level });
         };
 
-        // Authoritative embedded Problem Report — always shown when period matches
-        (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(c => add(c, 1));
+        // Authoritative embedded Problem Report — year-scoped only (not hidden by Ops geo filters)
+        getEmbeddedProblemCases().forEach(c => add(c, 1, passYear));
 
-        // Upload-sourced complications with narrative / severity
+        // Upload-sourced complications inherit Operations country / distributor filters
         allCasesGlobal.forEach(c => {
             if (isStandaloneEmbeddedCase(c)) return;
             let sig = getClinicalSignals(c);
-            if (sig.level > 0) add(c, sig.level);
+            if (sig.level > 0) add(c, sig.level, passOpsFilters);
         });
 
         return rows;
@@ -4091,6 +4119,9 @@
         let tBody = document.querySelector('#critical-cases-table tbody');
         if (!cardsContainer || !tBody) return;
 
+        ensureBuiltinProblemRegistry();
+        updateBuiltinMemoryBanner();
+
         clinicalCriticalCases = [];
         clinicalExportData = [];
 
@@ -4124,7 +4155,7 @@
             if (activeCountryExpanded) inherited.push(`Country: ${activeCountryExpanded}`);
             if (activeDistFilter) inherited.push(`Distributor: ${activeDistFilter}`);
             if (inherited.length > 0) {
-                ctxBox.innerHTML = `🔗 Inherited global filters → ${inherited.join(' &nbsp;|&nbsp; ')} <span style="font-weight:400; color:var(--v-text-mutated);">(set in the Operations module)</span>`;
+                ctxBox.innerHTML = `🔗 Upload complications inherit Operations filters → ${inherited.join(' &nbsp;|&nbsp; ')} <span style="font-weight:400; color:var(--v-text-mutated);">(embedded Problem Report cases are always shown for the selected year)</span>`;
                 ctxBox.style.display = 'block';
             } else {
                 ctxBox.style.display = 'none';

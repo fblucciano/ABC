@@ -970,3 +970,4 @@ const BUILTIN_PROBLEM_CASES = [
     "_builtin": true
   }
 ];
+if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLEM_CASES;
