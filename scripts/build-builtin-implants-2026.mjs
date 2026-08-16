@@ -105,3 +105,6 @@ console.log(`Wrote ${baseline.length} cases to ${target}`);
 if (baseline.length !== 191) {
     console.warn(`Warning: expected 191 cases, got ${baseline.length}`);
 }
+
+import { spawnSync } from 'child_process';
+spawnSync('node', [path.join(repoRoot, 'scripts/inline-builtin-implants.mjs')], { stdio: 'inherit' });
