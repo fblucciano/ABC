@@ -13,6 +13,7 @@
     <!-- LIBRARIES -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="latam-builtin-implants-2025.js"></script>
+    <script src="latam-builtin-implants-2026.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -269,7 +270,7 @@
     <label id="drop-zone" for="startup-file-input">
         <div style="font-size: 50px; margin-bottom: 15px;">📥</div>
         <div style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">Drag & Drop LATAM Database</div>
-        <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv) — 2026: Implant Data + Procedures LATAM</div>
+        <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse — baselines embedded; xlsx merges live data</div>
     </label>
     <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple />
 </div>
@@ -1769,6 +1770,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let builtinClinicalFingerprints = new Set();
     const BUILTIN_REGISTRY_KEY = '__builtin_problem_report__';
     const BASELINE_2025_KEY = '__builtin_implants_2025__';
+    const BASELINE_2026_KEY = '__builtin_implants_2026__';
     
     // Arrays for EXCEL Export
     let proctorFinanceDataExport = [];
@@ -2204,35 +2206,33 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return typeof BUILTIN_IMPLANTS_2025 !== 'undefined' && BUILTIN_IMPLANTS_2025.length > 0;
     }
 
-    // Cases LATAM CSV: 253 rows for 2025 (now embedded) + 18 partial 2026 rows that must NEVER
-    // be counted — authoritative 2026 volume comes from Implant Data + Procedures xlsx only.
+    // Legacy Cases_Latam summary CSV (271 rows, 18 partial 2026) — block only that file, never xlsx uploads.
     function isCasesLatamSummaryFilename(name) {
-        return /cases[\s_.-]*latam/i.test(String(name ?? ''));
-    }
-
-    function isCasesLatamSummaryRow(caseObj) {
-        let rawId = String(caseObj?._sourceCaseId || caseObj?._caseId || '').trim();
-        return /^latam case 20\d{2}/i.test(rawId);
+        let n = String(name ?? '');
+        if (/master[\s_.-]*cases/i.test(n) || /latam[\s_.-]*master/i.test(n)) return false;
+        return /cases[\s_.-]*latam/i.test(n);
     }
 
     function isCasesLatamSummaryFile(res) {
-        if (isCasesLatamSummaryFilename(res?.filename)) return true;
-        let sample = (res?.validCases || []).slice(0, 5);
-        return sample.length > 0 && sample.every(isCasesLatamSummaryRow);
+        return isCasesLatamSummaryFilename(res?.filename);
     }
 
-    function getUploadVolumeContext(parsedFiles) {
-        let hasBaseline2025 = hasEmbeddedBaseline2025();
-        return { hasBaseline2025 };
+    function hasEmbeddedBaseline2026() {
+        return typeof BUILTIN_IMPLANTS_2026 !== 'undefined' && BUILTIN_IMPLANTS_2026.length > 0;
+    }
+
+    function getUploadVolumeContext() {
+        return {
+            hasBaseline2025: hasEmbeddedBaseline2025(),
+            hasBaseline2026: hasEmbeddedBaseline2026()
+        };
     }
 
     function shouldIncludeUploadVolumeRow(caseObj, sourceName, ctx, isCasesLatamFile) {
+        if (!isCasesLatamFile) return true;
         let year = getCaseYear(caseObj);
-        if (isCasesLatamFile || isCasesLatamSummaryRow(caseObj)) {
-            if (ctx.hasBaseline2025) return false;
-            if (year === 2026) return false;
-        }
-        if (ctx.hasBaseline2025 && year === 2025) return false;
+        if (ctx.hasBaseline2025 || ctx.hasBaseline2026) return false;
+        if (year === 2026) return false;
         return true;
     }
 
@@ -2247,14 +2247,31 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         c.proctor = normalizePersonList(c.proctor || 'N/A');
         c.hospital = stdHosp(c.hospital, c.implanter);
         c.country = anchorCountryFromHospital(c.hospital, c.country);
-        c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, 'baseline2025');
+        c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, raw._sourceCaseId || 'baseline2025');
         c._baseline2025 = true;
+        return c;
+    }
+
+    function buildCaseFromBaseline2026(raw) {
+        let c = Object.assign({}, raw);
+        c.implanter = normalizePersonList(c.implanter || 'N/A');
+        c.specialist = normalizePersonList(c.specialist || 'N/A');
+        c.proctor = normalizePersonList(c.proctor || 'N/A');
+        c.hospital = stdHosp(c.hospital, c.implanter);
+        c.country = anchorCountryFromHospital(c.hospital, c.country);
+        c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, raw._sourceCaseId || 'baseline2026');
+        c._baseline2026 = true;
         return c;
     }
 
     function ensureBuiltinImplants2025() {
         if (!hasEmbeddedBaseline2025()) return [];
         return BUILTIN_IMPLANTS_2025.map(buildCaseFromBaseline2025);
+    }
+
+    function ensureBuiltinImplants2026() {
+        if (!hasEmbeddedBaseline2026()) return [];
+        return BUILTIN_IMPLANTS_2026.map(buildCaseFromBaseline2026);
     }
 
     function updateBuiltinMemoryBanner() {
@@ -2308,12 +2325,13 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             allCasesGlobal.push(c);
         };
 
-        // Fixed 2025 master register (253 cases) — never changes after embed.
+        // Fixed master registers — 2025 (253) + 2026 (191) from reconciliation.
         ensureBuiltinImplants2025().forEach(c => pushVolumeCase(c, BASELINE_2025_KEY));
+        ensureBuiltinImplants2026().forEach(c => pushVolumeCase(c, BASELINE_2026_KEY));
 
-        // 2026+ volume = user uploads only. Embedded problem registry is clinical memory (Tab 05), not Operations volume.
+        // User uploads merge into baselines via serial+date dedup (xlsx never blocked).
         Object.entries(fileUploads).forEach(([sourceName, arr]) => {
-            if (sourceName === BUILTIN_REGISTRY_KEY || sourceName === BASELINE_2025_KEY) return;
+            if (sourceName === BUILTIN_REGISTRY_KEY || sourceName === BASELINE_2025_KEY || sourceName === BASELINE_2026_KEY) return;
             arr.forEach(raw => {
                 pushVolumeCase(raw, sourceName);
             });
@@ -3265,7 +3283,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 res.validCases = validCases;
             });
 
-            let volumeCtx = getUploadVolumeContext(results);
+            let volumeCtx = getUploadVolumeContext();
             let csvSkipNote = '';
             results.forEach((res) => {
                 let isCasesLatam = isCasesLatamSummaryFile(res);
@@ -3273,10 +3291,10 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 let filtered = filterUploadVolumeCases(res.validCases || [], res.filename, volumeCtx, isCasesLatam);
                 if (isCasesLatam && before > filtered.length) {
                     let skipped = before - filtered.length;
-                    if (volumeCtx.hasBaseline2025) {
-                        csvSkipNote = `ℹ️ Cases LATAM CSV: all ${before} rows skipped — 2025 baseline (${BUILTIN_IMPLANTS_2025.length} cases) is embedded. Upload Implant Data + Procedures for 2026 volume.`;
+                    if (volumeCtx.hasBaseline2025 || volumeCtx.hasBaseline2026) {
+                        csvSkipNote = `ℹ️ Cases LATAM summary CSV ignored (${before} rows) — master baselines embedded (${BUILTIN_IMPLANTS_2025?.length || 0} for 2025, ${BUILTIN_IMPLANTS_2026?.length || 0} for 2026).`;
                     } else {
-                        csvSkipNote = `ℹ️ Cases LATAM CSV: ${skipped} row(s) with year 2026 ignored (partial export). Operations 2026 comes from Implant Data + Procedures xlsx only.`;
+                        csvSkipNote = `ℹ️ Cases LATAM CSV: ${skipped} row(s) with year 2026 ignored (partial export). Use Implant Data + Procedures xlsx or latam_master_cases for 2026.`;
                     }
                 }
                 fileUploads[res.filename] = filtered;
@@ -4977,7 +4995,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     // Operations / S&OP implant volume — embedded 2025 baseline + user uploads (never problem-report rows)
     function isOperationsVolumeCase(c) {
-        return !!(c?._baseline2025 || c?._uploadSource);
+        return !!(c?._baseline2025 || c?._baseline2026 || c?._uploadSource);
     }
 
     function isStandaloneEmbeddedCase(c) {
@@ -5012,7 +5030,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         el.style.color = ok ? '#065f46' : '#92400e';
         el.innerHTML = ok
             ? `✅ <strong>Reconciliation match:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} master cases (per LATAM Case Reconciliation Report).`
-            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. <span style="font-weight:500;">2025 = ${hasEmbeddedBaseline2025() ? BUILTIN_IMPLANTS_2025.length + ' embedded' : 'Cases LATAM CSV'} · 2026 = Implant Data + Procedures only (Cases LATAM 2026 rows are always blocked).</span>`;
+            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. <span style="font-weight:500;">Embedded: ${BUILTIN_IMPLANTS_2025?.length || 0} (2025) + ${BUILTIN_IMPLANTS_2026?.length || 0} (2026). xlsx uploads merge by serial+date; only the legacy Cases LATAM summary CSV is blocked.</span>`;
     }
 
     function getImplantVolumeData() {
