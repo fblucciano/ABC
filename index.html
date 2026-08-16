@@ -540,7 +540,7 @@
     <div id="tab-clinical" class="tab-content">
         <h2>Clinical Excellence & Device Safety</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database plus an <strong>embedded Consolidated LATAM Problem Report (38 cases, 2025–Aug 2026)</strong>. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and auto-translations (PT / ES / 中文).</p>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database plus an <strong>embedded Consolidated LATAM Problem Report (38 cases, 2025–Aug 2026)</strong>. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and on-demand translations (choose language).</p>
         <div id="clinical-filter-context" style="display:none; background:#fffdf5; border:1px solid var(--v-yellow); border-radius:8px; padding:10px 15px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--v-deep-blue);"></div>
         <div id="builtin-memory-banner" style="background:#f5f3ff; border:1px solid #c4b5fd; border-radius:8px; padding:10px 15px; margin-bottom:14px; font-size:12px; font-weight:700; color:#5b21b6;"></div>
 
@@ -641,7 +641,7 @@
         "laura zemp": "Laura Zemp", "zemp laura": "Laura Zemp", "laura": "Laura Zemp",
         "sonia grosso": "Sonia Grosso", "grosso sonia": "Sonia Grosso", "sonia groso": "Sonia Grosso", "sonia": "Sonia Grosso",
         "mariana martinez": "Mariana Martinez", "mariana martínez": "Mariana Martinez", "martinez mariana": "Mariana Martinez", "mariana": "Mariana Martinez",
-        "francisco navarro": "Francisco Navarro", "francisco": "Francisco Navarro", "feancisco": "Francisco Navarro", "dr feancisco": "Francisco Navarro",
+        "francisco navarro": "Francisco Navarro", "feancisco": "Francisco (Unspecified)", "dr feancisco": "Francisco (Unspecified)",
         "michelle altamirano": "Michelle Altamirano", "michelle": "Michelle Altamirano",
         "alice moraes": "Alice Moraes", "alice maciel": "Alice Moraes", "alice": "Alice Moraes",
         "ariane sanchez": "Ariane Sanchez", "ariane": "Ariane Sanchez",
@@ -736,7 +736,8 @@
         // MEXICO/OTHERS
         "instituto nacional de cardiologia": "Instituto Nacional de Cardiología",
         "instituto nacional de cardiología": "Instituto Nacional de Cardiología",
-        "incor de natal": "InCor Natal", "hospital incor de natal": "InCor Natal"
+        "incor de natal": "InCor Natal", "hospital incor de natal": "InCor Natal",
+        "incor": "InCor SP", "hospital incor": "InCor SP", "instituto do coracao": "InCor SP"
     };
     const HOSPITAL_ALIASES_KEYS = Object.keys(HOSPITAL_ALIASES).sort((a, b) => b.length - a.length);
 
@@ -934,7 +935,24 @@
         });
     }
 
+    const HOSPITAL_COUNTRY_ANCHORS = {
+        "incor sp": "Brazil", "incor natal": "Brazil", "hospital incor de natal": "Brazil",
+        "instituto nacional del torax": "Chile", "hospital del torax": "Chile",
+        "sanatorio mitre": "Argentina", "funcacorr": "Argentina", "instituto cardiologico de corrientes": "Argentina"
+    };
+
+    function anchorCountryFromHospital(hospital, country) {
+        let h = cleanStr(hospital);
+        for (let [key, anchored] of Object.entries(HOSPITAL_COUNTRY_ANCHORS)) {
+            if (h.includes(cleanStr(key))) return anchored;
+        }
+        return country;
+    }
+
     function mergeClinicalMetadata(primary, donor) {
+        let donorIsBuiltin = !!(donor._builtin || donor._clinicalBuiltin);
+        let primaryIsBuiltin = !!(primary._builtin || primary._clinicalBuiltin);
+
         if (donor.commentOriginal && !primary.commentOriginal) primary.commentOriginal = donor.commentOriginal;
         if (donor.commentEn && !primary.commentEn) primary.commentEn = donor.commentEn;
         if (donor.commentLang && !primary.commentLang) primary.commentLang = donor.commentLang;
@@ -950,8 +968,19 @@
         if (donor.survival) primary.survival = donor.survival;
         if (donor.clusterIssue && !primary.clusterIssue) primary.clusterIssue = donor.clusterIssue;
         if (donor._builtin) primary._clinicalBuiltin = true;
-        mergePersonField(primary, donor, 'specialist');
-        mergePersonField(primary, donor, 'implanter');
+
+        // Embedded problem-report rows are the authority for site, country, and team identity.
+        if (donorIsBuiltin && !primaryIsBuiltin) {
+            if (donor.country) primary.country = donor.country;
+            if (donor.hospital) primary.hospital = donor.hospital;
+            if (donor.implanter && donor.implanter !== 'N/A') primary.implanter = donor.implanter;
+            if (donor.specialist && donor.specialist !== 'N/A') primary.specialist = donor.specialist;
+            primary.country = anchorCountryFromHospital(primary.hospital, primary.country);
+        } else {
+            mergePersonField(primary, donor, 'specialist');
+            mergePersonField(primary, donor, 'implanter');
+        }
+        primary.country = anchorCountryFromHospital(primary.hospital, primary.country);
     }
 
     function normalizeCommentFingerprint(text) {
@@ -1005,6 +1034,7 @@
         c.specialist = normalizePersonList(c.specialist);
         c.proctor = normalizePersonList(c.proctor || 'N/A');
         c.hospital = stdHosp(c.hospital, c.implanter);
+        c.country = anchorCountryFromHospital(c.hospital, c.country);
         if (!c.comment && c.commentOriginal) c.comment = c.commentOriginal;
         c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, raw.id || 'builtin');
         c._builtin = true;
@@ -1100,6 +1130,8 @@
 
     function implantRecordScore(c) {
         let s = 0;
+        if (c?._builtin || c?._clinicalBuiltin) s += 12;
+        if (c?.severityLabel) s += 6;
         if (c?.dist && !String(c.dist).toLowerCase().includes('venus direct')) s += 3;
         if (c?.proctor && c.proctor !== 'N/A') s += 2;
         if (c?.specialist && c.specialist !== 'N/A') s += 1;
@@ -1250,6 +1282,12 @@
         caseObj.implanter = normalizePersonList(caseObj.implanter);
         caseObj.specialist = normalizePersonList(caseObj.specialist);
         caseObj.proctor = normalizePersonList(caseObj.proctor);
+        if (caseObj.country === 'Brazil') {
+            let stripNavarro = list => list.split(', ').filter(n => n && n !== 'Francisco Navarro').join(', ');
+            caseObj.implanter = stripNavarro(caseObj.implanter) || 'N/A';
+            caseObj.specialist = stripNavarro(caseObj.specialist) || 'N/A';
+        }
+        caseObj.country = anchorCountryFromHospital(caseObj.hospital, caseObj.country);
     }
 
     function stdName(raw) {
@@ -1264,12 +1302,8 @@
         let clean_raw = cleanStr(raw);
         
         if (clean_raw.includes('incor') || clean_raw.includes('in cor')) {
-            let imp_clean = cleanStr(implanter_str);
-            if (imp_clean.includes('francisco') || imp_clean.includes('feancisco') || imp_clean.includes('bruno coutinho') || clean_raw.includes('natal')) {
-                return 'InCor Natal';
-            } else {
-                return 'InCor SP'; 
-            }
+            if (clean_raw.includes('natal')) return 'InCor Natal';
+            return 'InCor SP';
         }
         
         for (let k of HOSPITAL_ALIASES_KEYS) { if (clean_raw.includes(cleanStr(k))) return HOSPITAL_ALIASES[k]; }
@@ -1785,12 +1819,18 @@
                             impArr = filteredImp;
                         }
 
-                        // FRANCISCO NAVARRO GLOBAL EXCEPTION (CAMIR)
-                        if (impArr.includes('Francisco Navarro')) {
+                        // FRANCISCO NAVARRO GLOBAL EXCEPTION (CAMIR — Chile only)
+                        if (country === 'Chile' && impArr.includes('Francisco Navarro')) {
                             impArr = impArr.filter(name => name !== 'Francisco Navarro');
                             if (!specArr.includes('Francisco Navarro')) {
                                 specArr.push('Francisco Navarro');
                             }
+                        }
+
+                        // Francisco Navarro never operates in Brazil — strip mis-assigned aliases
+                        if (country === 'Brazil') {
+                            impArr = impArr.filter(name => name !== 'Francisco Navarro');
+                            specArr = specArr.filter(name => name !== 'Francisco Navarro');
                         }
 
                         // ARGENTINA/BRAZIL EXCEPTION 
@@ -3592,7 +3632,6 @@
 
         tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected for the selected period. The embedded Problem Report has <strong>38 cases</strong> — enable the matching year(s) in Time Travel or upload your implant DB to enrich volumes. ✅</td></tr>`;
         updateClinicalSortIcons();
-        loadAllClinicalTranslations();
     }
 
     function renderClinicalNarrativeCell(c, idx) {
@@ -3606,18 +3645,27 @@
                     <div class="narr-label">📄 Original Report (${lang})${builtinTag}</div>
                     <div class="narr-text">${escapeHtml(orig) || '—'}</div>
                 </div>
-                ${en ? `<div class="narr-block"><div class="narr-label">🇺🇸 English Reference</div><div class="narr-text">${escapeHtml(en)}</div></div>` : `<div class="narr-block" id="clin-en-${idx}"><div class="narr-label">🇺🇸 English Reference</div><div class="narr-text"><em>Translating…</em></div></div>`}
+                ${en ? `<div class="narr-block"><div class="narr-label">🇺🇸 English Reference</div><div class="narr-text">${escapeHtml(en)}</div></div>` : `<div class="narr-block" id="clin-en-${idx}"><div class="narr-label">🇺🇸 English Reference</div><div class="narr-text"><em style="color:var(--v-text-mutated);">Not available — use Translate below.</em></div></div>`}
                 <div class="narr-block">
-                    <div class="narr-label">🌐 Translations (PT · ES · 中文)</div>
-                    <div id="clin-trans-${idx}" class="narr-text"><em style="color:var(--v-text-mutated);">Loading…</em></div>
+                    <div class="narr-label">🌐 On-Demand Translation</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0 8px;">
+                        <select id="clin-lang-${idx}" class="year-pill" style="font-size:11px; padding:4px 10px; cursor:pointer;">
+                            ${CLINICAL_I18N_LANGS.map(l => `<option value="${l.code}">${l.label}</option>`).join('')}
+                        </select>
+                        <button type="button" class="year-pill" style="font-size:11px; padding:4px 12px; cursor:pointer;" onclick="translateClinicalComment(${idx})">Translate</button>
+                    </div>
+                    <div id="clin-trans-${idx}" class="narr-text"><em style="color:var(--v-text-mutated);">Select a language and click Translate.</em></div>
                 </div>
             </div>`;
     }
 
     const CLINICAL_I18N_LANGS = [
-        { code: 'pt', label: '🇧🇷 Português' },
-        { code: 'es', label: '🇪🇸 Español' },
-        { code: 'zh-CN', label: '🇨🇳 中文' }
+        { code: 'de', label: '🇩🇪 German' },
+        { code: 'he', label: '🇮🇱 Hebrew' },
+        { code: 'fr', label: '🇫🇷 French' },
+        { code: 'en', label: '🇺🇸 English' },
+        { code: 'pt', label: '🇧🇷 Portuguese' },
+        { code: 'zh-CN', label: '🇨🇳 Chinese' }
     ];
 
     async function translateClinicalText(text, target, source = 'auto') {
@@ -3628,38 +3676,39 @@
         return (data?.[0] ?? []).map(seg => seg?.[0] ?? '').join('');
     }
 
-    async function prefetchClinicalTranslations(idx) {
+    async function translateClinicalComment(idx) {
         let item = clinicalCriticalCases[idx];
-        if (!item || item.c?._translationsLoaded) return;
+        if (!item) return;
         let c = item.c;
         let orig = c.commentOriginal || c.comment || '';
         if (!orig) return;
 
-        if (!c.commentEn && c.commentLang !== 'en') {
-            try {
-                c.commentEn = await translateClinicalText(orig, 'en');
-                let enBox = document.getElementById(`clin-en-${idx}`);
-                if (enBox) enBox.querySelector('.narr-text').innerHTML = escapeHtml(c.commentEn);
-            } catch (err) { /* keep async fill below */ }
-        }
-
+        let selectEl = document.getElementById(`clin-lang-${idx}`);
+        let target = selectEl?.value || 'en';
         let box = document.getElementById(`clin-trans-${idx}`);
         if (!box) return;
-        let html = '';
-        for (let lang of CLINICAL_I18N_LANGS) {
-            try {
-                let translated = await translateClinicalText(orig, lang.code);
-                html += `<div style="margin-bottom:10px;"><strong style="font-size:11px; color:var(--v-blue);">${lang.label}</strong><div style="margin-top:4px; line-height:1.5;">${escapeHtml(translated)}</div></div>`;
-            } catch (err) {
-                html += `<div style="margin-bottom:10px; color:#991B1B; font-size:12px;">${lang.label}: unavailable</div>`;
-            }
-        }
-        box.innerHTML = html || '<em>Translation unavailable</em>';
-        c._translationsLoaded = true;
-    }
 
-    function loadAllClinicalTranslations() {
-        clinicalCriticalCases.forEach((_, idx) => prefetchClinicalTranslations(idx));
+        if (!c._manualTranslations) c._manualTranslations = {};
+        if (c._manualTranslations[target]) {
+            box.innerHTML = `<div style="line-height:1.5;">${escapeHtml(c._manualTranslations[target])}</div>`;
+            return;
+        }
+
+        let langMeta = CLINICAL_I18N_LANGS.find(l => l.code === target);
+        box.innerHTML = `<em style="color:var(--v-text-mutated);">Translating to ${langMeta?.label || target}…</em>`;
+
+        try {
+            let translated = await translateClinicalText(orig, target);
+            c._manualTranslations[target] = translated;
+            box.innerHTML = `<div style="line-height:1.5;">${escapeHtml(translated)}</div>`;
+            if (target === 'en' && !c.commentEn) {
+                c.commentEn = translated;
+                let enBox = document.getElementById(`clin-en-${idx}`);
+                if (enBox) enBox.querySelector('.narr-text').innerHTML = escapeHtml(translated);
+            }
+        } catch (err) {
+            box.innerHTML = `<span style="color:#991B1B; font-size:12px;">Translation unavailable. Check network and try again.</span>`;
+        }
     }
 
     function enterWithBuiltinProblems() {
@@ -3881,11 +3930,6 @@
             if (q) ctx.push(`"${searchEl.value.trim()}"`);
             counter.innerText = `(${visible} of ${contextTotal} cases in the selected period${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
         }
-    }
-
-    // Legacy single-language translator kept for compatibility
-    async function translateClinicalComment(idx) {
-        await prefetchClinicalTranslations(idx);
     }
 </script>
 
