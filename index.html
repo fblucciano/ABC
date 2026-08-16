@@ -542,6 +542,7 @@
         <div class="section-dash">—</div>
         <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database plus an <strong>embedded Consolidated LATAM Problem Report (38 cases, 2025–Aug 2026)</strong>. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and auto-translations (PT / ES / 中文).</p>
         <div id="clinical-filter-context" style="display:none; background:#fffdf5; border:1px solid var(--v-yellow); border-radius:8px; padding:10px 15px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--v-deep-blue);"></div>
+        <div id="builtin-memory-banner" style="background:#f5f3ff; border:1px solid #c4b5fd; border-radius:8px; padding:10px 15px; margin-bottom:14px; font-size:12px; font-weight:700; color:#5b21b6;"></div>
 
         <!-- SAFETY PROFILE PORTFOLIO CARDS -->
         <h2 style="margin-top: 30px;">Selected Period Safety Profile by Portfolio <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click on a Valve to filter the Problem Log)</span></h2>
@@ -784,6 +785,8 @@
     let processedData = []; 
     let fullyFilteredData = [];
     let fileUploads = {}; 
+    let builtinClinicalFingerprints = new Set();
+    const BUILTIN_REGISTRY_KEY = '__builtin_problem_report__';
     
     // Arrays for EXCEL Export
     let proctorFinanceDataExport = [];
@@ -1008,18 +1011,78 @@
         return c;
     }
 
+    function buildClinicalFingerprint(c) {
+        return [
+            normalizeSerialKey(c?.serial),
+            cleanStr(c?.date),
+            normalizeCommentFingerprint(c?.commentOriginal || c?.comment),
+            cleanStr(c?.implanter),
+            cleanStr(c?.specialist)
+        ].filter(Boolean).join('|');
+    }
+
+    function registerBuiltinFingerprints() {
+        builtinClinicalFingerprints = new Set();
+        if (typeof BUILTIN_PROBLEM_CASES === 'undefined') return 0;
+        BUILTIN_PROBLEM_CASES.forEach(raw => {
+            let c = buildCaseFromBuiltin(raw);
+            builtinClinicalFingerprints.add(buildClinicalFingerprint(c));
+            if (raw.id) builtinClinicalFingerprints.add('id:' + cleanStr(raw.id));
+        });
+        return builtinClinicalFingerprints.size;
+    }
+
+    function isProtectedBuiltinDuplicate(c) {
+        if (!c) return false;
+        if (c._builtin || c._clinicalBuiltin) return true;
+        let fp = buildClinicalFingerprint(c);
+        return fp && builtinClinicalFingerprints.has(fp);
+    }
+
+    function findClinicalNearDuplicateInList(list, candidate) {
+        return list.find(existing => isClinicalNearDuplicate(existing, candidate));
+    }
+
     function ensureBuiltinProblemRegistry() {
-        if (typeof BUILTIN_PROBLEM_CASES === 'undefined' || !BUILTIN_PROBLEM_CASES.length) return;
-        fileUploads['__builtin_problem_report__'] = BUILTIN_PROBLEM_CASES.map(buildCaseFromBuiltin);
+        if (typeof BUILTIN_PROBLEM_CASES === 'undefined' || !BUILTIN_PROBLEM_CASES.length) return 0;
+        registerBuiltinFingerprints();
+        fileUploads[BUILTIN_REGISTRY_KEY] = BUILTIN_PROBLEM_CASES.map(buildCaseFromBuiltin);
+        return fileUploads[BUILTIN_REGISTRY_KEY].length;
+    }
+
+    function updateBuiltinMemoryBanner() {
+        let el = document.getElementById('builtin-memory-banner');
+        if (!el) return;
+        let n = (typeof BUILTIN_PROBLEM_CASES !== 'undefined') ? BUILTIN_PROBLEM_CASES.length : 0;
+        if (n === 0) { el.style.display = 'none'; return; }
+        el.style.display = 'block';
+        el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases from the Consolidated LATAM Report (2025–Aug 2026) are always loaded. Uploading the same case again (serial + date + narrative + team) will <strong>merge</strong>, never duplicate.`;
     }
 
     function rebuildAllCasesGlobal() {
-        ensureBuiltinProblemRegistry();
+        let builtinCount = ensureBuiltinProblemRegistry();
         allCasesGlobal = [];
         let dedupMap = new Map();
-        Object.values(fileUploads).forEach(arr => {
+
+        // 1) Canonical embedded registry first — app "memory" anchor
+        (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(c => {
+            dedupMap.set(c.dedupKey, c);
+            allCasesGlobal.push(c);
+        });
+
+        // 2) User uploads merge into memory; near-duplicates are absorbed
+        Object.entries(fileUploads).forEach(([sourceName, arr]) => {
+            if (sourceName === BUILTIN_REGISTRY_KEY) return;
             arr.forEach(c => {
-                if (!c.dedupKey) { allCasesGlobal.push(c); return; }
+                let nearDup = findClinicalNearDuplicateInList(allCasesGlobal, c);
+                if (nearDup) {
+                    mergeClinicalMetadata(nearDup, c);
+                    return;
+                }
+                if (!c.dedupKey) {
+                    allCasesGlobal.push(c);
+                    return;
+                }
                 if (dedupMap.has(c.dedupKey)) {
                     mergeClinicalMetadata(dedupMap.get(c.dedupKey), c);
                     return;
@@ -1028,8 +1091,11 @@
                 allCasesGlobal.push(c);
             });
         });
+
         allCasesGlobal = consolidateClinicalBySerial(allCasesGlobal);
         allCasesGlobal = dedupeClinicalNearDuplicates(allCasesGlobal);
+        updateBuiltinMemoryBanner();
+        return builtinCount;
     }
 
     function implantRecordScore(c) {
@@ -3597,7 +3663,6 @@
     }
 
     function enterWithBuiltinProblems() {
-        ensureBuiltinProblemRegistry();
         rebuildAllCasesGlobal();
         if (allCasesGlobal.length === 0) return;
         document.getElementById('startup-screen').style.display = 'none';
@@ -3606,6 +3671,11 @@
         processData();
         switchTab('tab-clinical');
     }
+
+    // Boot embedded clinical memory as soon as the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        rebuildAllCasesGlobal();
+    });
 
     function renderClinical() {
         let cardsContainer = document.getElementById('clinical-valve-cards');
