@@ -332,6 +332,8 @@
 
     <!-- TAB 1: OPERATIONS -->
     <div id="tab-ops" class="tab-content active">
+
+        <div id="reconciliation-banner" style="display:none; background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:10px 15px; margin-bottom:18px; font-size:12px; font-weight:700; color:#92400e;"></div>
         
         <!-- HERO BANNER -->
         <div class="hero-banner">
@@ -2025,8 +2027,15 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         if (donor.clusterIssue && !primary.clusterIssue) primary.clusterIssue = donor.clusterIssue;
         if (donor._builtin || donor._clinicalBuiltin) {
             primary._clinicalBuiltin = true;
-            if (donor._builtin) primary._builtin = true;
-            if (donor.id && !primary.id) primary.id = donor.id;
+            if (donor._builtin) {
+                if (primary._builtin) {
+                    if (donor.id && !primary.id) primary.id = donor.id;
+                } else if (donor.id) {
+                    primary._builtinId = donor.id;
+                }
+            } else if (donor.id && !primary.id) {
+                primary.id = donor.id;
+            }
         }
 
         // Embedded problem-report rows are the authority for site, country, and team identity.
@@ -2067,6 +2076,34 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return false;
     }
 
+    function isBuiltinClinicalRow(c) {
+        return !!(c?._builtin || c?._clinicalBuiltin);
+    }
+
+    // Implant uploads are authoritative for Operations volume; embedded rows donate clinical fields only.
+    function preferImplantRecordOverBuiltin(implantRow, builtinRow) {
+        if (!implantRow || !builtinRow) return implantRow || builtinRow;
+        if (!isBuiltinClinicalRow(builtinRow) || isBuiltinClinicalRow(implantRow)) {
+            mergeClinicalMetadata(implantRow, builtinRow);
+            return implantRow;
+        }
+        mergeClinicalMetadata(implantRow, builtinRow);
+        delete implantRow._builtin;
+        implantRow._clinicalBuiltin = true;
+        if (builtinRow.id) implantRow._builtinId = builtinRow.id;
+        return implantRow;
+    }
+
+    function replaceCaseInList(list, oldCase, newCase) {
+        let idx = list.indexOf(oldCase);
+        if (idx >= 0) list[idx] = newCase;
+    }
+
+    function replaceCaseInDedupMap(map, oldCase, newCase) {
+        if (oldCase?.dedupKey) map.delete(oldCase.dedupKey);
+        if (newCase?.dedupKey) map.set(newCase.dedupKey, newCase);
+    }
+
     function isClinicalNearDuplicate(a, b) {
         let snA = normalizeSerialKey(a?.serial), snB = normalizeSerialKey(b?.serial);
         let sameDate = cleanStr(a?.date) && cleanStr(a?.date) === cleanStr(b?.date);
@@ -2083,10 +2120,11 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         cases.forEach(c => {
             let match = merged.find(existing => isClinicalNearDuplicate(existing, c));
             if (match) {
-                if ((c._builtin || c._clinicalBuiltin) && !(match._builtin || match._clinicalBuiltin)) {
-                    mergeClinicalMetadata(c, match);
-                    let idx = merged.indexOf(match);
-                    merged[idx] = c;
+                if (isBuiltinClinicalRow(c) && !isBuiltinClinicalRow(match)) {
+                    let replacement = preferImplantRecordOverBuiltin(match, c);
+                    merged[merged.indexOf(match)] = replacement;
+                } else if (!isBuiltinClinicalRow(c) && isBuiltinClinicalRow(match)) {
+                    merged[merged.indexOf(match)] = preferImplantRecordOverBuiltin(c, match);
                 } else {
                     mergeClinicalMetadata(match, c);
                 }
@@ -2183,9 +2221,16 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         Object.entries(fileUploads).forEach(([sourceName, arr]) => {
             if (sourceName === BUILTIN_REGISTRY_KEY) return;
             arr.forEach(c => {
+                c._uploadSource = sourceName;
                 let nearDup = findClinicalNearDuplicateInList(allCasesGlobal, c);
                 if (nearDup) {
-                    mergeClinicalMetadata(nearDup, c);
+                    if (isBuiltinClinicalRow(nearDup) && !isBuiltinClinicalRow(c)) {
+                        let replacement = preferImplantRecordOverBuiltin(c, nearDup);
+                        replaceCaseInList(allCasesGlobal, nearDup, replacement);
+                        replaceCaseInDedupMap(dedupMap, nearDup, replacement);
+                    } else {
+                        mergeClinicalMetadata(nearDup, c);
+                    }
                     return;
                 }
                 if (!c.dedupKey) {
@@ -2193,7 +2238,14 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                     return;
                 }
                 if (dedupMap.has(c.dedupKey)) {
-                    mergeClinicalMetadata(dedupMap.get(c.dedupKey), c);
+                    let existing = dedupMap.get(c.dedupKey);
+                    if (isBuiltinClinicalRow(existing) && !isBuiltinClinicalRow(c)) {
+                        let replacement = preferImplantRecordOverBuiltin(c, existing);
+                        replaceCaseInList(allCasesGlobal, existing, replacement);
+                        replaceCaseInDedupMap(dedupMap, existing, replacement);
+                    } else {
+                        mergeClinicalMetadata(existing, c);
+                    }
                     return;
                 }
                 dedupMap.set(c.dedupKey, c);
@@ -2203,9 +2255,11 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
         allCasesGlobal = consolidateClinicalBySerial(allCasesGlobal);
         allCasesGlobal = dedupeClinicalNearDuplicates(allCasesGlobal);
-        // Guarantee every embedded problem case survives upload merges
+        // Guarantee unmatched embedded problem cases survive upload merges
         (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(b => {
-            if (!allCasesGlobal.some(c => c.id && b.id && c.id === b.id)) allCasesGlobal.push(b);
+            if (!allCasesGlobal.some(c => (c.id && b.id && c.id === b.id) || c._builtinId === b.id)) {
+                allCasesGlobal.push(b);
+            }
         });
         updateBuiltinMemoryBanner();
         return builtinCount;
@@ -2222,27 +2276,34 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return s;
     }
 
-    // When implant DB and complications export disagree on hospital/date spelling,
-    // merge clinical narrative onto the implant row by valve serial and drop the shadow row
-    // so volumes are not double-counted in Tab 05.
+    // Merge cross-source rows that share the same valve serial AND procedure date (PDF reconciliation rule).
+    // Never collapse the same serial on different dates — those remain separate master cases.
     function consolidateClinicalBySerial(cases) {
-        let bySerial = new Map();
+        let bySerialDate = new Map();
         cases.forEach((c, idx) => {
             let sn = normalizeSerialKey(c.serial);
             if (!sn) return;
-            if (!bySerial.has(sn)) bySerial.set(sn, []);
-            bySerial.get(sn).push({ c, idx });
+            let key = sn + '|' + cleanStr(c.date);
+            if (!bySerialDate.has(key)) bySerialDate.set(key, []);
+            bySerialDate.get(key).push(idx);
         });
 
         let dropIdx = new Set();
-        bySerial.forEach(group => {
-            if (group.length < 2) return;
-            let primaryEntry = group.find(x => x.c._builtin || x.c._clinicalBuiltin) || group[0];
-            let primary = primaryEntry.c;
-            group.forEach(entry => {
-                if (entry === primaryEntry) return;
-                mergeClinicalMetadata(primary, entry.c);
-                if (!(entry.c._builtin || entry.c._clinicalBuiltin)) dropIdx.add(entry.idx);
+        bySerialDate.forEach(idxs => {
+            if (idxs.length < 2) return;
+            let primaryIdx = idxs.find(i => !isBuiltinClinicalRow(cases[i])) ?? idxs[0];
+            idxs.forEach(i => {
+                if (i === primaryIdx) return;
+                if (isBuiltinClinicalRow(cases[primaryIdx]) && !isBuiltinClinicalRow(cases[i])) {
+                    cases[primaryIdx] = preferImplantRecordOverBuiltin(cases[i], cases[primaryIdx]);
+                    dropIdx.add(i);
+                } else if (!isBuiltinClinicalRow(cases[primaryIdx]) && isBuiltinClinicalRow(cases[i])) {
+                    cases[primaryIdx] = preferImplantRecordOverBuiltin(cases[primaryIdx], cases[i]);
+                    dropIdx.add(i);
+                } else {
+                    mergeClinicalMetadata(cases[primaryIdx], cases[i]);
+                    dropIdx.add(i);
+                }
             });
         });
         return cases.filter((_, idx) => !dropIdx.has(idx));
@@ -3318,6 +3379,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
             renderCountryCards(processedData, getPrimaryActiveYear());
             renderOperations(); 
+            updateReconciliationBanner();
             renderTrendChart();
             renderGeo(); 
             renderProctorFinance(); 
@@ -4825,7 +4887,38 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     // Pure embedded rows (no matching implant upload) — excluded from Operations volume counts
     function isStandaloneEmbeddedCase(c) {
-        return !!(c?._builtin);
+        return !!(c?._builtin) && !c?._clinicalBuiltin;
+    }
+
+    const RECONCILIATION_TARGETS = { 2025: 253, 2026: 191, total: 444 };
+
+    function updateReconciliationBanner() {
+        let el = document.getElementById('reconciliation-banner');
+        if (!el) return;
+        if (!processedData.length) { el.style.display = 'none'; return; }
+        let counts = {};
+        processedData.forEach(c => {
+            let y = getCaseYear(c);
+            if (y) counts[y] = (counts[y] || 0) + 1;
+        });
+        let parts = [];
+        let ok = true;
+        [2026, 2025].forEach(y => {
+            if (!counts[y] && !activeYears.includes(y)) return;
+            let n = counts[y] || 0;
+            let t = RECONCILIATION_TARGETS[y];
+            if (t && n !== t) ok = false;
+            parts.push(`${y}: ${n}${t ? '/' + t : ''}`);
+        });
+        let total = processedData.length;
+        if (total !== RECONCILIATION_TARGETS.total) ok = false;
+        el.style.display = 'block';
+        el.style.background = ok ? '#ecfdf5' : '#fffbeb';
+        el.style.borderColor = ok ? '#6ee7b7' : '#fcd34d';
+        el.style.color = ok ? '#065f46' : '#92400e';
+        el.innerHTML = ok
+            ? `✅ <strong>Reconciliation match:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} master cases (per LATAM Case Reconciliation Report).`
+            : `📋 <strong>Reconciliation check:</strong> ${parts.join(' · ')} · Total ${total}/${RECONCILIATION_TARGETS.total} expected. Upload all 3 source files (Cases LATAM CSV + Implant Data 2026 + Procedures LATAM 2026) for the full reconciled register.`;
     }
 
     function getImplantVolumeData() {
