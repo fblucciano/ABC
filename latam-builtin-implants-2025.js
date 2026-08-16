@@ -3,7 +3,7 @@
 const BUILTIN_IMPLANTS_2025 = [
   {
     "date": "01/04/2025",
-    "hospital": "HONPAR",
+    "hospital": "Honpar",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L32",
@@ -27,7 +27,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "01/12/2025",
-    "hospital": "Sanatorio San Geronimo",
+    "hospital": "Sanatorio San Gerónimo",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX32",
@@ -39,7 +39,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/05/2025",
-    "hospital": "UNIVERSIDAD CATOLICA DE CHILE",
+    "hospital": "Universidad Catolica De Chile",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB29",
@@ -51,7 +51,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/05/2025",
-    "hospital": "HUMANIZA",
+    "hospital": "Humaniza",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -63,7 +63,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/06/2025",
-    "hospital": "SALVALUS",
+    "hospital": "Salvalus",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -75,7 +75,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/09/2025",
-    "hospital": "Hospital Geral de Palmas",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -87,7 +87,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/09/2025",
-    "hospital": "Hospital Geral de Palmas",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -99,7 +99,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/09/2025",
-    "hospital": "Hospital Geral de Palmas",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -135,7 +135,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/12/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -147,7 +147,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/12/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -159,7 +159,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/12/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -171,7 +171,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/03/2025",
-    "hospital": "CLINICA IMBANACO",
+    "hospital": "Clinica Imbanaco",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P28-25",
@@ -183,7 +183,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/04/2025",
-    "hospital": "PAULO SACRAMENTO",
+    "hospital": "Paulo Sacramento",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -195,7 +195,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/06/2025",
-    "hospital": "HOSPITAL RIBEIRÃO PRETO",
+    "hospital": "Hospital Ribeir�o Preto",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -207,7 +207,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/07/2025",
-    "hospital": "ICR",
+    "hospital": "Icr",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX26",
@@ -219,7 +219,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/07/2025",
-    "hospital": "ICR",
+    "hospital": "Icr",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -231,7 +231,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/09/2025",
-    "hospital": "Clínica DIME",
+    "hospital": "Clínica Dime",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus A L23",
@@ -243,7 +243,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/09/2025",
-    "hospital": "Clínica DIME",
+    "hospital": "Clínica Dime",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus A L26",
@@ -255,7 +255,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/09/2025",
-    "hospital": "Hospital Privado de Vicente López",
+    "hospital": "Hospital Privado De Vicente López",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P32-25",
@@ -267,7 +267,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/09/2025",
-    "hospital": "Instituto Cardiológico de Corrientes",
+    "hospital": "Instituto Cardiológico de Corrientes (FUNCACORR)",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P30-25",
@@ -315,7 +315,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/03/2025",
-    "hospital": "CLINICA CARDIOVID",
+    "hospital": "Clinica Cardiovid",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P34-25",
@@ -327,7 +327,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/03/2025",
-    "hospital": "CLINICA CARDIOVID",
+    "hospital": "Clinica Cardiovid",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P30-25",
@@ -339,7 +339,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/04/2025",
-    "hospital": "HOSPITAL PRIVADO DE CORDOBA",
+    "hospital": "Hospital Privado De Cordoba",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P36-25",
@@ -351,7 +351,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/06/2025",
-    "hospital": "FUNDACION FAVALORO",
+    "hospital": "Fundación Favaloro",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P32-25",
@@ -363,7 +363,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/07/2025",
-    "hospital": "Sanatório San Geronimo",
+    "hospital": "Sanatorio San Gerónimo",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -375,7 +375,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/08/2025",
-    "hospital": "IPENSA",
+    "hospital": "Ipensa",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -387,7 +387,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/08/2025",
-    "hospital": "Hospital Gutierrez",
+    "hospital": "Hospital de Niños Dr. Ricardo Gutiérrez",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P28-25",
@@ -399,7 +399,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/11/2025",
-    "hospital": "Fundacion Favaloro",
+    "hospital": "Fundación Favaloro",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -411,7 +411,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "04/12/2025",
-    "hospital": "HOSPITAL BELO HORIZONTE",
+    "hospital": "Hospital Belo Horizonte",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -423,7 +423,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "05/04/2025",
-    "hospital": "LACIC",
+    "hospital": "Lacic",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -435,7 +435,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "05/08/2025",
-    "hospital": "CLÍNICA SAN JOSÉ",
+    "hospital": "Clínica San José",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P30-25",
@@ -447,7 +447,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "05/09/2025",
-    "hospital": "Instituto nacional de cardiología",
+    "hospital": "Instituto Nacional De Cardiología",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P34-25",
@@ -459,7 +459,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "05/12/2025",
-    "hospital": "HOSPITAL AMECOR",
+    "hospital": "Hospital Amecor",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -471,7 +471,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "06/08/2025",
-    "hospital": "Instituto Nacional de Cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P30-25",
@@ -483,7 +483,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "06/08/2025",
-    "hospital": "Instituto Nacional de Cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P32-25",
@@ -495,7 +495,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "06/08/2025",
-    "hospital": "Instituto Nacional de Cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L29",
@@ -519,7 +519,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "06/10/2025",
-    "hospital": "Hospital Gutierrez",
+    "hospital": "Hospital de Niños Dr. Ricardo Gutiérrez",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -531,7 +531,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "06/10/2025",
-    "hospital": "CEMIC",
+    "hospital": "Cemic",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -543,7 +543,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "07/01/2025",
-    "hospital": "UNIVERSIDAD CATOLICA DE CHILE",
+    "hospital": "Universidad Catolica De Chile",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus P P34-25",
@@ -555,7 +555,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "07/01/2025",
-    "hospital": "LUXEMBURGO",
+    "hospital": "Luxemburgo",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -567,7 +567,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "07/01/2025",
-    "hospital": "HONPAR",
+    "hospital": "Honpar",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -579,7 +579,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "07/02/2025",
-    "hospital": "HOSPITAL BRITANICO",
+    "hospital": "Hospital Britanico",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P34-25",
@@ -591,7 +591,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "07/03/2025",
-    "hospital": "LUXEMBURGO",
+    "hospital": "Luxemburgo",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -603,7 +603,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "07/03/2025",
-    "hospital": "LUXEMBURGO",
+    "hospital": "Luxemburgo",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -639,7 +639,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/01/2025",
-    "hospital": "SANTA MARTHA",
+    "hospital": "Santa Martha",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -651,7 +651,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/04/2025",
-    "hospital": "HONPAR",
+    "hospital": "Honpar",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -663,7 +663,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/05/2025",
-    "hospital": "HOSPITAL SOR DE MARÍA LUDOVICA",
+    "hospital": "Hospital Sor De María Ludovica",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P34-25",
@@ -675,7 +675,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/07/2025",
-    "hospital": "CLÍNICA CARDIOVID",
+    "hospital": "Clínica Cardiovid",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P36-25",
@@ -687,7 +687,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/08/2025",
-    "hospital": "Instituto Nacional de Cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L26",
@@ -723,7 +723,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/08/2025",
-    "hospital": "Centro médico nacional de occidente",
+    "hospital": "Centro Médico Nacional de Occidente",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P28-25",
@@ -735,7 +735,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/08/2025",
-    "hospital": "Centro médico nacional de occidente",
+    "hospital": "Centro Médico Nacional de Occidente",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P32-25",
@@ -783,7 +783,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/10/2025",
-    "hospital": "Instituto Cardiológico de Corrientes",
+    "hospital": "Instituto Cardiológico de Corrientes (FUNCACORR)",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX23",
@@ -795,7 +795,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/12/2025",
-    "hospital": "Centro Médico Nacional la Raza",
+    "hospital": "Centro Médico Nacional La Raza",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L26",
@@ -807,7 +807,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "09/01/2025",
-    "hospital": "HOSPITAL UNIVERSITARIO AUSTRAL",
+    "hospital": "Hospital Universitario Austral",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P28-25",
@@ -819,7 +819,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "09/01/2025",
-    "hospital": "SANTA MARTHA",
+    "hospital": "Santa Martha",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -831,7 +831,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "09/06/2025",
-    "hospital": "SANATORIO LA ENTRERIANA",
+    "hospital": "Sanatorio La Entreriana",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX26",
@@ -843,7 +843,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "09/06/2025",
-    "hospital": "SANATORIO LA ENTRERIANA",
+    "hospital": "Sanatorio La Entreriana",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX26",
@@ -867,7 +867,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "09/10/2025",
-    "hospital": "CEMIC",
+    "hospital": "Cemic",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P28-25",
@@ -903,7 +903,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "09/12/2025",
-    "hospital": "Centro Médico Nacional la Raza",
+    "hospital": "Centro Médico Nacional La Raza",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L26",
@@ -915,7 +915,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/03/2025",
-    "hospital": "CLINICA DIME",
+    "hospital": "Clinica Dime",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus A L29",
@@ -927,7 +927,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/03/2025",
-    "hospital": "HSPM",
+    "hospital": "Hspm",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -939,7 +939,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/06/2025",
-    "hospital": "IMAC",
+    "hospital": "Imac",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P36-25",
@@ -963,7 +963,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/09/2025",
-    "hospital": "SALVALUS",
+    "hospital": "Salvalus",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -975,7 +975,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/11/2025",
-    "hospital": "FUNDACION FAVALORO",
+    "hospital": "Fundación Favaloro",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -987,7 +987,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/12/2025",
-    "hospital": "Sanatorio Trinidad de San Isidro",
+    "hospital": "Sanatorio Trinidad De San Isidro",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB29",
@@ -999,7 +999,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/12/2025",
-    "hospital": "Centro Médico Nacional la Raza",
+    "hospital": "Centro Médico Nacional La Raza",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L29",
@@ -1011,7 +1011,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/12/2025",
-    "hospital": "Centro Médico Nacional la Raza",
+    "hospital": "Centro Médico Nacional La Raza",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L29",
@@ -1023,7 +1023,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "10/12/2025",
-    "hospital": "HOSPITAL DO CORAÇAO",
+    "hospital": "Hospital Do Coraçao",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -1071,7 +1071,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "11/08/2025",
-    "hospital": "CLÍNICA IMBANACO",
+    "hospital": "Clínica Imbanaco",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P34-25",
@@ -1083,7 +1083,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "11/09/2025",
-    "hospital": "Fundacion Favaloro",
+    "hospital": "Fundación Favaloro",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P34-25",
@@ -1095,7 +1095,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "11/09/2025",
-    "hospital": "Fundacion Favaloro",
+    "hospital": "Fundación Favaloro",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB29",
@@ -1131,7 +1131,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "11/12/2025",
-    "hospital": "CEMIC",
+    "hospital": "Cemic",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -1143,7 +1143,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "12/03/2025",
-    "hospital": "SANATORIO LA ENTRERIANA",
+    "hospital": "Sanatorio La Entreriana",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -1155,7 +1155,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "12/08/2025",
-    "hospital": "CENTRO MEDICO DOCENTE LA TRINIDAD",
+    "hospital": "Centro Medico Docente La Trinidad",
     "country": "Venezuela",
     "dist": "GPM",
     "valve": "Venus A L29",
@@ -1167,7 +1167,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "12/11/2025",
-    "hospital": "HOSPITAL RIO NEGRO (HAPVIDA)",
+    "hospital": "Hospital Rio Negro (hapvida)",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1179,7 +1179,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "12/11/2025",
-    "hospital": "UNIMED VALADARES",
+    "hospital": "Unimed Valadares",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1191,7 +1191,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "12/11/2025",
-    "hospital": "HEMOCOR",
+    "hospital": "Hemocor",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1203,7 +1203,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "12/11/2025",
-    "hospital": "HEMOCOR",
+    "hospital": "Hemocor",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1215,7 +1215,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "13/03/2025",
-    "hospital": "FUNDACION CARDIOVASCULAR",
+    "hospital": "Fundacion Cardiovascular",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus A L32",
@@ -1263,7 +1263,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/03/2025",
-    "hospital": "ICBA",
+    "hospital": "Icba",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -1275,7 +1275,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/03/2025",
-    "hospital": "ICBA",
+    "hospital": "Icba",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -1287,7 +1287,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/04/2025",
-    "hospital": "SALVALUS",
+    "hospital": "Salvalus",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L32",
@@ -1311,7 +1311,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/10/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1323,7 +1323,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/10/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1335,7 +1335,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/10/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1347,7 +1347,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/12/2025",
-    "hospital": "INSTITUTO NACIONAL DE CARDIOLOGIA",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L29",
@@ -1359,7 +1359,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "15/10/2025",
-    "hospital": "Instituto nacional de Pediatria",
+    "hospital": "Instituto Nacional de Pediatría",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P36-25",
@@ -1371,7 +1371,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "15/10/2025",
-    "hospital": "Clínica Isamedica",
+    "hospital": "Clínica Isamédica",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -1383,7 +1383,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "15/12/2025",
-    "hospital": "INSTITUTO NACIONAL DE CARDIOLOGIA",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L29",
@@ -1395,7 +1395,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "15/12/2025",
-    "hospital": "Hospital Gutierrez",
+    "hospital": "Hospital de Niños Dr. Ricardo Gutiérrez",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P30-25",
@@ -1407,7 +1407,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "16/09/2025",
-    "hospital": "HRS",
+    "hospital": "Hrs",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1431,7 +1431,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "17/02/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1443,7 +1443,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "17/09/2025",
-    "hospital": "Instituto Nacional de Cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L26",
@@ -1455,7 +1455,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "17/10/2025",
-    "hospital": "Instituto Nacional de Cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P30-25",
@@ -1479,7 +1479,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "18/02/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -1491,7 +1491,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "18/02/2025",
-    "hospital": "HOSPITAL GERAL DE PALMAS",
+    "hospital": "Hospital Geral De Palmas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1503,7 +1503,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "18/06/2025",
-    "hospital": "CLÍNICA SAGRADA FAMILIA",
+    "hospital": "Clínica Sagrada Familia",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -1515,7 +1515,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "18/07/2025",
-    "hospital": "HPR",
+    "hospital": "Hpr",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX32",
@@ -1527,7 +1527,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "18/12/2025",
-    "hospital": "Instituto Cardiológico de Corrientes",
+    "hospital": "Instituto Cardiológico de Corrientes (FUNCACORR)",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -1587,7 +1587,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/03/2025",
-    "hospital": "HOSPITAL ANTONIO PRUDENTE",
+    "hospital": "Hospital Antonio Prudente",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1599,7 +1599,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/05/2025",
-    "hospital": "SANATORIO LA ENTRERIANA",
+    "hospital": "Sanatorio La Entreriana",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -1623,7 +1623,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/06/2025",
-    "hospital": "ICBA",
+    "hospital": "Icba",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -1635,7 +1635,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/06/2025",
-    "hospital": "ASCARDIO",
+    "hospital": "Ascardio",
     "country": "Venezuela",
     "dist": "GPM",
     "valve": "Venus A L32",
@@ -1671,7 +1671,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/09/2025",
-    "hospital": "Sanatorio 9 de Julio",
+    "hospital": "Sanatorio 9 De Julio",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -1683,7 +1683,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/12/2025",
-    "hospital": "Clínica Bazterrica",
+    "hospital": "Centro Médico Bazterrica",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -1695,7 +1695,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "20/03/2025",
-    "hospital": "HOSPITAL METROPOLITANO DJMP",
+    "hospital": "Hospital Metropolitano Djmp",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1707,7 +1707,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "20/06/2025",
-    "hospital": "ASCARDIO",
+    "hospital": "Ascardio",
     "country": "Venezuela",
     "dist": "GPM",
     "valve": "Venus Vitae AB23",
@@ -1719,7 +1719,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "20/08/2025",
-    "hospital": "INCOR",
+    "hospital": "InCor SP",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -1731,7 +1731,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "21/03/2025",
-    "hospital": "HOSPITAL DE NINOS RICARDO GUTIERREZ",
+    "hospital": "Hospital de Niños Dr. Ricardo Gutiérrez",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -1743,7 +1743,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "21/03/2025",
-    "hospital": "HOSPITAL INCOR DE NATAL",
+    "hospital": "InCor Natal",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L32",
@@ -1803,7 +1803,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "21/10/2025",
-    "hospital": "HIPOLITO GAUDENCIO DE SOUZA",
+    "hospital": "Hipolito Gaudencio De Souza",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1827,7 +1827,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "21/12/2025",
-    "hospital": "Hospital infantil privado",
+    "hospital": "Hospital Infantil Privado",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P32-25",
@@ -1839,7 +1839,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "22/02/2025",
-    "hospital": "HOSPITAL UNIMED RECIFE III",
+    "hospital": "Hospital Unimed Recife Iii",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1851,7 +1851,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "22/05/2025",
-    "hospital": "HSPM",
+    "hospital": "Hspm",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -1863,7 +1863,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "22/08/2025",
-    "hospital": "Hospital Privado de Rosario",
+    "hospital": "Hospital Privado De Rosario",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX26",
@@ -1875,7 +1875,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "22/10/2025",
-    "hospital": "Clínica Bazterrica",
+    "hospital": "Centro Médico Bazterrica",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB29",
@@ -1899,7 +1899,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "22/12/2025",
-    "hospital": "Hospital infantil privado",
+    "hospital": "Hospital Infantil Privado",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P28-25",
@@ -1923,7 +1923,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "22/12/2025",
-    "hospital": "Hospital Gutierrez",
+    "hospital": "Hospital de Niños Dr. Ricardo Gutiérrez",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -1935,7 +1935,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/01/2025",
-    "hospital": "HEMODINÂMICA SÃO LUCAS",
+    "hospital": "Hemodin�mica S�o Lucas",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -1947,7 +1947,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/01/2025",
-    "hospital": "HCI - POUSO ALEGRE",
+    "hospital": "Hci - Pouso Alegre",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -1959,7 +1959,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/04/2025",
-    "hospital": "HOSPITAL MILITAR",
+    "hospital": "Hospital Militar",
     "country": "Venezuela",
     "dist": "GPM",
     "valve": "Venus A L23",
@@ -1971,7 +1971,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/05/2025",
-    "hospital": "CLINICA SANTA SOFIA",
+    "hospital": "Clinica Santa Sofia",
     "country": "Venezuela",
     "dist": "GPM",
     "valve": "Venus A L32",
@@ -1983,7 +1983,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/06/2025",
-    "hospital": "IPENSA LA PLATA",
+    "hospital": "Ipensa La Plata",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX32",
@@ -1995,7 +1995,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/06/2025",
-    "hospital": "HOSPITAL ONIX",
+    "hospital": "Hospital Onix",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -2007,7 +2007,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/07/2025",
-    "hospital": "Hospital Unimed GV",
+    "hospital": "Hospital Unimed Gv",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -2019,7 +2019,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/09/2025",
-    "hospital": "ICR",
+    "hospital": "Icr",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -2031,7 +2031,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/09/2025",
-    "hospital": "CARDIOVID",
+    "hospital": "Cardiovid",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P32-25",
@@ -2055,7 +2055,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/12/2025",
-    "hospital": "CLINICA SAGRADA FAMILIA",
+    "hospital": "Clínica Sagrada Familia",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P28-25",
@@ -2091,7 +2091,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/12/2025",
-    "hospital": "HOSPITAL VAZ MONTEIRO",
+    "hospital": "Hospital Vaz Monteiro",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -2103,7 +2103,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/02/2025",
-    "hospital": "CLINICA SANTA ANA DE DIOS",
+    "hospital": "Clinica Santa Ana De Dios",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus A L32",
@@ -2115,7 +2115,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/07/2025",
-    "hospital": "Ciudad de la Salud",
+    "hospital": "Ciudad De La Salud",
     "country": "Panama",
     "dist": "GPM",
     "valve": "Venus A L26",
@@ -2127,7 +2127,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/07/2025",
-    "hospital": "HOSPITAL SANTA RITA",
+    "hospital": "Hospital Santa Rita",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -2139,7 +2139,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/10/2025",
-    "hospital": "Sanatório San Geronimo",
+    "hospital": "Sanatorio San Gerónimo",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -2151,7 +2151,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/10/2025",
-    "hospital": "Sanatorio San Geronimo",
+    "hospital": "Sanatorio San Gerónimo",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX32",
@@ -2175,7 +2175,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/11/2025",
-    "hospital": "INP",
+    "hospital": "Instituto Nacional de Pediatría",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P34-25",
@@ -2199,7 +2199,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/12/2025",
-    "hospital": "Instituto nacional de cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P34-25",
@@ -2211,7 +2211,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/02/2025",
-    "hospital": "FUNDACION CARDIOVASCULAR",
+    "hospital": "Fundacion Cardiovascular",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus A L29",
@@ -2223,7 +2223,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/02/2025",
-    "hospital": "HSPM",
+    "hospital": "Hspm",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -2235,7 +2235,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/06/2025",
-    "hospital": "MERIDIONAL PRAIA DA COSTA",
+    "hospital": "Meridional Praia Da Costa",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -2247,7 +2247,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/07/2025",
-    "hospital": "Ciudad de la Salud",
+    "hospital": "Ciudad De La Salud",
     "country": "Panama",
     "dist": "GPM",
     "valve": "Venus A L23",
@@ -2259,7 +2259,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/07/2025",
-    "hospital": "Ciudad de la Salud",
+    "hospital": "Ciudad De La Salud",
     "country": "Panama",
     "dist": "GPM",
     "valve": "Venus A L26",
@@ -2283,7 +2283,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/09/2025",
-    "hospital": "HOSPITAL BELO HORIZONTE",
+    "hospital": "Hospital Belo Horizonte",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -2295,7 +2295,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/11/2025",
-    "hospital": "FUNCACORR",
+    "hospital": "Instituto Cardiológico de Corrientes (FUNCACORR)",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -2319,7 +2319,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/11/2025",
-    "hospital": "SANTA CASA DE MISERICORDIA DE ITABUNA",
+    "hospital": "Santa Casa De Misericordia De Itabuna",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -2331,7 +2331,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/11/2025",
-    "hospital": "SANTA CASA DE MISERICORDIA DE ITABUNA",
+    "hospital": "Santa Casa De Misericordia De Itabuna",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -2343,7 +2343,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/11/2025",
-    "hospital": "SANTA CASA DE MISERICORDIA DE ITABUNA",
+    "hospital": "Santa Casa De Misericordia De Itabuna",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L23",
@@ -2355,7 +2355,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/02/2025",
-    "hospital": "HOSPITAL DO CORAÇÃO ALAGOANO",
+    "hospital": "Hospital Do Cora��o Alagoano",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -2367,7 +2367,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/02/2025",
-    "hospital": "HOSPITAL DO CORAÇÃO ALAGOANO",
+    "hospital": "Hospital Do Cora��o Alagoano",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -2379,7 +2379,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/03/2025",
-    "hospital": "HOSPITAL INFANTIL DE MEXICO",
+    "hospital": "Hospital Infantil De Mexico",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P30-25",
@@ -2391,7 +2391,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/03/2025",
-    "hospital": "HOSPITAL LESTE MINEIRO",
+    "hospital": "Hospital Leste Mineiro",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -2403,7 +2403,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/05/2025",
-    "hospital": "INSTITUTO NACIONAL DE CARDIOLOGIA",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P28-25",
@@ -2415,7 +2415,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/05/2025",
-    "hospital": "INSTITUTO NACIONAL DE CARDIOLOGIA",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P34-25",
@@ -2463,7 +2463,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/09/2025",
-    "hospital": "Instituto Cardiológico de Corrientes",
+    "hospital": "Instituto Cardiológico de Corrientes (FUNCACORR)",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB26",
@@ -2487,7 +2487,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/03/2025",
-    "hospital": "CENTRO MEDICO NACIONAL DE OCCIDENTE",
+    "hospital": "Centro Médico Nacional de Occidente",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P32-25",
@@ -2499,7 +2499,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/05/2025",
-    "hospital": "IMMS T1 - LEON",
+    "hospital": "Imms T1 - Leon",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P30-25",
@@ -2511,7 +2511,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/05/2025",
-    "hospital": "FUNCACOOR",
+    "hospital": "Funcacoor",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -2523,7 +2523,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/05/2025",
-    "hospital": "FUNCACOOR",
+    "hospital": "Funcacoor",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -2535,7 +2535,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/05/2025",
-    "hospital": "SANATORIO AMERICANO",
+    "hospital": "Sanatorio Americano",
     "country": "Uruguay",
     "dist": "SANYFICO",
     "valve": "Venus P P30-25",
@@ -2547,7 +2547,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/06/2025",
-    "hospital": "REAL HOSPITAL PORTUGUÊS",
+    "hospital": "Real Hospital Português",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -2571,7 +2571,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/10/2025",
-    "hospital": "Instituto nacional de pediatría",
+    "hospital": "Instituto Nacional de Pediatría",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P32-25",
@@ -2595,7 +2595,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "28/04/2025",
-    "hospital": "SANATORIO LA ENTRERIANA",
+    "hospital": "Sanatorio La Entreriana",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -2607,7 +2607,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "28/04/2025",
-    "hospital": "HOSPITAL SOR DE MARÍA LUDOVICA",
+    "hospital": "Hospital Sor De María Ludovica",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P32-25",
@@ -2619,7 +2619,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "28/05/2025",
-    "hospital": "NUESTRA SENORA DEL PILAR",
+    "hospital": "Nuestra Senora Del Pilar",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -2631,7 +2631,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "28/07/2025",
-    "hospital": "INSTITUTO NACIONAL DE CARDIOLOGIA",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L32",
@@ -2643,7 +2643,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "28/07/2025",
-    "hospital": "Instituto Nacional de Cardiologia",
+    "hospital": "Instituto Nacional De Cardiologia",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L29",
@@ -2655,7 +2655,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "28/07/2025",
-    "hospital": "Hospital Gutiérrez",
+    "hospital": "Hospital de Niños Dr. Ricardo Gutiérrez",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P32-25",
@@ -2679,7 +2679,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/01/2025",
-    "hospital": "SALVALUS",
+    "hospital": "Salvalus",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -2691,7 +2691,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/04/2025",
-    "hospital": "HOSPITAL ITALIANO SANTA FÉ",
+    "hospital": "Hospital Italiano Santa Fé",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -2703,7 +2703,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/05/2025",
-    "hospital": "SANATORIO CHIVILCOY",
+    "hospital": "Sanatorio Chivilcoy",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX29",
@@ -2715,7 +2715,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/07/2025",
-    "hospital": "Instituto Cardiológico de Corrientes",
+    "hospital": "Instituto Cardiológico de Corrientes (FUNCACORR)",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -2727,7 +2727,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/07/2025",
-    "hospital": "Centro Médico Nacional la Raza",
+    "hospital": "Centro Médico Nacional La Raza",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus A L26",
@@ -2739,7 +2739,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/07/2025",
-    "hospital": "Instituto Cardiológico de Corrientes",
+    "hospital": "Instituto Cardiológico de Corrientes (FUNCACORR)",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -2751,7 +2751,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/07/2025",
-    "hospital": "HOSPITAL BOM CLIMA",
+    "hospital": "Hospital Bom Clima",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -2775,7 +2775,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/08/2025",
-    "hospital": "CLINICA PABÓN",
+    "hospital": "Clinica Pabón",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P34-25",
@@ -2811,7 +2811,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/09/2025",
-    "hospital": "Instituto Nacional de pediatría",
+    "hospital": "Instituto Nacional de Pediatría",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P34-25",
@@ -2823,7 +2823,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "29/12/2025",
-    "hospital": "HOSPITAL SALVALUS",
+    "hospital": "Hospital Salvalus",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -2835,7 +2835,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/01/2025",
-    "hospital": "HSPM",
+    "hospital": "Hspm",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -2847,7 +2847,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/04/2025",
-    "hospital": "HOSPITAL RICARDO GUTIERREZ",
+    "hospital": "Hospital Ricardo Gutierrez",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus Vitae AB23",
@@ -2859,7 +2859,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/05/2025",
-    "hospital": "INSTITUTO NACIONAL DE PEDIATRIA",
+    "hospital": "Instituto Nacional de Pediatría",
     "country": "Mexico",
     "dist": "DDM",
     "valve": "Venus P P34-25",
@@ -2979,7 +2979,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/10/2025",
-    "hospital": "NERODINAMIA",
+    "hospital": "Nerodinamia",
     "country": "Colombia",
     "dist": "MEDINISTROS",
     "valve": "Venus P P28-25",
@@ -2991,7 +2991,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/10/2025",
-    "hospital": "Sanatorio 9 de Julio",
+    "hospital": "Sanatorio 9 De Julio",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus PowerX PowerX32",
@@ -3003,7 +3003,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "31/07/2025",
-    "hospital": "ICBA",
+    "hospital": "Icba",
     "country": "Argentina",
     "dist": "MEDICAL WORLD AS",
     "valve": "Venus P P34-25",
@@ -3015,7 +3015,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "31/10/2025",
-    "hospital": "HOSP AROLDO TOURINHO",
+    "hospital": "Hosp Aroldo Tourinho",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L29",
@@ -3027,7 +3027,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "31/10/2025",
-    "hospital": "Hospital del Ejercito San Jorge",
+    "hospital": "Hospital Del Ejercito San Jorge",
     "country": "Paraguay",
     "dist": "EMEDICAL",
     "valve": "Venus A L26",
