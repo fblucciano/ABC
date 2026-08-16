@@ -5,6 +5,7 @@
  */
 import fs from 'fs';
 import path from 'path';
+import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -106,5 +107,4 @@ if (baseline.length !== 191) {
     console.warn(`Warning: expected 191 cases, got ${baseline.length}`);
 }
 
-import { spawnSync } from 'child_process';
 spawnSync('node', [path.join(repoRoot, 'scripts/inline-builtin-implants.mjs')], { stdio: 'inherit' });
