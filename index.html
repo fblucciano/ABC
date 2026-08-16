@@ -953,7 +953,7 @@
         let text = cleanStr(report);
         return isClinicalPPI(text)
             || isClinicalFailure(text)
-            || /\b(arrest|ruptur\w*|rompeu|vazamento|leak|regurgit\w*|hematoma|bleeding|sangramento|hemorrag\w*|stroke|avc|tampon\w*|dissection|dissecc\w*|perfor\w*|shock|choque|hypotension|hipotens\w*|arrhythm\w*|arritm\w*|vascular complication|complicacao vascular|insuficiencia|failure|falha)\b/.test(text);
+            || /\b(arrest|ruptur\w*|rompeu|vazamento|leak|regurgit\w*|hematoma|bleeding|sangramento|hemorrag\w*|stroke|avc|tampon\w*|dissection|dissecc\w*|perforation|perforated|perforacao|perfur\w*|shock|choque|hypotension|hipotens\w*|arrhythm\w*|arritm\w*|vascular complication|complicacao vascular|insuficiencia|failure|falha)\b/.test(text);
     }
 
     function isRelevantClinicalReport(report) {
