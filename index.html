@@ -270,7 +270,7 @@
         <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display: none;" />
     </div>
     <button type="button" class="year-pill" onclick="enterWithBuiltinProblems()" style="margin-top: 24px; font-size: 12px; padding: 10px 18px; cursor: pointer;">📋 Continue without uploading data</button>
-    <p style="font-size: 11px; opacity: 0.55; margin-top: 10px; max-width: 520px; text-align: center;">Upload additional complication files anytime — duplicates are merged by serial, date, narrative and team.</p>
+    <p style="font-size: 11px; opacity: 0.55; margin-top: 10px; max-width: 520px; text-align: center;">Supports <strong>Implant Data</strong> (pivot exports), <strong>PROCEDURES LATAM</strong> forms (A–AL), and <strong>Cases_Latam</strong> CSV. Duplicates merge by serial, date, narrative and team.</p>
 </div>
 
 <div class="container" id="main-app" style="display: none;">
@@ -888,12 +888,20 @@
         return valveSizeSortKey(a) - valveSizeSortKey(b);
     }
 
+    function normalizeYear(y) {
+        if (y === null || y === undefined || isNaN(y)) return null;
+        y = parseInt(y, 10);
+        if (y >= 100) return y;
+        // LATAM implant exports use DD/MM/YY (e.g. 28/01/26 → 2026)
+        return y >= 50 ? 1900 + y : 2000 + y;
+    }
+
     function getCaseYear(caseObj) {
         if (!caseObj?.date) return null;
         let parts = String(caseObj.date).split('/');
         if (parts.length === 3) {
-            let y = parseInt(parts[2], 10);
-            if (!isNaN(y)) return y;
+            let y = normalizeYear(parseInt(parts[2], 10));
+            if (y !== null) return y;
         }
         let d = parseDate(caseObj.date);
         return d ? d.getFullYear() : null;
@@ -1207,7 +1215,7 @@
     // trimmed, accents stripped) before substring matching. Never throws: a malformed row
     // simply yields an empty string.
     // Exclude patterns used ONLY for person-name column matching (not date/country/serial).
-    const PERSON_COLUMN_KEY_EXCLUDE_RE = /(email|e-mail|mail|@|had\s*proctor|balloon\s*used|predilat|postdilat|paravalvular|patient\s*name|vitae\s*position|not\s*applicable|submit|timestamp)/i;
+    const PERSON_COLUMN_KEY_EXCLUDE_RE = /(email|e-mail|mail|@|had\s*proctor|proctoring|case\s*proctor|balloon\s*used|predilat|postdilat|paravalvular|patient\s*name|vitae\s*position|not\s*applicable|submit|timestamp)/i;
 
     function fuzzyColumnMatcher(row, possibleNames, joinMultiple = false, excludePatterns = null) {
         let vals = new Set();
@@ -1253,8 +1261,9 @@
 
             let parts = strVal.split(/[\/\-]/);
             if (parts.length === 3) {
-                if (parts[2].length === 4) {
-                    let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10); let p2 = parseInt(parts[2], 10);
+                if (parts[2].length === 4 || parts[2].length === 2) {
+                    let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10); let p2 = normalizeYear(parseInt(parts[2], 10));
+                    if (p2 === null) return null;
                     let d, m;
                     if (p1 > 12) { d = p1; m = p0; }        // second slot cannot be a month -> MDY
                     else if (p0 > 12) { d = p0; m = p1; }   // first slot cannot be a month -> DMY
@@ -1282,7 +1291,7 @@
             try {
                 let raw = fuzzyColumnMatcher(row, ['procedure date', 'proceduredate', 'date', 'data', 'procedure']);
                 let parts = String(raw ?? '').trim().split(/[\/\-]/);
-                if (parts.length === 3 && parts[2]?.length === 4) {
+                if (parts.length === 3 && (parts[2]?.length === 4 || parts[2]?.length === 2)) {
                     let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10);
                     if (!isNaN(p0) && !isNaN(p1)) {
                         if (p0 > 12 && p1 <= 12) dmyEvidence++;
@@ -1717,6 +1726,146 @@
         return floors;
     }
 
+    function pickWorkbookSheet(wb, filename = '') {
+        const fn = cleanStr(filename);
+        if (wb.SheetNames.includes('LATAM')) return 'LATAM';
+        // Implant Data pivot exports often keep the flat table on the first/largest sheet
+        if (fn.includes('implant data') || fn.includes('procedures latam')) {
+            let best = wb.SheetNames[0], bestScore = -1;
+            wb.SheetNames.forEach(name => {
+                let rows = sheetToRowObjects(wb.Sheets[name]);
+                let score = rows.length;
+                if (rows.length > 0) {
+                    let keys = Object.keys(rows[0]).map(cleanStr);
+                    if (keys.some(k => k.includes('country'))) score += 50;
+                    if (keys.some(k => k.includes('hospital'))) score += 50;
+                    if (keys.some(k => k.includes('case id') || k.includes('caseid'))) score += 30;
+                    if (keys.some(k => k.includes('proctor'))) score += 20;
+                    if (keys.some(k => k.includes('valve size') || k === 'size')) score += 20;
+                }
+                if (score > bestScore) { bestScore = score; best = name; }
+            });
+            return best;
+        }
+        let best = wb.SheetNames[0], bestCount = 0;
+        wb.SheetNames.forEach(name => {
+            let count = sheetToRowObjects(wb.Sheets[name]).length;
+            if (count > bestCount) { bestCount = count; best = name; }
+        });
+        return best;
+    }
+
+    // Pivot exports may place the real header a few rows below row 1 — scan for Country + Hospital.
+    function sheetToRowObjects(sheet) {
+        if (!sheet) return [];
+        let matrix = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1 });
+        if (!matrix || matrix.length === 0) return [];
+
+        let headerIdx = -1;
+        for (let i = 0; i < Math.min(matrix.length, 25); i++) {
+            let row = (matrix[i] || []).map(c => cleanStr(c));
+            let hasCountry = row.some(c => c === 'country' || c.includes('country'));
+            let hasHospital = row.some(c => c === 'hospital' || c.includes('hospital') || c.includes('centro'));
+            let hasDate = row.some(c => c === 'date' || c.includes('procedure date') || c.includes('data'));
+            if (hasCountry && (hasHospital || hasDate)) { headerIdx = i; break; }
+        }
+
+        if (headerIdx >= 0) {
+            let headers = matrix[headerIdx].map(h => String(h ?? '').trim());
+            let out = [];
+            for (let r = headerIdx + 1; r < matrix.length; r++) {
+                let rowArr = matrix[r] || [];
+                if (!rowArr.some(cell => String(cell ?? '').trim() !== '')) continue;
+                let obj = {};
+                headers.forEach((h, idx) => {
+                    if (!h) return;
+                    obj[h] = rowArr[idx] ?? '';
+                });
+                out.push(obj);
+            }
+            if (out.length > 0) return out;
+        }
+
+        return XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    }
+
+    function getImplantSerialFromRow(row) {
+        let serial = getSmartColumnValue(row, ['serial n', 'serial no', 'serial number', 'valve serial number', 'valve serial', 'serial', 'sn']);
+        if (!serial) serial = getSmartColumnValue(row, ['lot n', 'lote', 'lot number']);
+        return serial;
+    }
+
+    function getProcedureCommentFromRow(row) {
+        let direct = getSmartColumnValue(row, [
+            'complication', 'complica', 'comment', 'coment', 'observa', 'relato',
+            'event description', 'descri', 'notes', 'remark', 'feedback', 'narrative',
+            'please describe', 'additional comments', 'case comments', 'comments'
+        ], true);
+        if (direct) return direct;
+
+        // PROCEDURES LATAM form exports: narrative often lives in the last column (e.g. column AL)
+        let keys = Object.keys(row ?? {});
+        for (let i = keys.length - 1; i >= 0; i--) {
+            let ck = cleanStr(keys[i]);
+            if (/(comment|coment|observa|relato|feedback|describe|narrative|nota|remark|event)/.test(ck)) {
+                let v = String(row[keys[i]] ?? '').trim();
+                if (v.length > 2) return v;
+            }
+        }
+        for (let i = keys.length - 1; i >= 0; i--) {
+            let ck = cleanStr(keys[i]);
+            if (/(timestamp|email|country|hospital|distributor|case id|date|proctor|implanter|specialist|product|valve|serial|lot|delivery|size|select)/.test(ck)) continue;
+            let v = String(row[keys[i]] ?? '').trim();
+            if (v.length > 25 && !/^(yes|no|true|false|n\/a)$/i.test(v)) return v;
+        }
+        return '';
+    }
+
+    function parseValveFromRow(row) {
+        let valveRaw = getSmartColumnValue(row, ['product', 'valve', 'produto', 'valvula', 'select']);
+        let sz = getSmartColumnValue(row, ['valve size', 'size', 'tamanho']);
+
+        let vStr = String(valveRaw).toUpperCase().replace(/_/g, ' ').trim();
+        let vName = 'Venus A';
+        if (vStr.includes('POWERX') || vStr.includes('POWER X')) vName = 'PowerX';
+        else if (vStr.includes('VITAE') || vStr.includes('VENUS VITAE')) vName = 'Vitae';
+        else if (vStr.includes('VENUS_P') || vStr.includes('VENUS P') || vStr.includes('VENUSP') || vStr.includes('PULMONAR')) vName = 'Venus P';
+        else if (vStr.includes('VENUS A') || vStr.includes('VENUSA') || vStr === 'VENUS' || vStr.includes('VENUS')) vName = 'Venus A';
+
+        let cleanSz = String(sz || '').trim();
+        if (!cleanSz) {
+            let inline = String(valveRaw).replace(/_/g, ' ');
+            let m = inline.match(/\b(L?\d{2,3}|AB\d{2}|P\d{2}[-/]\d{2})\b/i);
+            if (m) cleanSz = m[1];
+        }
+        cleanSz = cleanSz.replace(new RegExp(vName.replace(' ', '\\s*'), 'i'), '').trim();
+        if (vName === 'PowerX' && cleanSz.toUpperCase().startsWith('POWERX')) cleanSz = cleanSz.replace(/POWERX/i, '').trim();
+        cleanSz = cleanSz.replace(/^venus\s*a/i, '').replace(/^venus\s*p/i, '').replace(/^powerx/i, '').replace(/^vitae/i, '').trim();
+
+        return { vName, valveFullName: vName + (cleanSz ? ' ' + cleanSz : '') };
+    }
+
+    function getProctorNamesFromRow(row) {
+        let procRawStr = getSmartColumnValue(row, ['proctor name', 'proctor'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
+        let procArr = procRawStr.split(PERSON_SPLIT_RE).map(stdName).filter(isValidPersonName);
+
+        // Implant Data: "1 case proctoring" = TRUE but Proctor cell may still hold the name
+        if (procArr.length === 0) {
+            let proctoringFlag = getSmartColumnValue(row, ['case proctoring', 'proctoring', 'had proctor']);
+            if (/^(true|yes|sim|1)$/i.test(String(proctoringFlag).trim())) {
+                for (let key of Object.keys(row ?? {})) {
+                    let ck = cleanStr(key);
+                    if (ck === 'proctor' || ck.endsWith(' proctor')) {
+                        let v = String(row[key] ?? '').trim();
+                        if (isValidPersonName(v)) procArr.push(stdName(v));
+                        break;
+                    }
+                }
+            }
+        }
+        return procArr;
+    }
+
     // --- 4. DATA BUILDER ---
     async function handleFiles(files) {
         if(!files || files.length === 0) return;
@@ -1736,9 +1885,11 @@
                         try {
                             let wb = isCSV
                                 ? XLSX.read(ev.target.result, { type: 'string' })
-                                : XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-                            let sName = wb.SheetNames.includes('LATAM') ? 'LATAM' : wb.SheetNames[0];
-                            let rawData = XLSX.utils.sheet_to_json(wb.Sheets[sName], { defval: "" });
+                                : XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
+                            let sName = pickWorkbookSheet(wb, file.name);
+                            let rawData = isCSV
+                                ? XLSX.utils.sheet_to_json(wb.Sheets[sName], { defval: "" })
+                                : sheetToRowObjects(wb.Sheets[sName]);
                             if (!rawData || rawData.length === 0) {
                                 reject(new Error(file.name + ': no rows found'));
                                 return;
@@ -1820,44 +1971,20 @@
 
                         let dist = getSmartColumnValue(item.row, ['distributor','dist']) || 'Venus Direct (No Partner)';
                         
-                        // 'select' covers form exports ("PROCEDURES LATAM") where the product lives in a "Select" question column
-                        let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula', 'select']);
-                        let sz = getSmartColumnValue(item.row, ['size','tamanho']); 
-                        // Flexible serial mapping: "Serial N°" / "Valve Serial Number" / "Valve Lot Number:" / "LOT N°"
-                        let serial = getSmartColumnValue(item.row, ['valve serial number', 'valve serial', 'serial', 'sn', 'lot n', 'lote']);
-                        // Clinical narrative / adverse-event fields (Tab 05)
-                        let comment = getSmartColumnValue(item.row, ['complication','complica','comment','coment','observa','relato','event description','descri','notes','remark','feedback','narrative'], true);
+                        let { vName, valveFullName } = parseValveFromRow(item.row);
+                        let serial = getImplantSerialFromRow(item.row);
+                        let comment = getProcedureCommentFromRow(item.row);
                         let severityLabel = getSmartColumnValue(item.row, ['severity','severidade','risk level']);
                         let survival = getSmartColumnValue(item.row, ['survival','sobrevida','patient outcome','outcome']);
                         let clusterIssue = getSmartColumnValue(item.row, ['cluster','top issue','issue type']);
                         if (!comment && clusterIssue) comment = clusterIssue;
-                        
-                        let vStr = String(valveRaw).toUpperCase();
-                        let vName = 'Venus A';
-                        if (vStr.includes('POWERX')) vName = 'PowerX'; 
-                        else if (vStr.includes('VITAE')) vName = 'Vitae'; 
-                        else if (vStr.includes('VENUS_P') || vStr.includes('VENUS P') || vStr.includes('VENUSP') || vStr.includes('PULMONAR')) vName = 'Venus P';
 
-                        let cleanSz = String(sz).replace(new RegExp(vName.replace(' ', '\\s*'), 'i'), '').trim();
-                        if (vName === 'PowerX' && cleanSz.toUpperCase().startsWith('POWERX')) {
-                             cleanSz = cleanSz.replace(/POWERX/i, '').trim();
-                        }
-                        cleanSz = cleanSz.replace(/^venus\s*a/i, '').replace(/^venus\s*p/i, '').replace(/^powerx/i, '').replace(/^vitae/i, '').trim();
-
-                        let valveFullName = vName + (cleanSz ? ' ' + cleanSz : '');
-
-                        let validName = x => {
-                            let cl = cleanStr(x);
-                            return cl && !['false', 'true', 'n/a', 'na', 'nan', 'load', 'loader', '0', '-'].includes(cl) && !/^\d+$/.test(cl);
-                        };
-
-                        let procRawStr = getSmartColumnValue(item.row, ['proctor name', 'proctor'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
+                        let procArr = getProctorNamesFromRow(item.row);
                         let impRawStr = getSmartColumnValue(item.row, ['first operator', 'implanter name', 'implanter', 'operator name', 'medico'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
                         let specRawStr = getSmartColumnValue(item.row, ['clinical specialist', 'crimper', 'especialista'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
 
                         let impArr = impRawStr.split(PERSON_SPLIT_RE).map(stdName).filter(isValidPersonName);
                         let specArr = specRawStr.split(PERSON_SPLIT_RE).map(stdName).filter(isValidPersonName);
-                        let procArr = procRawStr.split(PERSON_SPLIT_RE).map(stdName).filter(isValidPersonName);
 
                         // --- VENUS P CLINICAL RULE ---
                         // For Venus P, the Proctor necessarily acted on the technical valve assembly (Specialist role)
@@ -1926,7 +2053,8 @@
                         
                         let dateStr = 'N/A';
                         if (item.dObj) {
-                            dateStr = String(item.dObj.getDate()).padStart(2, '0') + '/' + String(item.dObj.getMonth() + 1).padStart(2, '0') + '/' + item.rowYear;
+                            let yr = normalizeYear(item.rowYear ?? item.dObj.getFullYear());
+                            dateStr = String(item.dObj.getDate()).padStart(2, '0') + '/' + String(item.dObj.getMonth() + 1).padStart(2, '0') + '/' + yr;
                         } else {
                             let rawDateStr = getSmartColumnValue(item.row, ['procedure date', 'proceduredate', 'date', 'data', 'procedure']);
                             if (rawDateStr) dateStr = rawDateStr;
@@ -1936,7 +2064,7 @@
                         
                         // GLOBAL DEDUPLICATION KEY: Serial Number + Hospital + Date
                         // (falls back to Physician + Valve + source Case ID when the source has no serial)
-                        let sourceCaseId = getSmartColumnValue(item.row, ['case id', 'caseid', 'case n', 'id']);
+                        let sourceCaseId = getSmartColumnValue(item.row, ['case id', 'caseid', 'case n', 'latam case', 'id']);
                         caseObj.dedupKey = buildDedupKey(caseObj.serial, hosp, dateStr, caseObj.implanter, valveFullName, sourceCaseId);
                         validCases.push(caseObj);
                         
