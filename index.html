@@ -95,8 +95,9 @@
         .grid-2-finance { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; }
         .flex-center-cards { display: flex; justify-content: center; align-items: stretch; gap: 20px; margin-bottom: 40px; width: 100%; flex-wrap: wrap;}
         
-        /* S&OP CART FLEX ALIGNMENT (CENTERED) */
-        .sop-cart-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; width: 100%; align-items: flex-start;}
+        /* S&OP CART — 2 valve cards per row */
+        .sop-cart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; width: 100%; align-items: start; }
+        @media (max-width: 1100px) { .sop-cart-grid { grid-template-columns: 1fr; } }
         
         /* COUNTRY CARDS */
         .country-cards-wrapper { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; justify-content: center; } 
@@ -873,6 +874,42 @@
         return 'Venus A';
     }
 
+    function valveSizeSortKey(label) {
+        let s = String(label ?? '').toUpperCase().trim();
+        let vBase = getValveBaseFromSize(s);
+        let fam = { 'Vitae': 1, 'PowerX': 2, 'Venus A': 3, 'Venus P': 4 }[vBase] || 9;
+        let nums = s.match(/\d+/g) || [];
+        let primary = nums[0] ? parseInt(nums[0], 10) : 0;
+        let secondary = nums[1] ? parseInt(nums[1], 10) : 0;
+        return fam * 100000 + primary * 100 + secondary;
+    }
+
+    function compareValveSizes(a, b) {
+        return valveSizeSortKey(a) - valveSizeSortKey(b);
+    }
+
+    function getCaseYear(caseObj) {
+        if (!caseObj?.date) return null;
+        let parts = String(caseObj.date).split('/');
+        if (parts.length === 3) {
+            let y = parseInt(parts[2], 10);
+            if (!isNaN(y)) return y;
+        }
+        let d = parseDate(caseObj.date);
+        return d ? d.getFullYear() : null;
+    }
+
+    function resolveOfficialProctor(rawName) {
+        if (!rawName || !isValidPersonName(rawName)) return null;
+        let normalized = stdName(rawName);
+        let cleanP = cleanStr(normalized);
+        for (let o of OFFICIAL_PROCTORS) {
+            let cleanO = cleanStr(o);
+            if (cleanP === cleanO || cleanP.includes(cleanO) || cleanO.includes(cleanP)) return o;
+        }
+        return null;
+    }
+
     function getDS(valveName) {
         let name = String(valveName).toUpperCase();
         if (name.includes('VENUS A') || name.includes('VENUSA')) {
@@ -1243,7 +1280,7 @@
         let dmyEvidence = 0, mdyEvidence = 0;
         (rawData ?? []).forEach(row => {
             try {
-                let raw = fuzzyColumnMatcher(row, ['date', 'data', 'procedure']);
+                let raw = fuzzyColumnMatcher(row, ['procedure date', 'proceduredate', 'date', 'data', 'procedure']);
                 let parts = String(raw ?? '').trim().split(/[\/\-]/);
                 if (parts.length === 3 && parts[2]?.length === 4) {
                     let p0 = parseInt(parts[0], 10); let p1 = parseInt(parts[1], 10);
@@ -1428,8 +1465,8 @@
             if(['Paraguay', 'Uruguay', 'Panama'].includes(c.country)) return;
             
             if(activeYears.length > 0) {
-                 let yr = parseInt(c.date.split('/')[2], 10);
-                 if (!activeYears.includes(yr)) return;
+                 let yr = getCaseYear(c);
+                 if (!yr || !activeYears.includes(yr)) return;
             }
 
             if(!hist[c.country]) hist[c.country] = { rev: 0, units: 0, dists: {} };
@@ -1567,12 +1604,12 @@
         });
 
         let html = '';
-        Object.keys(familyGroups).sort().forEach(vBase => {
+        Object.keys(familyGroups).sort((a, b) => compareValveSizes(a, b)).forEach(vBase => {
             let fg = familyGroups[vBase];
             let baseImg = getValveBaseImgUrl(vBase);
 
             let sizesHtml = '';
-            Object.entries(fg.sizes).sort((a,b)=>b[1]-a[1]).forEach(szEntry => {
+            Object.entries(fg.sizes).sort((a, b) => compareValveSizes(a[0], b[0])).forEach(szEntry => {
                 let szName = szEntry[0];
                 let szQty = szEntry[1];
                 let invKey = `${contextPrefix}_${szName}`;
@@ -1618,7 +1655,7 @@
             }
 
             html += `
-                <div style="width: 100%; max-width: 600px; flex: 1 1 400px; background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                <div class="sop-valve-cart-card" style="width: 100%; background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
                     <div style="background: var(--v-deep-blue); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <img src="${baseImg}" style="height: 40px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
@@ -1756,9 +1793,8 @@
                 let validCases = [];
 
                 parsedRows.forEach(item => {
-                    if (isCSV && dominantYear && item.rowYear && item.rowYear > dominantYear) {
-                        return; 
-                    }
+                    // Drop only clearly invalid years (keep multi-year CSV exports intact)
+                    if (item.rowYear && (item.rowYear < 2018 || item.rowYear > 2035)) return;
 
                     try {
                         let countryRaw = getSmartColumnValue(item.row, ['country','pais','territory','país']).trim() || 'Unknown';
@@ -1815,7 +1851,7 @@
                             return cl && !['false', 'true', 'n/a', 'na', 'nan', 'load', 'loader', '0', '-'].includes(cl) && !/^\d+$/.test(cl);
                         };
 
-                        let procRawStr = getSmartColumnValue(item.row, ['proctor name'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
+                        let procRawStr = getSmartColumnValue(item.row, ['proctor name', 'proctor'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
                         let impRawStr = getSmartColumnValue(item.row, ['first operator', 'implanter name', 'implanter', 'operator name', 'medico'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
                         let specRawStr = getSmartColumnValue(item.row, ['clinical specialist', 'crimper', 'especialista'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
 
@@ -2013,12 +2049,8 @@
         try {
             processedData = allCasesGlobal.filter(c => {
                 if (activeYears.length === 0) return true;
-                let dParts = String(c.date).split('/');
-                if(dParts.length === 3) {
-                    let y = parseInt(dParts[2], 10);
-                    return activeYears.includes(y);
-                }
-                return false;
+                let y = getCaseYear(c);
+                return y !== null && activeYears.includes(y);
             });
 
             // Re-apply Operations name normalization whenever filters refresh
@@ -3018,20 +3050,17 @@
     function renderProctorFinance() {
         let pMap = {};
         
-        fullyFilteredData.forEach(d => {
-            if(d.proctor && d.proctor !== 'N/A') {
-                d.proctor.split(', ').forEach(p => {
-                    let cleanP = cleanStr(p);
-                    let officialName = OFFICIAL_PROCTORS.find(o => cleanP.includes(cleanStr(o)));
-                    if(officialName) { 
-                        if(!pMap[officialName]) pMap[officialName] = { name: officialName, totalCases: 0, totalDays: 0, countries: {} };
-                        pMap[officialName].totalCases++;
-                        if(!pMap[officialName].countries[d.country]) pMap[officialName].countries[d.country] = { cases: 0, dates: new Set() };
-                        pMap[officialName].countries[d.country].cases++;
-                        pMap[officialName].countries[d.country].dates.add(d.date);
-                    }
-                });
-            }
+        processedData.forEach(d => {
+            if (!d.proctor || d.proctor === 'N/A') return;
+            d.proctor.split(', ').forEach(p => {
+                let officialName = resolveOfficialProctor(p);
+                if (!officialName) return;
+                if (!pMap[officialName]) pMap[officialName] = { name: officialName, totalCases: 0, totalDays: 0, countries: {} };
+                pMap[officialName].totalCases++;
+                if (!pMap[officialName].countries[d.country]) pMap[officialName].countries[d.country] = { cases: 0, dates: new Set() };
+                pMap[officialName].countries[d.country].cases++;
+                pMap[officialName].countries[d.country].dates.add(d.date);
+            });
         });
 
         let tbody = ''; let totalCost = 0; let totalCasesAll = 0; let totalDaysAll = 0;
@@ -3394,6 +3423,12 @@
         if (sizeNetList.length > 0 && activeSOPCountry) {
             let countryWeights = getSeasonalityWeights(activeSOPCountry);
             let trHtml = '';
+
+            sizeNetList.sort((a, b) => {
+                let bySize = compareValveSizes(`${a.vBase} ${a.sz}`, `${b.vBase} ${b.sz}`);
+                if (bySize !== 0) return bySize;
+                return String(a.dist).localeCompare(String(b.dist));
+            });
 
             sizeNetList.forEach(item => {
                 if (item.net === 0) return; 
