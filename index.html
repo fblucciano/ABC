@@ -943,7 +943,7 @@
         let text = cleanStr(report);
         if (/\b(death|dead|died|obito|falleci\w*|cardiac arrest|cardiorespiratory arrest|parada cardiorrespiratoria|paro cardiorrespiratorio)\b/.test(text)) return 3;
         if (isClinicalPPI(text)
-            || /\b(embol\w*|migrou|migrat\w*|balloon rupture|ruptured balloon|balao rompeu|ruptura de balao|ruptura del balon)\b/.test(text)
+            || /\b(embol\w*|migrou|migrat\w*|balloon ruptur\w*|ruptur\w* balloon|balao rompeu|rompimento de balao|ruptura de balao|ruptura del balon|rotura de balon|balon roto)\b/.test(text)
             || text.includes('aorta descendente')
             || text.includes('descending aorta')) return 2;
         return 1;
