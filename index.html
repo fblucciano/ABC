@@ -1169,10 +1169,10 @@
     // vs "Valve Lot Number:"). Headers and candidates are both normalized (lowercase,
     // trimmed, accents stripped) before substring matching. Never throws: a malformed row
     // simply yields an empty string.
-    // Keys that must never be treated as person-name columns (emails, booleans, device fields).
-    const COLUMN_KEY_EXCLUDE_RE = /(email|e-mail|mail|@|had\s|proctor\s*used|balloon\s*used|predilat|postdilat|paravalvular|serial|case\s*id|patient\s*name|vitae\s*position|procedure\s*date|country|distributor|valve\s*size|select|submit|timestamp|form\s*id|not\s*applicable)/i;
+    // Exclude patterns used ONLY for person-name column matching (not date/country/serial).
+    const PERSON_COLUMN_KEY_EXCLUDE_RE = /(email|e-mail|mail|@|had\s*proctor|balloon\s*used|predilat|postdilat|paravalvular|patient\s*name|vitae\s*position|not\s*applicable|submit|timestamp)/i;
 
-    function fuzzyColumnMatcher(row, possibleNames, joinMultiple = false, excludePatterns = COLUMN_KEY_EXCLUDE_RE) {
+    function fuzzyColumnMatcher(row, possibleNames, joinMultiple = false, excludePatterns = null) {
         let vals = new Set();
         try {
             const rowKeys = Object.keys(row ?? {});
@@ -1693,27 +1693,44 @@
         try {
             let allPromises = Array.from(files).map(file => {
                 return new Promise((resolve, reject) => {
+                    let isCSV = file.name.toLowerCase().endsWith('.csv');
                     let reader = new FileReader();
                     reader.onload = (ev) => {
                         try {
-                            let wb = XLSX.read(new Uint8Array(ev.target.result), {type: 'array'});
+                            let wb = isCSV
+                                ? XLSX.read(ev.target.result, { type: 'string' })
+                                : XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                             let sName = wb.SheetNames.includes('LATAM') ? 'LATAM' : wb.SheetNames[0];
-                            let rawData = XLSX.utils.sheet_to_json(wb.Sheets[sName], {defval: ""});
-                            resolve({ data: rawData, filename: file.name });
-                        } catch(err) {
+                            let rawData = XLSX.utils.sheet_to_json(wb.Sheets[sName], { defval: "" });
+                            if (!rawData || rawData.length === 0) {
+                                reject(new Error(file.name + ': no rows found'));
+                                return;
+                            }
+                            resolve({ data: rawData, filename: file.name, isCSV });
+                        } catch (err) {
                             reject(err);
                         }
                     };
                     reader.onerror = reject;
-                    reader.readAsArrayBuffer(file);
+                    if (isCSV) reader.readAsText(file);
+                    else reader.readAsArrayBuffer(file);
                 });
             });
 
-            let results = await Promise.all(allPromises);
+            let settled = await Promise.allSettled(allPromises);
+            let results = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
+            let failures = settled.filter(r => r.status === 'rejected');
+            if (results.length === 0) {
+                throw new Error(failures.map(f => f.reason?.message || String(f.reason)).join(' | '));
+            }
+            if (failures.length > 0 && errAlert) {
+                errAlert.innerText = '⚠️ Some files could not be read: ' + failures.map(f => f.reason?.message || 'unknown').join('; ');
+                errAlert.style.display = 'block';
+            }
 
             results.forEach((res) => {
                 let rawData = res.data;
-                let isCSV = res.filename.toLowerCase().endsWith('.csv');
+                let isCSV = res.isCSV || res.filename.toLowerCase().endsWith('.csv');
                 
                 let tempYearCounts = {};
                 let parsedRows = [];
@@ -1722,7 +1739,7 @@
                 let dateFormatHint = detectDateFormat(rawData);
                 
                 rawData.forEach((row) => {
-                    let dateVal = getSmartColumnValue(row, ['date', 'data', 'procedure']);
+                    let dateVal = getSmartColumnValue(row, ['procedure date', 'proceduredate', 'date', 'data', 'procedure']);
                     let dObj = parseDate(dateVal, dateFormatHint);
                     let rowYear = null;
                     if (dObj) { rowYear = dObj.getFullYear(); }
@@ -1771,7 +1788,7 @@
                         let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula', 'select']);
                         let sz = getSmartColumnValue(item.row, ['size','tamanho']); 
                         // Flexible serial mapping: "Serial N°" / "Valve Serial Number" / "Valve Lot Number:" / "LOT N°"
-                        let serial = getSmartColumnValue(item.row, ['serial','sn','lot n','lote']);
+                        let serial = getSmartColumnValue(item.row, ['valve serial number', 'valve serial', 'serial', 'sn', 'lot n', 'lote']);
                         // Clinical narrative / adverse-event fields (Tab 05)
                         let comment = getSmartColumnValue(item.row, ['complication','complica','comment','coment','observa','relato','event description','descri','notes','remark','feedback','narrative'], true);
                         let severityLabel = getSmartColumnValue(item.row, ['severity','severidade','risk level']);
@@ -1798,9 +1815,9 @@
                             return cl && !['false', 'true', 'n/a', 'na', 'nan', 'load', 'loader', '0', '-'].includes(cl) && !/^\d+$/.test(cl);
                         };
 
-                        let procRawStr = getSmartColumnValue(item.row, ['proctor name'], false);
-                        let impRawStr = getSmartColumnValue(item.row, ['first operator', 'implanter name', 'implanter', 'operator name', 'medico'], false);
-                        let specRawStr = getSmartColumnValue(item.row, ['clinical specialist', 'crimper', 'especialista'], false);
+                        let procRawStr = getSmartColumnValue(item.row, ['proctor name'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
+                        let impRawStr = getSmartColumnValue(item.row, ['first operator', 'implanter name', 'implanter', 'operator name', 'medico'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
+                        let specRawStr = getSmartColumnValue(item.row, ['clinical specialist', 'crimper', 'especialista'], false, PERSON_COLUMN_KEY_EXCLUDE_RE);
 
                         let impArr = impRawStr.split(PERSON_SPLIT_RE).map(stdName).filter(isValidPersonName);
                         let specArr = specRawStr.split(PERSON_SPLIT_RE).map(stdName).filter(isValidPersonName);
@@ -1875,7 +1892,7 @@
                         if (item.dObj) {
                             dateStr = String(item.dObj.getDate()).padStart(2, '0') + '/' + String(item.dObj.getMonth() + 1).padStart(2, '0') + '/' + item.rowYear;
                         } else {
-                            let rawDateStr = getSmartColumnValue(item.row, ['date', 'data', 'procedure']);
+                            let rawDateStr = getSmartColumnValue(item.row, ['procedure date', 'proceduredate', 'date', 'data', 'procedure']);
                             if (rawDateStr) dateStr = rawDateStr;
                         }
                         
@@ -2065,7 +2082,7 @@
                 });
             });
 
-            renderCountryCards(processedData, Math.max(...activeYears));
+            renderCountryCards(processedData, getPrimaryActiveYear());
             renderOperations(); 
             renderTrendChart();
             renderGeo(); 
@@ -2188,9 +2205,17 @@
         if(cContainer) cContainer.innerHTML = cHtml;
     }
 
+    function getPrimaryActiveYear() {
+        return activeYears.length > 0 ? Math.max(...activeYears) : new Date().getFullYear();
+    }
+
+    function getComparisonYear() {
+        return activeYears.length > 1 ? Math.min(...activeYears) : null;
+    }
+
     function renderOperations() {
-        let primaryYear = Math.max(...activeYears);
-        let compYear = activeYears.length > 1 ? Math.min(...activeYears) : null;
+        let primaryYear = getPrimaryActiveYear();
+        let compYear = getComparisonYear();
 
         let geoLabel = activeCountryExpanded ? activeCountryExpanded.toUpperCase() : 'LATAM REGION';
         let distLabel = activeDistFilter ? ` | ${activeDistFilter}` : '';
@@ -2432,8 +2457,8 @@
             return;
         }
 
-        let primaryYear = Math.max(...activeYears);
-        let compYear = activeYears.length > 1 ? Math.min(...activeYears) : null;
+        let primaryYear = getPrimaryActiveYear();
+        let compYear = getComparisonYear();
 
         let monthCountsPrimary = {};
         let monthCountsComp = {};
@@ -3752,6 +3777,10 @@
     // Boot embedded clinical memory as soon as the page loads
     document.addEventListener('DOMContentLoaded', () => {
         rebuildAllCasesGlobal();
+        if (allCasesGlobal.length > 0) {
+            extractFilters();
+            processData();
+        }
     });
 
     function renderClinical() {
