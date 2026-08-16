@@ -982,11 +982,12 @@
     // source Case ID, so genuinely distinct same-day procedures (e.g. two identical valves
     // implanted at the same center with missing serials) are still preserved.
     function buildDedupKey(serial, hospital, dateStr, physician, valve, caseId) {
+        let cid = cleanStr(caseId ?? '');
+        if (cid && cid !== 'id' && !/^(na|n\/a|nan)$/.test(cid)) return 'cid:' + cid;
         let s = normalizeSerialKey(serial);
         let base = cleanStr(hospital) + '|' + cleanStr(dateStr);
         if (s) return 'sn:' + s + '|' + base;
-        let cid = cleanStr(caseId ?? '');
-        return 'fb:' + base + '|' + cleanStr(physician) + '|' + cleanStr(valve) + (cid ? '|' + cid : '');
+        return 'fb:' + base + '|' + cleanStr(physician) + '|' + cleanStr(valve);
     }
 
     function normalizeSerialKey(serial) {
@@ -1048,7 +1049,11 @@
         }
         if (donor.survival) primary.survival = donor.survival;
         if (donor.clusterIssue && !primary.clusterIssue) primary.clusterIssue = donor.clusterIssue;
-        if (donor._builtin) primary._clinicalBuiltin = true;
+        if (donor._builtin || donor._clinicalBuiltin) {
+            primary._clinicalBuiltin = true;
+            if (donor._builtin) primary._builtin = true;
+            if (donor.id && !primary.id) primary.id = donor.id;
+        }
 
         // Embedded problem-report rows are the authority for site, country, and team identity.
         if (donorIsBuiltin && !primaryIsBuiltin) {
@@ -1104,7 +1109,7 @@
         cases.forEach(c => {
             let match = merged.find(existing => isClinicalNearDuplicate(existing, c));
             if (match) {
-                if (c._builtin && !match._builtin) {
+                if ((c._builtin || c._clinicalBuiltin) && !(match._builtin || match._clinicalBuiltin)) {
                     mergeClinicalMetadata(c, match);
                     let idx = merged.indexOf(match);
                     merged[idx] = c;
@@ -2144,7 +2149,7 @@
                         
                         // GLOBAL DEDUPLICATION KEY: Serial Number + Hospital + Date
                         // (falls back to Physician + Valve + source Case ID when the source has no serial)
-                        let sourceCaseId = getSmartColumnValue(item.row, ['latam case', 'case id', 'caseid', 'case n', 'id']);
+                        let sourceCaseId = getSmartColumnValue(item.row, ['id', 'form id', 'formid', 'latam case', 'case id', 'caseid', 'case n']);
                         caseObj.dedupKey = buildDedupKey(caseObj.serial, hosp, dateStr, caseObj.implanter, valveFullName, sourceCaseId);
                         validCases.push(caseObj);
                         
@@ -2256,6 +2261,7 @@
     function processData() {
         try {
             processedData = allCasesGlobal.filter(c => {
+                if (isStandaloneEmbeddedCase(c)) return false;
                 if (activeYears.length === 0) return true;
                 let y = getCaseYear(c);
                 return y !== null && activeYears.includes(y);
@@ -3824,8 +3830,30 @@
     // (already scoped to the "Time Travel" active years) and additionally inherits
     // the global Country and Distributor filters applied in the Operations module
     // (valve inheritance is handled separately so all 4 portfolio cards stay visible).
-    function getClinicalDataset() {
-        const passesFilters = (c) => {
+    function isEmbeddedProblemCase(c) {
+        return !!(c?._builtin || c?._clinicalBuiltin);
+    }
+
+    // Pure embedded rows (no matching implant upload) — excluded from Operations volume counts
+    function isStandaloneEmbeddedCase(c) {
+        return !!(c?._builtin);
+    }
+
+    function getImplantVolumeData() {
+        return allCasesGlobal.filter(c => {
+            if (isStandaloneEmbeddedCase(c)) return false;
+            if (activeYears.length > 0) {
+                let y = getCaseYear(c);
+                if (y === null || !activeYears.includes(y)) return false;
+            }
+            if (activeCountryExpanded && c?.country !== activeCountryExpanded) return false;
+            if (activeDistFilter && c?.dist !== activeDistFilter) return false;
+            return true;
+        });
+    }
+
+    function getClinicalProblemLog() {
+        const pass = (c) => {
             if (activeYears.length > 0) {
                 let y = getCaseYear(c);
                 if (y === null || !activeYears.includes(y)) return false;
@@ -3835,20 +3863,29 @@
             return true;
         };
 
+        let rows = [];
         let seen = new Set();
-        let out = [];
-        const addCase = (c) => {
-            if (!c || !passesFilters(c)) return;
-            let key = c.id || c.dedupKey || `${c.date}|${c.hospital}|${c.serial}|${c.implanter}`;
+        const add = (c, minLevel) => {
+            if (!c || !pass(c)) return;
+            let key = c.id ? ('id:' + c.id) : ('dk:' + (c.dedupKey || `${c.date}|${c.hospital}|${c.serial}`));
             if (seen.has(key)) return;
             seen.add(key);
-            out.push(c);
+            let sig = getClinicalSignals(c);
+            let level = sig.level > 0 ? sig.level : (minLevel || 0);
+            if (level > 0) rows.push({ c, level });
         };
 
-        allCasesGlobal.forEach(addCase);
-        // Embedded Problem Report always participates when the selected period matches
-        (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(addCase);
-        return out;
+        // Authoritative embedded Problem Report — always shown when period matches
+        (fileUploads[BUILTIN_REGISTRY_KEY] || []).forEach(c => add(c, 1));
+
+        // Upload-sourced complications with narrative / severity
+        allCasesGlobal.forEach(c => {
+            if (isStandaloneEmbeddedCase(c)) return;
+            let sig = getClinicalSignals(c);
+            if (sig.level > 0) add(c, sig.level);
+        });
+
+        return rows;
     }
 
     // Only the Tab 05 card click filters the Problem Log — do NOT inherit the
@@ -3942,7 +3979,7 @@
             `;
         });
 
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected for the selected period. The embedded Problem Report has <strong>${(typeof BUILTIN_PROBLEM_CASES !== 'undefined' ? BUILTIN_PROBLEM_CASES.length : 39)} cases</strong> — enable the matching year(s) in Time Travel or upload your implant DB to enrich volumes. ✅</td></tr>`;
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events for the selected filters. Enable the matching year(s) in <strong>Time Travel</strong> — the embedded Problem Report has <strong>${(typeof BUILTIN_PROBLEM_CASES !== 'undefined' ? BUILTIN_PROBLEM_CASES.length : 44)} cases</strong> always available.</td></tr>`;
         updateClinicalSortIcons();
     }
 
@@ -4060,21 +4097,24 @@
         let famStats = {};
         ["Vitae", "PowerX", "Venus A", "Venus P"].forEach(f => famStats[f] = { total: 0, ppi: 0, critical: 0, adverse: 0, penaltySum: 0 });
 
-        // allCasesGlobal is already deduplicated at ingestion (Serial + Hospital + Date key)
-        let clinicalData = getClinicalDataset();
-        clinicalData.forEach(c => {
+        // Implant volume for portfolio cards (excludes standalone embedded problem-only rows)
+        let implantData = getImplantVolumeData();
+        implantData.forEach(c => {
             let f = c?.valveBase;
             if (!famStats[f]) return;
             famStats[f].total++;
+        });
 
-            let sig = getClinicalSignals(c);
-            if (sig.isPPI) famStats[f].ppi++;
-            if (sig.isCritical) famStats[f].critical++;
-            if (sig.level > 0) {
-                famStats[f].adverse++;
-                famStats[f].penaltySum += SEVERITY_WEIGHTS[sig.level] || 0;
-                clinicalCriticalCases.push({ c: c, level: sig.level });
-            }
+        // Problem Log — embedded memory + upload complications
+        clinicalCriticalCases = getClinicalProblemLog();
+        clinicalCriticalCases.forEach(item => {
+            let f = item.c?.valveBase;
+            if (!famStats[f]) return;
+            let level = item.level;
+            if (level === 1) famStats[f].ppi++;
+            if (level >= 2) famStats[f].critical++;
+            famStats[f].adverse++;
+            famStats[f].penaltySum += SEVERITY_WEIGHTS[level] || 0;
         });
 
         // Inherited-filter context banner
