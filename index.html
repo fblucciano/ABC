@@ -1958,11 +1958,13 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     // source Case ID, so genuinely distinct same-day procedures (e.g. two identical valves
     // implanted at the same center with missing serials) are still preserved.
     function buildDedupKey(serial, hospital, dateStr, physician, valve, caseId) {
+        // PDF reconciliation primary key: normalized procedure date + valve serial
+        let s = normalizeSerialKey(serial);
+        let d = cleanStr(dateStr);
+        if (s && d) return 'sn:' + s + '|' + d;
         let cid = cleanStr(caseId ?? '');
         if (cid && cid !== 'id' && !/^(na|n\/a|nan)$/.test(cid)) return 'cid:' + cid;
-        let s = normalizeSerialKey(serial);
-        let base = cleanStr(hospital) + '|' + cleanStr(dateStr);
-        if (s) return 'sn:' + s + '|' + base;
+        let base = cleanStr(hospital) + '|' + d;
         return 'fb:' + base + '|' + cleanStr(physician) + '|' + cleanStr(valve);
     }
 
@@ -2104,13 +2106,20 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         if (newCase?.dedupKey) map.set(newCase.dedupKey, newCase);
     }
 
+    function clinicalLogKey(c) {
+        if (c?._builtinId) return 'bid:' + cleanStr(c._builtinId);
+        if (c?.id) return 'id:' + cleanStr(c.id);
+        let sn = normalizeSerialKey(c?.serial);
+        let d = cleanStr(c?.date);
+        if (sn && d) return 'sn:' + sn + '|' + d;
+        return 'fp:' + buildClinicalFingerprint(c);
+    }
+
     function isClinicalNearDuplicate(a, b) {
         let snA = normalizeSerialKey(a?.serial), snB = normalizeSerialKey(b?.serial);
         let sameDate = cleanStr(a?.date) && cleanStr(a?.date) === cleanStr(b?.date);
-        if (snA && snA === snB) {
-            if (sameDate) return true;
-            if (commentsClinicallyOverlap(a, b)) return true;
-        }
+        // PDF reconciliation: primary match is date + serial — never merge same serial on different dates
+        if (snA && snA === snB && sameDate) return true;
         if (sameDate && commentsClinicallyOverlap(a, b) && peopleClinicallyOverlap(a, b)) return true;
         return false;
     }
@@ -4962,7 +4971,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let seen = new Set();
         const add = (c, minLevel, passFn) => {
             if (!c || !passFn(c)) return;
-            let key = c.id ? ('id:' + c.id) : ('dk:' + (c.dedupKey || `${c.date}|${c.hospital}|${c.serial}`));
+            let key = clinicalLogKey(c);
             if (seen.has(key)) return;
             seen.add(key);
             let sig = getClinicalSignals(c);
@@ -4976,6 +4985,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         // Upload-sourced complications inherit Operations country / distributor filters
         allCasesGlobal.forEach(c => {
             if (isStandaloneEmbeddedCase(c)) return;
+            if (c._builtinId) return; // already represented by embedded registry
             let sig = getClinicalSignals(c);
             if (sig.level > 0) add(c, sig.level, passOpsFilters);
         });
