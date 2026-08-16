@@ -268,7 +268,7 @@
         <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv, .txt)</div>
         <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display: none;" />
     </div>
-    <button type="button" class="year-pill" onclick="enterWithBuiltinProblems()" style="margin-top: 24px; font-size: 12px; padding: 10px 18px; cursor: pointer;">📋 Continue with embedded Problem Report (38 cases, 2025–Aug 2026)</button>
+    <button type="button" class="year-pill" onclick="enterWithBuiltinProblems()" style="margin-top: 24px; font-size: 12px; padding: 10px 18px; cursor: pointer;">📋 Continue with embedded Problem Report (39 cases, 2025–Aug 2026)</button>
     <p style="font-size: 11px; opacity: 0.55; margin-top: 10px; max-width: 520px; text-align: center;">Upload additional complication files anytime — duplicates are merged by serial, date, narrative and team.</p>
 </div>
 
@@ -540,7 +540,7 @@
     <div id="tab-clinical" class="tab-content">
         <h2>Clinical Excellence & Device Safety</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database plus an <strong>embedded Consolidated LATAM Problem Report (38 cases, 2025–Aug 2026)</strong>. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and on-demand translations (choose language).</p>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database plus an <strong>embedded LATAM Problem Report (39 cases: 7 in 2025 incl. Panama Case 01, 32 in 2026)</strong>. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and on-demand translations (choose language).</p>
         <div id="clinical-filter-context" style="display:none; background:#fffdf5; border:1px solid var(--v-yellow); border-radius:8px; padding:10px 15px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--v-deep-blue);"></div>
         <div id="builtin-memory-banner" style="background:#f5f3ff; border:1px solid #c4b5fd; border-radius:8px; padding:10px 15px; margin-bottom:14px; font-size:12px; font-weight:700; color:#5b21b6;"></div>
 
@@ -1086,7 +1086,7 @@
         let n = (typeof BUILTIN_PROBLEM_CASES !== 'undefined') ? BUILTIN_PROBLEM_CASES.length : 0;
         if (n === 0) { el.style.display = 'none'; return; }
         el.style.display = 'block';
-        el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases from the Consolidated LATAM Report (6 in 2025 · 32 in 2026) are always loaded. Uploading the same case again (serial + date + narrative + team) will <strong>merge</strong>, never duplicate.`;
+        el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases loaded (7 in 2025 incl. Panama Case 01 · 32 in 2026). Uploading the same case again (serial + date + narrative + team) will <strong>merge</strong>, never duplicate.`;
     }
 
     function rebuildAllCasesGlobal() {
@@ -3630,7 +3630,7 @@
             `;
         });
 
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected for the selected period. The embedded Problem Report has <strong>38 cases</strong> — enable the matching year(s) in Time Travel or upload your implant DB to enrich volumes. ✅</td></tr>`;
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected for the selected period. The embedded Problem Report has <strong>${(typeof BUILTIN_PROBLEM_CASES !== 'undefined' ? BUILTIN_PROBLEM_CASES.length : 39)} cases</strong> — enable the matching year(s) in Time Travel or upload your implant DB to enrich volumes. ✅</td></tr>`;
         updateClinicalSortIcons();
     }
 

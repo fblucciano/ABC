@@ -1,5 +1,5 @@
 // Auto-generated from Consolidated LATAM Problem Report EN Interactive (57f2.pdf)
-// 38 reported problem cases (6 in 2025, 32 in 2026)
+// 39 embedded problem cases (7 in 2025 incl. Panama Case 01, 32 in 2026)
 const BUILTIN_PROBLEM_CASES = [
   {
     "id": "INC-2025-01",
@@ -835,6 +835,28 @@ const BUILTIN_PROBLEM_CASES = [
     "commentLang": "pt",
     "comment": "Post-procedural left bundle branch block.",
     "source": "Consolidated LATAM Problem Report 2025-2026 (PDF 57f2)",
+    "_builtin": true
+  },
+  {
+    "id": "PANAMA-2025-01",
+    "date": "24/07/2025",
+    "hospital": "Panama Case 01",
+    "country": "Panama",
+    "dist": "VIP Medical",
+    "valve": "Venus A L26",
+    "valveBase": "Venus A",
+    "serial": "26A00000242120",
+    "implanter": "Dr. Jaime Dutary, Dr. Pedro Echeverria",
+    "specialist": "Fabio da Silva, Job Huiskamp",
+    "proctor": "N/A",
+    "severityLabel": "Level 3 - Critical (Fatality)",
+    "survival": "NO (Fatal)",
+    "clusterIssue": "Access & Navigation / Aortic dissection",
+    "commentOriginal": "Crimping and loading were difficult; a second valve kit was opened after capsule damage. Sheathless approach failed; conversion to Absopath sheath was required. Off-label Zebra guidewire (urology wire) was used instead of the recommended TAVI wire. After deployment and DS retrieval, aortography revealed aortic dissection with hemodynamic instability. Cerebral perfusion was insufficient for a period. Fatal outcome documented the day after the procedure.",
+    "commentEn": "Crimping and loading were difficult; a second valve kit was opened after capsule damage. Sheathless approach failed; conversion to Absopath sheath was required. Off-label Zebra guidewire (urology wire) was used instead of the recommended TAVI wire. After deployment and DS retrieval, aortography revealed aortic dissection with hemodynamic instability. Cerebral perfusion was insufficient for a period. Fatal outcome documented the day after the procedure.",
+    "commentLang": "en",
+    "comment": "Crimping and loading were difficult; a second valve kit was opened after capsule damage. Sheathless approach failed; conversion to Absopath sheath was required. Off-label Zebra guidewire (urology wire) was used instead of the recommended TAVI wire. After deployment and DS retrieval, aortography revealed aortic dissection with hemodynamic instability. Cerebral perfusion was insufficient for a period. Fatal outcome documented the day after the procedure.",
+    "source": "Case Report Panama Case 01 (24 Jul 2025)",
     "_builtin": true
   }
 ];
