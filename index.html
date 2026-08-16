@@ -897,18 +897,19 @@
     }
 
     function getClinicalReportFields(row) {
-        const reportKeyTerms = ['comment', 'coment', 'observ', 'report', 'relat', 'incident', 'intercorr', 'complica', 'outcome', 'resultado'];
+        const reportKeyTerms = ['comment', 'coment', 'observ', 'report', 'relat', 'incident', 'intercorr', 'complica', 'outcome', 'resultado', 'desfecho', 'evento advers'];
         const englishKeyTerms = ['english', 'ingles', 'translated', 'translation', 'traduz'];
         let originalReports = new Set();
         let englishReports = new Set();
 
         Object.keys(row).forEach(key => {
             let normalizedKey = cleanStr(key);
-            if (!reportKeyTerms.some(term => normalizedKey.includes(term))) return;
+            let isEnglishField = englishKeyTerms.some(term => normalizedKey.includes(term));
+            if (!isEnglishField && !reportKeyTerms.some(term => normalizedKey.includes(term))) return;
 
             let value = row[key];
             if (value === undefined || value === null || String(value).trim() === '') return;
-            let target = englishKeyTerms.some(term => normalizedKey.includes(term)) ? englishReports : originalReports;
+            let target = isEnglishField ? englishReports : originalReports;
             target.add(String(value).trim());
         });
 
@@ -948,16 +949,27 @@
         return 1;
     }
 
+    function hasAdverseClinicalTerm(report) {
+        let text = cleanStr(report);
+        return isClinicalPPI(text)
+            || isClinicalFailure(text)
+            || /\b(arrest|ruptur\w*|rompeu|vazamento|leak|regurgit\w*|hematoma|bleeding|sangramento|hemorrag\w*|stroke|avc|tampon\w*|dissection|dissecc\w*|perfor\w*|shock|choque|hypotension|hipotens\w*|arrhythm\w*|arritm\w*|vascular complication|complicacao vascular|insuficiencia|failure|falha)\b/.test(text);
+    }
+
     function isRelevantClinicalReport(report) {
         let text = cleanStr(report);
         if (!text) return false;
-        if (getClinicalSeverity(text) > 1 || isClinicalFailure(text)) return true;
+        if (hasAdverseClinicalTerm(text)) return true;
 
-        let genericOnly = text
-            .replace(/\b(no|without|sem|sin)\s+(complication|complications|complicacao|complicacoes|complicacion|complicaciones|intercorrencia|intercorrencias)\b/g, ' ')
-            .replace(/\b(success|successful|successfully|sucesso|exito|exitoso|exitosamente|procedure|procedimento|procedimiento|case|caso|with|com|and|e|y)\b/g, ' ')
-            .replace(/[^a-z0-9]+/g, '');
-        return genericOnly.length > 2;
+        const genericPatterns = [
+            /\b(sem|sin|no|without)\s+(complic\w*|intercorr\w*|problem\w*|problema\w*|queixa\w*|complaint\w*)\b/,
+            /\b(success\w*|sucesso|exito\w*|bem[\s-]sucedid\w*)\b/,
+            /\b(uneventful|sem intercorrencias)\b/,
+            /\b(good|excellent|satisfactory|bom|excelente|satisfatori\w*)\s+(result\w*|outcome\w*|resultado\w*|evolution|evolucao)\b/,
+            /\b(patient evolved well|paciente evoluiu bem|procedure proceeded without problems|procedimento transcorreu sem problemas|discharged without complications|alta sem complicacao)\b/,
+            /\b(patient without complaints|paciente sem queixas)\b/
+        ];
+        return !genericPatterns.some(pattern => pattern.test(text));
     }
 
     function parseDate(dateVal) {
@@ -1455,7 +1467,7 @@
 
                         let dist = getSmartColumnValue(item.row, ['distributor','dist']) || 'Venus Direct (No Partner)';
                         
-                        let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula']);
+                        let valveRaw = getSmartColumnValue(item.row, ['product', 'valve', 'produto', 'valvula', 'model', 'modelo']);
                         let sz = getSmartColumnValue(item.row, ['size','tamanho']); 
                         let serial = getSmartColumnValue(item.row, ['serial','sn']);
                         
