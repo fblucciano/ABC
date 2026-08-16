@@ -247,6 +247,11 @@
         .sortable-th:hover { color: var(--v-deep-blue); }
         .sortable-th.sort-active { color: var(--v-yellow); }
         .sortable-th .sort-icon { font-size: 10px; margin-left: 4px; opacity: 0.6; }
+        .clinical-narrative-wrap .narr-block { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--v-border); }
+        .clinical-narrative-wrap .narr-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .clinical-narrative-wrap .narr-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--v-text-mutated); margin-bottom: 6px; }
+        .clinical-narrative-wrap .narr-text { font-size: 13px; line-height: 1.55; color: var(--v-text-dark); }
+        .builtin-badge { font-size: 9px; background: #ede9fe; color: #5b21b6; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -263,6 +268,8 @@
         <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">or click to browse (.xlsx, .csv, .txt)</div>
         <input type="file" id="startup-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display: none;" />
     </div>
+    <button type="button" class="year-pill" onclick="enterWithBuiltinProblems()" style="margin-top: 24px; font-size: 12px; padding: 10px 18px; cursor: pointer;">📋 Continue with embedded Problem Report (38 cases, 2025–Aug 2026)</button>
+    <p style="font-size: 11px; opacity: 0.55; margin-top: 10px; max-width: 520px; text-align: center;">Upload additional complication files anytime — duplicates are merged by serial, date, narrative and team.</p>
 </div>
 
 <div class="container" id="main-app" style="display: none;">
@@ -533,7 +540,7 @@
     <div id="tab-clinical" class="tab-content">
         <h2>Clinical Excellence & Device Safety</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database (unique key: Serial Number + Hospital + Date). The Problem Log below reacts dynamically to the <strong>selected period</strong> ("Time Travel" active years) and inherits the global filters (Country / Distributor / Valve) applied in the Operations module. <strong>Success Rate</strong> is severity-weighted (Level 3 = full penalty, Level 2 = 65%, Level 1 = 25%) — click the badge in any Specialist/Implanter drilldown to review the exact adverse cases. Names use the same normalization engine as Operations.</p>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>deduplicated</strong> global database plus an <strong>embedded Consolidated LATAM Problem Report (38 cases, 2025–Aug 2026)</strong>. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and auto-translations (PT / ES / 中文).</p>
         <div id="clinical-filter-context" style="display:none; background:#fffdf5; border:1px solid var(--v-yellow); border-radius:8px; padding:10px 15px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--v-deep-blue);"></div>
 
         <!-- SAFETY PROFILE PORTFOLIO CARDS -->
@@ -599,6 +606,7 @@
     </div>
 </div>
 
+<script src="latam-builtin-problems.js"></script>
 <script>
     // --- 1. CORE CONSTANTS AND MATRICES ---
     const VALVE_IMGS = {
@@ -924,18 +932,104 @@
     }
 
     function mergeClinicalMetadata(primary, donor) {
+        if (donor.commentOriginal && !primary.commentOriginal) primary.commentOriginal = donor.commentOriginal;
+        if (donor.commentEn && !primary.commentEn) primary.commentEn = donor.commentEn;
+        if (donor.commentLang && !primary.commentLang) primary.commentLang = donor.commentLang;
         if (donor.comment) {
             primary.comment = primary.comment
                 ? (primary.comment.includes(donor.comment) ? primary.comment : primary.comment + ' | ' + donor.comment)
                 : donor.comment;
         }
+        if (!primary.comment && primary.commentOriginal) primary.comment = primary.commentOriginal;
         if (donor.severityLabel && (!primary.severityLabel || donor.severityLabel.length > primary.severityLabel.length)) {
             primary.severityLabel = donor.severityLabel;
         }
         if (donor.survival) primary.survival = donor.survival;
         if (donor.clusterIssue && !primary.clusterIssue) primary.clusterIssue = donor.clusterIssue;
+        if (donor._builtin) primary._clinicalBuiltin = true;
         mergePersonField(primary, donor, 'specialist');
         mergePersonField(primary, donor, 'implanter');
+    }
+
+    function normalizeCommentFingerprint(text) {
+        return cleanStr(text ?? '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+    }
+
+    function commentsClinicallyOverlap(a, b) {
+        let ca = normalizeCommentFingerprint(a?.commentOriginal || a?.comment);
+        let cb = normalizeCommentFingerprint(b?.commentOriginal || b?.comment);
+        if (!ca || !cb || ca.length < 20) return false;
+        return ca === cb || ca.includes(cb.slice(0, 80)) || cb.includes(ca.slice(0, 80));
+    }
+
+    function peopleClinicallyOverlap(a, b) {
+        let fields = [a?.implanter, a?.specialist, b?.implanter, b?.specialist];
+        let namesA = new Set(String(a?.implanter + ', ' + a?.specialist).split(', ').map(n => cleanStr(n)).filter(Boolean));
+        for (let name of String(b?.implanter + ', ' + b?.specialist).split(', ')) {
+            let n = cleanStr(name);
+            if (!n) continue;
+            for (let existing of namesA) {
+                if (existing.includes(n) || n.includes(existing)) return true;
+            }
+        }
+        return false;
+    }
+
+    function isClinicalNearDuplicate(a, b) {
+        let snA = normalizeSerialKey(a?.serial), snB = normalizeSerialKey(b?.serial);
+        let sameDate = cleanStr(a?.date) && cleanStr(a?.date) === cleanStr(b?.date);
+        if (snA && snA === snB) {
+            if (sameDate) return true;
+            if (commentsClinicallyOverlap(a, b)) return true;
+        }
+        if (sameDate && commentsClinicallyOverlap(a, b) && peopleClinicallyOverlap(a, b)) return true;
+        return false;
+    }
+
+    function dedupeClinicalNearDuplicates(cases) {
+        let merged = [];
+        cases.forEach(c => {
+            let match = merged.find(existing => isClinicalNearDuplicate(existing, c));
+            if (match) mergeClinicalMetadata(match, c);
+            else merged.push(c);
+        });
+        return merged;
+    }
+
+    function buildCaseFromBuiltin(raw) {
+        let c = Object.assign({}, raw);
+        c.implanter = normalizePersonList(c.implanter);
+        c.specialist = normalizePersonList(c.specialist);
+        c.proctor = normalizePersonList(c.proctor || 'N/A');
+        c.hospital = stdHosp(c.hospital, c.implanter);
+        if (!c.comment && c.commentOriginal) c.comment = c.commentOriginal;
+        c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, raw.id || 'builtin');
+        c._builtin = true;
+        return c;
+    }
+
+    function ensureBuiltinProblemRegistry() {
+        if (typeof BUILTIN_PROBLEM_CASES === 'undefined' || !BUILTIN_PROBLEM_CASES.length) return;
+        fileUploads['__builtin_problem_report__'] = BUILTIN_PROBLEM_CASES.map(buildCaseFromBuiltin);
+    }
+
+    function rebuildAllCasesGlobal() {
+        ensureBuiltinProblemRegistry();
+        allCasesGlobal = [];
+        let dedupMap = new Map();
+        Object.values(fileUploads).forEach(arr => {
+            arr.forEach(c => {
+                if (!c.dedupKey) { allCasesGlobal.push(c); return; }
+                if (dedupMap.has(c.dedupKey)) {
+                    mergeClinicalMetadata(dedupMap.get(c.dedupKey), c);
+                    return;
+                }
+                dedupMap.set(c.dedupKey, c);
+                allCasesGlobal.push(c);
+            });
+        });
+        allCasesGlobal = consolidateClinicalBySerial(allCasesGlobal);
+        allCasesGlobal = dedupeClinicalNearDuplicates(allCasesGlobal);
     }
 
     function implantRecordScore(c) {
@@ -1684,26 +1778,8 @@
             });
 
             // --- GLOBAL DEDUPLICATION ENGINE ---
-            // Unique key: Serial + Hospital + Date. When a second file carries the same
-            // procedure (e.g. implant DB + complications export), we MERGE the clinical
-            // narrative / severity instead of discarding the row outright.
-            allCasesGlobal = [];
-            let dedupMap = new Map();
-            Object.values(fileUploads).forEach(arr => {
-                arr.forEach(c => {
-                    if (!c.dedupKey) { allCasesGlobal.push(c); return; }
-                    if (dedupMap.has(c.dedupKey)) {
-                        mergeClinicalMetadata(dedupMap.get(c.dedupKey), c);
-                        return;
-                    }
-                    dedupMap.set(c.dedupKey, c);
-                    allCasesGlobal.push(c);
-                });
-            });
-
-            allCasesGlobal = consolidateClinicalBySerial(allCasesGlobal);
-
-            extractFilters(); 
+            rebuildAllCasesGlobal();
+            extractFilters();
             processData();
 
         } catch (err) {
@@ -2666,11 +2742,15 @@
         let logoHtml = `<div style="height:35px; width:80px; display:flex; align-items:center; justify-content:center;">${getDistLogoHTML(c.dist)}</div>`;
         let clinicalBlock = '';
         if (showClinical && sig && sig.level > 0) {
+            let orig = c.commentOriginal || c.comment || '';
+            let en = c.commentEn || (c.commentLang === 'en' ? orig : '');
             clinicalBlock = `
                 <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--v-border);">
                     <span class="sev-badge sev-${sig.level}">${SEV_LABELS[sig.level]}</span>
                     ${c.severityLabel ? `<span style="font-size:10px; color:var(--v-text-mutated); margin-left:8px;">${escapeHtml(c.severityLabel)}</span>` : ''}
-                    <div style="font-size:12px; margin-top:8px; color:var(--v-text-dark); line-height:1.55;">${escapeHtml(c.comment || 'No narrative recorded.')}</div>
+                    <div style="font-size:11px; font-weight:800; color:var(--v-text-mutated); margin-top:8px;">ORIGINAL</div>
+                    <div style="font-size:12px; margin-top:4px; color:var(--v-text-dark); line-height:1.55;">${escapeHtml(orig || 'No narrative recorded.')}</div>
+                    ${en ? `<div style="font-size:11px; font-weight:800; color:var(--v-text-mutated); margin-top:8px;">ENGLISH</div><div style="font-size:12px; margin-top:4px; line-height:1.55;">${escapeHtml(en)}</div>` : ''}
                 </div>`;
         }
         return `<div class="metric-card" style="margin-bottom: 10px; padding: 15px; display:flex; align-items:flex-start; background:#fff;">
@@ -3423,7 +3503,8 @@
             clinicalExportData.push({
                 "Date": c.date, "Country": c.country, "Hospital": c.hospital,
                 "Physician": c.implanter, "Specialist(s)": c.specialist, "Valve": c.valve, "Serial / Lot": c.serial,
-                "Severity": SEV_LABELS[item.level], "Clinical Report": c.comment
+                "Severity": SEV_LABELS[item.level], "Original Report": c.commentOriginal || c.comment,
+                "English Reference": c.commentEn || '', "Clinical Report": c.comment
             });
 
             rowsHtml += `
@@ -3437,24 +3518,93 @@
                     <td class="tech-font" style="font-size:12px;">${escapeHtml(c.serial)}</td>
                     <td><span class="sev-badge sev-${item.level}">${SEV_LABELS[item.level]}</span></td>
                     <td>
-                        <div style="font-size:13px; line-height:1.5; color:var(--v-text-dark);">${escapeHtml(c.comment)}</div>
-                        <div id="clin-trans-${idx}" style="display:none;"></div>
-                        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-                            <select id="clin-lang-${idx}" class="trans-select" onclick="event.stopPropagation()">
-                                <option value="en" selected>🇺🇸 English</option>
-                                <option value="pt">🇧🇷 Português</option>
-                                <option value="es">🇪🇸 Español</option>
-                                <option value="zh-CN">🇨🇳 中文</option>
-                            </select>
-                            <button class="trans-btn" id="clin-btn-${idx}" onclick="translateClinicalComment(${idx})">🌐 AI Translate</button>
-                        </div>
+                        ${renderClinicalNarrativeCell(c, idx)}
                     </td>
                 </tr>
             `;
         });
 
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected for the selected period. If you have a separate <strong>Complications / Problem Log</strong> file, upload it together with the implant database — clinical narratives will merge automatically by Serial + Hospital + Date. ✅</td></tr>`;
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events detected for the selected period. The embedded Problem Report has <strong>38 cases</strong> — enable the matching year(s) in Time Travel or upload your implant DB to enrich volumes. ✅</td></tr>`;
         updateClinicalSortIcons();
+        loadAllClinicalTranslations();
+    }
+
+    function renderClinicalNarrativeCell(c, idx) {
+        let orig = c.commentOriginal || c.comment || '';
+        let lang = (c.commentLang || 'en').toUpperCase();
+        let en = c.commentEn || (c.commentLang === 'en' ? orig : '');
+        let builtinTag = c._builtin || c._clinicalBuiltin ? '<span class="builtin-badge">EMBEDDED</span>' : '';
+        return `
+            <div class="clinical-narrative-wrap">
+                <div class="narr-block">
+                    <div class="narr-label">📄 Original Report (${lang})${builtinTag}</div>
+                    <div class="narr-text">${escapeHtml(orig) || '—'}</div>
+                </div>
+                ${en ? `<div class="narr-block"><div class="narr-label">🇺🇸 English Reference</div><div class="narr-text">${escapeHtml(en)}</div></div>` : `<div class="narr-block" id="clin-en-${idx}"><div class="narr-label">🇺🇸 English Reference</div><div class="narr-text"><em>Translating…</em></div></div>`}
+                <div class="narr-block">
+                    <div class="narr-label">🌐 Translations (PT · ES · 中文)</div>
+                    <div id="clin-trans-${idx}" class="narr-text"><em style="color:var(--v-text-mutated);">Loading…</em></div>
+                </div>
+            </div>`;
+    }
+
+    const CLINICAL_I18N_LANGS = [
+        { code: 'pt', label: '🇧🇷 Português' },
+        { code: 'es', label: '🇪🇸 Español' },
+        { code: 'zh-CN', label: '🇨🇳 中文' }
+    ];
+
+    async function translateClinicalText(text, target, source = 'auto') {
+        let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(source)}&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(text)}`;
+        let res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        let data = await res.json();
+        return (data?.[0] ?? []).map(seg => seg?.[0] ?? '').join('');
+    }
+
+    async function prefetchClinicalTranslations(idx) {
+        let item = clinicalCriticalCases[idx];
+        if (!item || item.c?._translationsLoaded) return;
+        let c = item.c;
+        let orig = c.commentOriginal || c.comment || '';
+        if (!orig) return;
+
+        if (!c.commentEn && c.commentLang !== 'en') {
+            try {
+                c.commentEn = await translateClinicalText(orig, 'en');
+                let enBox = document.getElementById(`clin-en-${idx}`);
+                if (enBox) enBox.querySelector('.narr-text').innerHTML = escapeHtml(c.commentEn);
+            } catch (err) { /* keep async fill below */ }
+        }
+
+        let box = document.getElementById(`clin-trans-${idx}`);
+        if (!box) return;
+        let html = '';
+        for (let lang of CLINICAL_I18N_LANGS) {
+            try {
+                let translated = await translateClinicalText(orig, lang.code);
+                html += `<div style="margin-bottom:10px;"><strong style="font-size:11px; color:var(--v-blue);">${lang.label}</strong><div style="margin-top:4px; line-height:1.5;">${escapeHtml(translated)}</div></div>`;
+            } catch (err) {
+                html += `<div style="margin-bottom:10px; color:#991B1B; font-size:12px;">${lang.label}: unavailable</div>`;
+            }
+        }
+        box.innerHTML = html || '<em>Translation unavailable</em>';
+        c._translationsLoaded = true;
+    }
+
+    function loadAllClinicalTranslations() {
+        clinicalCriticalCases.forEach((_, idx) => prefetchClinicalTranslations(idx));
+    }
+
+    function enterWithBuiltinProblems() {
+        ensureBuiltinProblemRegistry();
+        rebuildAllCasesGlobal();
+        if (allCasesGlobal.length === 0) return;
+        document.getElementById('startup-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'flex';
+        extractFilters();
+        processData();
+        switchTab('tab-clinical');
     }
 
     function renderClinical() {
@@ -3663,35 +3813,9 @@
         }
     }
 
-    // --- 5. AI TRANSLATOR FOR CLINICAL NARRATIVES ---
+    // Legacy single-language translator kept for compatibility
     async function translateClinicalComment(idx) {
-        let item = clinicalCriticalCases[idx];
-        let box = document.getElementById(`clin-trans-${idx}`);
-        let btn = document.getElementById(`clin-btn-${idx}`);
-        let langSel = document.getElementById(`clin-lang-${idx}`);
-        if (!item || !box || !langSel) return;
-
-        let target = langSel.value;
-        let langLabel = langSel.options[langSel.selectedIndex]?.text ?? target;
-        let originalBtnLabel = btn?.innerText ?? '🌐 AI Translate';
-
-        box.style.display = 'block';
-        box.innerHTML = `<div class="trans-result"><span class="trans-tag">🤖 AI Translator</span><em>Translating clinical narrative…</em></div>`;
-        if (btn) { btn.disabled = true; btn.innerText = 'Translating...'; }
-
-        try {
-            let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(item.c?.comment ?? '')}`;
-            let res = await fetch(url);
-            if (!res.ok) throw new Error('Service error ' + res.status);
-            let data = await res.json();
-            let translated = (data?.[0] ?? []).map(seg => seg?.[0] ?? '').join('');
-            if (!translated) throw new Error('Empty translation');
-            box.innerHTML = `<div class="trans-result"><span class="trans-tag">🤖 AI Translator → ${escapeHtml(langLabel)}</span>${escapeHtml(translated)}</div>`;
-        } catch (err) {
-            box.innerHTML = `<div class="trans-result" style="border-left-color:#EF4444; background:#FEF2F2; color:#991B1B;"><span class="trans-tag" style="color:#991B1B;">🤖 AI Translator</span>Translation service unavailable (${escapeHtml(err?.message ?? 'network error')}). Original narrative remains above.</div>`;
-        } finally {
-            if (btn) { btn.disabled = false; btn.innerText = originalBtnLabel; }
-        }
+        await prefetchClinicalTranslations(idx);
     }
 </script>
 
