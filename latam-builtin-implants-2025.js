@@ -15,7 +15,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "01/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX32",
@@ -123,7 +123,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "02/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX32",
@@ -291,7 +291,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/11/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -303,7 +303,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "03/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB23",
@@ -507,7 +507,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "06/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB29",
@@ -627,7 +627,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "07/11/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX29",
@@ -699,7 +699,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -711,7 +711,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "08/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX29",
@@ -1035,7 +1035,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "11/06/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -1047,7 +1047,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "11/07/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -1227,7 +1227,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "13/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB29",
@@ -1239,7 +1239,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "13/10/2025",
-    "hospital": "Hospital el torax",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -1299,7 +1299,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "14/07/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -1419,7 +1419,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "16/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -1467,7 +1467,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "17/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -1539,7 +1539,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/03/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -1551,7 +1551,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/03/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -1563,7 +1563,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/03/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -1575,7 +1575,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/03/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -1611,7 +1611,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/06/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -1647,7 +1647,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -1659,7 +1659,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "19/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -1755,7 +1755,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "21/07/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -1815,7 +1815,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "21/10/2025",
-    "hospital": "Hospital el torax",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -1887,7 +1887,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "22/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -2067,7 +2067,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "23/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX29",
@@ -2163,7 +2163,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/10/2025",
-    "hospital": "Hospital el torax",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -2187,7 +2187,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "24/12/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX29",
@@ -2307,7 +2307,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "25/11/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX26",
@@ -2427,7 +2427,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -2439,7 +2439,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -2451,7 +2451,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "26/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX29",
@@ -2559,7 +2559,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "27/08/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -2667,7 +2667,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "28/11/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX32",
@@ -2871,7 +2871,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/07/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB23",
@@ -2883,7 +2883,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/07/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -2895,7 +2895,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/09/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -2907,7 +2907,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/09/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX23",
@@ -2919,7 +2919,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/09/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB23",
@@ -2931,7 +2931,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/09/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -2943,7 +2943,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/09/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -2955,7 +2955,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/09/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus Vitae AB26",
@@ -2967,7 +2967,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "30/09/2025",
-    "hospital": "INSTITUTO NACIONAL DEL TORAX",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "CAMIR",
     "valve": "Venus PowerX PowerX29",

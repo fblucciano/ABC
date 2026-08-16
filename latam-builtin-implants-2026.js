@@ -107,7 +107,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "03/06/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -185,7 +185,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "04/02/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -263,7 +263,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "05/01/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB29",
@@ -328,7 +328,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "06/02/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB29",
@@ -523,7 +523,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "09/01/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus PowerX PowerX26",
@@ -562,7 +562,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "09/03/2026",
-    "hospital": "Del Torax",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB29",
@@ -575,7 +575,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "09/04/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -588,7 +588,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "09/04/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -666,7 +666,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "10/02/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus PowerX PowerX29",
@@ -835,7 +835,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "11/05/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus P P30-25",
@@ -1186,7 +1186,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "15/05/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -1316,7 +1316,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "16/03/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -1329,7 +1329,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "16/03/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -1472,7 +1472,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "18/03/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
@@ -1602,7 +1602,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "20/01/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus PowerX PowerX23",
@@ -1615,7 +1615,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "20/02/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB23",
@@ -1836,7 +1836,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "23/03/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB23",
@@ -1927,7 +1927,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "24/02/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus PowerX PowerX23",
@@ -1966,7 +1966,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "24/03/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus PowerX PowerX23",
@@ -1979,7 +1979,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "24/03/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus PowerX PowerX29",
@@ -2200,7 +2200,7 @@ const BUILTIN_IMPLANTS_2026 = [
   },
   {
     "date": "27/04/2026",
-    "hospital": "Instituto Nacional del TÃ³rax (INT)",
+    "hospital": "Instituto Nacional del Tórax (INT)",
     "country": "Chile",
     "dist": "Venus Direct (No Partner)",
     "valve": "Venus Vitae AB26",
