@@ -1719,7 +1719,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "20/08/2025",
-    "hospital": "InCor SP",
+    "hospital": "InCor Natal",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",

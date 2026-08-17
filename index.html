@@ -1733,7 +1733,7 @@ const BUILTIN_IMPLANTS_2025 = [
   },
   {
     "date": "20/08/2025",
-    "hospital": "InCor SP",
+    "hospital": "InCor Natal",
     "country": "Brazil",
     "dist": "HOMAC",
     "valve": "Venus A L26",
@@ -5629,8 +5629,8 @@ if (typeof window !== 'undefined') {
         .flex-center-cards { display: flex; justify-content: center; align-items: stretch; gap: 20px; margin-bottom: 40px; width: 100%; flex-wrap: wrap;}
         
         /* S&OP CART — 2 valve cards per row */
-        .sop-cart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; width: 100%; align-items: start; }
-        @media (max-width: 1100px) { .sop-cart-grid { grid-template-columns: 1fr; } }
+        .sop-cart-grid { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 30px; width: 100%; }
+        .sop-valve-cart-card { width: min(100%, 560px); flex: 0 1 560px; }
         
         /* COUNTRY CARDS */
         .country-cards-wrapper { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; justify-content: center; } 
@@ -6589,13 +6589,13 @@ const BUILTIN_PROBLEM_CASES = [
   {
     "id": "PROC-275",
     "date": "06/05/2026",
-    "hospital": "InCor SP",
+    "hospital": "InCor Natal",
     "country": "Brazil",
     "dist": "Sellmed",
     "valve": "Venus A L26",
     "valveBase": "Venus A",
     "serial": "26A00000242604",
-    "implanter": "Feancisco",
+    "implanter": "Francisco (Sobrenome Não Informado), Renato Arero",
     "specialist": "Alice Moraes",
     "proctor": "N/A",
     "severityLabel": "Level 3 - Critical (Fatality)",
@@ -7142,10 +7142,10 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     const FLAGS = { "Brazil": "🇧🇷", "Argentina": "🇦🇷", "Chile": "🇨🇱", "Colombia": "🇨🇴", "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "Peru": "🇵🇪", "Uruguay": "🇺🇾", "Paraguay": "🇵🇾", "Panama": "🇵🇦", "Dominican Republic": "🇩🇴", "China": "🇨🇳", "Unknown": "🌍", "Venezuela": "🇻🇪", "Bolivia": "🇧🇴" };
     const COUNTRY_ISO = { "Brazil": "br", "Argentina": "ar", "Chile": "cl", "Colombia": "co", "Mexico": "mx", "Ecuador": "ec", "Peru": "pe", "Uruguay": "uy", "Paraguay": "py", "Panama": "pa", "Bolivia": "bo", "Venezuela": "ve", "Dominican Republic": "do", "China": "cn" };
-    const NATIONALITIES = { "Stephanie Bugeño Apablaza": "Chile", "Fabio Silva": "Brazil", "Ariane Sanchez": "Brazil", "Edgard Quintella": "Brazil", "Alice Moraes": "Brazil", "Marcio Montenegro": "Brazil", "Henrique Ribeiro": "Brazil", "Alexis Vasiluk Knebel": "Brazil", "Ricardo Lisboa Cardozo": "Brazil", "Cesar Roberto Pintos": "Brazil", "Francisco": "Brazil", "Igor Salles": "Brazil", "Carlos Magno": "Brazil", "Eudes Figueredo": "Brazil", "Jarede Pereira": "Brazil", "Andreia Vasconcellos": "Brazil", "Jorge Baccaro": "Argentina", "Marcelo Rivarola": "Argentina", "Laura Zemp": "Argentina", "Fernando Pineda": "Chile", "Daniel Springmuller": "Chile", "Francisco Garay": "Chile", "Juan Pablo De Brahi": "Argentina", "Jorge Sandoval": "Chile", "Pablo Spaletra": "Argentina", "Luis Cressa": "Venezuela", "Victorio Lucini": "Argentina", "Jian Wang": "China", "Jesus María Damsky Barbosa": "Argentina", "Gian Manuel Jimenez": "Mexico", "Diego Villar": "Argentina" };
+    const NATIONALITIES = { "Stephanie Bugeño Apablaza": "Chile", "Fabio Silva": "Brazil", "Ariane Sanchez": "Brazil", "Edgard Quintella": "Brazil", "Alice Moraes": "Brazil", "Marcio Montenegro": "Brazil", "Henrique Ribeiro": "Brazil", "Alexis Vasiluk Knebel": "Brazil", "Alexis Knebel": "Brazil", "Ricardo Lisboa Cardozo": "Brazil", "Cesar Roberto Pintos": "Brazil", "Francisco": "Brazil", "Igor Salles": "Brazil", "Carlos Magno": "Brazil", "Eudes Figueredo": "Brazil", "Jarede Pereira": "Brazil", "Andreia Vasconcellos": "Brazil", "Jorge Baccaro": "Argentina", "Marcelo Rivarola": "Argentina", "Laura Zemp": "Argentina", "Fernando Pineda": "Chile", "Daniel Springmuller": "Chile", "Francisco Garay": "Chile", "Juan Pablo De Brahi": "Argentina", "Jorge Sandoval": "Chile", "Pablo Spaletra": "Argentina", "Luis Cressa": "Venezuela", "Victorio Lucini": "Argentina", "Jian Wang": "China", "Jesus María Damsky Barbosa": "Argentina", "Gian Manuel Jimenez": "Mexico", "Diego Villar": "Argentina" };
     
     // Official Proctors (Shielded in Finance Module)
-    const OFFICIAL_PROCTORS = ["Marcio Montenegro", "Edgard Quintella", "Pablo Lamelas", "Fernando Pineda", "Daniel Springmuller", "Marcelo Rivarola", "Victorio Lucini", "Pablo Spaletra", "Juan Pablo De Brahi", "Jorge Sandoval", "Gian Manuel Jimenez", "Luis Cressa", "Francisco Garay", "Jorge Baccaro", "Alexis Knebel"];
+    const OFFICIAL_PROCTORS = ["Marcio Montenegro", "Edgard Quintella", "Pablo Lamelas", "Fernando Pineda", "Daniel Springmuller", "Marcelo Rivarola", "Victorio Lucini", "Pablo Spaletra", "Juan Pablo De Brahi", "Jorge Sandoval", "Gian Manuel Jimenez", "Luis Cressa", "Francisco Garay", "Jorge Baccaro"];
 
     const PROCTOR_ALIASES = {
         "marcio montenegro": "Marcio Montenegro", "márcio montenegro": "Marcio Montenegro",
@@ -7154,7 +7154,6 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         "fernando pineda": "Fernando Pineda", "dr fernando pineda": "Fernando Pineda",
         "pablo spaletra": "Pablo Spaletra", "spaletra pablo": "Pablo Spaletra",
         "gian manuel jimenez": "Gian Manuel Jimenez", "gian manuel jiménez": "Gian Manuel Jimenez", "dr gian manuel jimenez": "Gian Manuel Jimenez",
-        "alexis knebel": "Alexis Knebel", "alexis vasiluk knebel": "Alexis Knebel", "alexia knebel": "Alexis Knebel",
         "luis cressa": "Luis Cressa", "dr luis cressa": "Luis Cressa",
         "francisco garay": "Francisco Garay", "dr francisco garay": "Francisco Garay",
         "daniel springmuller": "Daniel Springmuller", "springmuller": "Daniel Springmuller",
@@ -7314,7 +7313,8 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         "instituto nacional de cardiologia": "Instituto Nacional de Cardiología",
         "instituto nacional de cardiología": "Instituto Nacional de Cardiología",
         "incor de natal": "InCor Natal", "hospital incor de natal": "InCor Natal",
-        "incor": "InCor SP", "hospital incor": "InCor SP", "instituto do coracao": "InCor SP"
+        "incor": "InCor Natal", "hospital incor": "InCor Natal",
+        "incor sp": "InCor SP", "hospital incor sp": "InCor SP", "instituto do coracao": "InCor SP"
     };
     const HOSPITAL_ALIASES_KEYS = Object.keys(HOSPITAL_ALIASES).sort((a, b) => b.length - a.length);
 
@@ -7848,6 +7848,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         c.specialist = normalizePersonList(c.specialist);
         c.proctor = normalizePersonList(c.proctor || 'N/A');
         c.hospital = stdHosp(c.hospital, c.implanter);
+        applyInCorHospitalRule(c);
         c.country = anchorCountryFromHospital(c.hospital, c.country);
         c.dist = stdDist(c);
         if (!c.comment && c.commentOriginal) c.comment = c.commentOriginal;
@@ -7946,15 +7947,38 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return validCases.filter(c => shouldIncludeUploadVolumeRow(c, sourceName, ctx, isCasesLatamFile));
     }
 
-    function buildCaseFromBaseline2025(raw) {
+    const INCOR_SP_SERIALS = new Set(['26A00000251482']);
+
+    function applyInCorHospitalRule(caseObj) {
+        if (!caseObj) return;
+        let sn = normalizeSerialKey(caseObj.serial);
+        if (INCOR_SP_SERIALS.has(sn)) {
+            caseObj.hospital = 'InCor SP';
+            return;
+        }
+        let h = cleanStr(caseObj.hospital);
+        if (!h.includes('incor') && !h.includes('in cor') && !h.includes('instituto do coracao')) return;
+        if (h.includes('natal')) {
+            caseObj.hospital = 'InCor Natal';
+            return;
+        }
+        if (h.includes('sao paulo') || h.includes('são paulo') || /\bsp\b/.test(h)) {
+            caseObj.hospital = 'InCor SP';
+            return;
+        }
+        caseObj.hospital = 'InCor Natal';
+    }
+
+    function buildCaseFromBaseline2025(raw, rowIdx = 0) {
         let c = Object.assign({}, raw);
         c.implanter = normalizePersonList(c.implanter || 'N/A');
         c.specialist = normalizePersonList(c.specialist || 'N/A');
         c.proctor = normalizePersonList(c.proctor || 'N/A');
         c.hospital = stdHosp(c.hospital, c.implanter);
+        applyInCorHospitalRule(c);
         c.country = anchorCountryFromHospital(c.hospital, c.country);
         c.dist = stdDist(c);
-        c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, raw._sourceCaseId || 'baseline2025');
+        c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, raw._sourceCaseId || ('BL25-' + rowIdx));
         c._baseline2025 = true;
         return c;
     }
@@ -7965,6 +7989,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         c.specialist = normalizePersonList(c.specialist || 'N/A');
         c.proctor = normalizePersonList(c.proctor || 'N/A');
         c.hospital = stdHosp(c.hospital, c.implanter);
+        applyInCorHospitalRule(c);
         c.country = anchorCountryFromHospital(c.hospital, c.country);
         c.dist = stdDist(c);
         c.dedupKey = buildDedupKey(c.serial, c.hospital, c.date, c.implanter, c.valve, raw._sourceCaseId || 'baseline2026');
@@ -7974,7 +7999,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function ensureBuiltinImplants2025() {
         if (!hasEmbeddedBaseline2025()) return [];
-        return getBuiltinImplants2025().map(buildCaseFromBaseline2025);
+        return getBuiltinImplants2025().map((raw, idx) => buildCaseFromBaseline2025(raw, idx));
     }
 
     function ensureBuiltinImplants2026() {
@@ -8233,6 +8258,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             caseObj.specialist = stripNavarro(caseObj.specialist) || 'N/A';
         }
         caseObj.hospital = stdHosp(caseObj.hospital, caseObj.implanter);
+        applyInCorHospitalRule(caseObj);
         caseObj.country = anchorCountryFromHospital(caseObj.hospital, caseObj.country);
         caseObj.dist = stdDist(caseObj);
     }
@@ -8261,8 +8287,8 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         
         if (clean_raw.includes('incor') || clean_raw.includes('in cor')) {
             if (clean_raw.includes('natal')) return 'InCor Natal';
-            if (clean_raw.includes('sao paulo') || raw.includes(' - ')) return 'InCor SP';
-            return 'InCor SP';
+            if (clean_raw.includes('sao paulo') || clean_raw.includes('são paulo') || raw.includes(' - ')) return 'InCor SP';
+            return 'InCor Natal';
         }
 
         if (isChileToraxHospital(raw)) return CHILE_INT_HOSPITAL;
@@ -8583,7 +8609,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             }
 
             html += `
-                <div class="sop-valve-cart-card" style="width: 100%; background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                <div class="sop-valve-cart-card" style="background: #fff; border: 1px solid var(--v-border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
                     <div style="background: var(--v-deep-blue); color: #fff; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <img src="${baseImg}" style="height: 40px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">

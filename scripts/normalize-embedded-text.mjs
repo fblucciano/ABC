@@ -64,7 +64,7 @@ const HOSPITAL_ALIASES = {
     'fundacion medica de rio negro': 'Fundación Médica de Río Negro',
     'clinica bazterrica': 'Centro Médico Bazterrica',
     'hospital maceio': 'Hospital Maceió - Hapvida', 'maceio': 'Hospital Maceió - Hapvida',
-    'incor': 'InCor SP', 'fundacion cardiovascular de colombia': 'Fundación Cardiovascular de Colombia',
+    'incor': 'InCor Natal', 'incor sp': 'InCor SP', 'fundacion cardiovascular de colombia': 'Fundación Cardiovascular de Colombia',
     'instituto diagnostico de la plata': 'Instituto Diagnóstico de La Plata',
     'smh petropolis': 'SMH Petrópolis',
     'hemodinamica sao lucas': 'Hemodinâmica São Lucas',
