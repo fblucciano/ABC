@@ -9518,6 +9518,37 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return values.length > 0 ? Math.round(sum / values.length) : Math.round(ytdTotal / Math.max(endMonth, 1));
     }
 
+    function computeTrendChartYMaxFromSeries(seriesArr, collapsedIndices) {
+        let collapsed = collapsedIndices || [];
+        let maxVal = 0;
+        (seriesArr || []).forEach((s, idx) => {
+            if (collapsed.includes(idx)) return;
+            (s.data || []).forEach(val => {
+                let n = Number(val);
+                if (!isNaN(n) && n > maxVal) maxVal = n;
+            });
+        });
+        return maxVal > 0 ? maxVal + 10 : 10;
+    }
+
+    function computeTrendChartYMaxFromChart(chartContext) {
+        if (!chartContext || !chartContext.w) return 10;
+        let g = chartContext.w.globals;
+        return computeTrendChartYMaxFromSeries(
+            chartContext.w.config.series,
+            g.collapsedSeriesIndices
+        );
+    }
+
+    function syncTrendChartYAxis(chartContext) {
+        if (!chartContext) return;
+        let ymax = computeTrendChartYMaxFromChart(chartContext);
+        let yaxisCfg = chartContext.w.config.yaxis;
+        let currentMax = Array.isArray(yaxisCfg) ? yaxisCfg[0].max : yaxisCfg.max;
+        if (currentMax === ymax) return;
+        chartContext.updateOptions({ yaxis: { min: 0, max: ymax } }, false, false);
+    }
+
     function buildTrendValveTooltipHtml(year, mName, tot, vMap) {
         if (!tot) return '';
         let h = `<div style="padding:12px; font-family:'Inter', sans-serif; min-width:160px; background:#fff; border:1px solid #E2E8F0; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
@@ -9689,10 +9720,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             colors.push('#FAA74A');
         }
 
-        let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
-        if (showForecastLines) allValues.push(targetPerMonth, runRatePerMonth);
-        let maxDataVal = allValues.length > 0 ? Math.max(...allValues) : 0;
-        let viewMax = maxDataVal > 0 ? maxDataVal + 10 : 10;
+        let viewMax = computeTrendChartYMaxFromSeries(series);
 
         let options = {
             series,
@@ -9702,7 +9730,15 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 fontFamily: 'Inter, sans-serif',
                 toolbar: { show: false },
                 animations: { enabled: true, easing: 'easeinout', speed: 800 },
-                background: 'transparent'
+                background: 'transparent',
+                events: {
+                    legendClick: function(chartContext) {
+                        setTimeout(() => syncTrendChartYAxis(chartContext), 60);
+                    },
+                    animationEnd: function(chartContext) {
+                        syncTrendChartYAxis(chartContext);
+                    }
+                }
             },
             colors,
             title: {
