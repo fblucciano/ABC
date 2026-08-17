@@ -9692,7 +9692,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
         if (showForecastLines) allValues.push(targetPerMonth, runRatePerMonth);
         let maxDataVal = allValues.length > 0 ? Math.max(...allValues) : 0;
-        let viewMax = maxDataVal + (maxDataVal * 0.1) + 5;
+        let viewMax = maxDataVal > 0 ? maxDataVal + 10 : 10;
 
         let options = {
             series,
@@ -9743,7 +9743,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             },
             plotOptions: {
                 bar: {
-                    columnWidth: compYear ? '38%' : '48%',
+                    columnWidth: compYear ? '72%' : '55%',
                     borderRadius: 4,
                     borderRadiusApplication: 'end'
                 }
