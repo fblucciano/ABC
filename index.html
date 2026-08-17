@@ -5716,7 +5716,11 @@ if (typeof window !== 'undefined') {
         /* CHART CONTAINER */
         .trend-chart-wrap { position: relative; margin-bottom: 50px; }
         #trend-chart-container { min-height: 500px; height: 560px; width: 100%; background: #fff; border: 1px solid var(--v-border); border-radius: 12px; padding: 15px; box-sizing: border-box; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        #trend-apex-chart { height: 100%; min-height: 480px; }
+        #trend-apex-chart { height: calc(100% - 44px); min-height: 420px; }
+        .trend-chart-title { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: #171434; line-height: 1.5; margin: 0 0 6px 0; padding-right: 130px; }
+        .trend-growth-pill { display: inline-block; font-weight: 800; padding: 2px 9px; border-radius: 6px; margin-left: 2px; }
+        .trend-growth-positive { color: #047857; background: #ECFDF5; border: 1px solid #6EE7B7; }
+        .trend-growth-negative { color: #B91C1C; background: #FEF2F2; border: 1px solid #FECACA; }
         .apexcharts-tooltip.trend-valve-tooltip { padding: 0 !important; border: none !important; box-shadow: none !important; background: transparent !important; }
 
         .hidden { display: none !important; }
@@ -9534,10 +9538,16 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     function computeTrendChartYMaxFromChart(chartContext) {
         if (!chartContext || !chartContext.w) return 10;
         let g = chartContext.w.globals;
-        return computeTrendChartYMaxFromSeries(
-            chartContext.w.config.series,
-            g.collapsedSeriesIndices
-        );
+        let collapsed = g.collapsedSeriesIndices || [];
+        let maxVal = 0;
+        (g.series || []).forEach((seriesData, idx) => {
+            if (collapsed.includes(idx)) return;
+            (seriesData || []).forEach(val => {
+                let n = Number(val);
+                if (!isNaN(n) && n > maxVal) maxVal = n;
+            });
+        });
+        return maxVal > 0 ? maxVal + 10 : 10;
     }
 
     function syncTrendChartYAxis(chartContext) {
@@ -9623,7 +9633,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
         let filterLabel = activeCountryExpanded ? activeCountryExpanded.toUpperCase() : 'LATAM REGION';
         if (activeValveFilter) filterLabel += ` | ${activeValveFilter}`;
-        let chartTitle = `${filterLabel} Pipeline: ${primaryYear} (${totalPrimary} cases)`;
+        let chartTitleHtml = `${filterLabel} Pipeline: ${primaryYear} (${totalPrimary} cases)`;
 
         if (compYear) {
             let doneCompYTD = 0;
@@ -9632,7 +9642,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             let sign = yoy >= 0 ? '+' : '';
             let monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             let periodText = `Jan-${monthNamesShort[maxMonthActive - 1]}`;
-            chartTitle = `${filterLabel} YoY Comparison (YTD ${periodText}): ${compYear} (${doneCompYTD} cases) vs ${primaryYear} (${totalPrimary} cases) | Growth: ${sign}${yoy.toFixed(1)}%`;
+            let growthClass = yoy >= 0 ? 'trend-growth-positive' : 'trend-growth-negative';
+            let growthLabel = `${sign}${yoy.toFixed(1)}%`;
+            chartTitleHtml = `${filterLabel} YoY Comparison (YTD ${periodText}): ${compYear} (${doneCompYTD} cases) vs ${primaryYear} (${totalPrimary} cases) | Growth: <span class="trend-growth-pill ${growthClass}">${growthLabel}</span>`;
         }
 
         let opsTargetInput = document.getElementById('ops-target-input');
@@ -9669,7 +9681,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let targetPerMonth = Math.round(remainingUnits / remainingMonths);
 
         container.style.height = showForecastLines ? '580px' : '520px';
-        container.innerHTML = '<div id="trend-apex-chart"></div>';
+        container.innerHTML = `<div id="trend-chart-title" class="trend-chart-title">${chartTitleHtml}</div><div id="trend-apex-chart"></div>`;
 
         let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         let compSeriesData = monthNames.map((_, idx) => monthCountsComp[idx + 1] || 0);
@@ -9742,16 +9754,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             },
             colors,
             title: {
-                text: chartTitle,
-                align: 'left',
-                margin: 10,
-                offsetX: 0,
-                style: {
-                    fontFamily: 'Space Mono, monospace',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: '#171434'
-                }
+                text: undefined
             },
             legend: {
                 show: true,
