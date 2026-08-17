@@ -541,8 +541,8 @@ for (const [k, v] of Object.entries(extraPerson)) {
     if (!PERSON_ALIASES[k]) personAliasCandidates.set(k, v);
 }
 
-mergeAliasesIntoIndex('HOSPITAL_ALIASES', hospitalAliasCandidates, HOSPITAL_ALIASES);
-mergeAliasesIntoIndex('PERSON_ALIASES', personAliasCandidates, PERSON_ALIASES);
+// Do NOT merge aliases into index.html — corrupts syntax and adds bad mappings.
+// Aliases are maintained manually in index.html; CSV script only patches embedded .js data.
 fs.writeFileSync(indexPath, html, 'utf8');
 console.log(`Canonical serials loaded: ${canonical.size}, total case patches: ${totalPatched}`);
 console.log(`New hospital alias candidates: ${hospitalAliasCandidates.size}, person: ${personAliasCandidates.size}`);
