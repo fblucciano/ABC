@@ -524,14 +524,7 @@
         document.body.appendChild(report);
         app.style.display = 'none';
 
-        var opt = {
-            margin: [10, 10, 10, 10],
-            filename: buildPdfFileName(data),
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, windowWidth: 780 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] }
-        };
+        var filename = buildPdfFileName(data);
 
         function cleanup() {
             if (report.parentNode) report.parentNode.removeChild(report);
@@ -539,10 +532,53 @@
             if (exportBtn) { exportBtn.disabled = false; exportBtn.innerText = 'Export PDF'; }
         }
 
-        html2pdf().set(opt).from(report).save().then(cleanup).catch(function(err) {
-            console.error('PDF export failed:', err);
-            cleanup();
-        });
+        // Renderiza cada página do proforma individualmente e ajusta a escala
+        // para caber exatamente em uma folha A4 — garante 6 páginas sem cortes.
+        var JsPDFCtor = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
+        var h2c = window.html2canvas;
+
+        if (JsPDFCtor && h2c) {
+            var pdf = new JsPDFCtor({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+            var pageEls = report.querySelectorAll('.pdf-page');
+            var PAGE_W = 210, PAGE_H = 297, MARGIN = 9;
+            var availW = PAGE_W - (MARGIN * 2), availH = PAGE_H - (MARGIN * 2);
+
+            var chain = Promise.resolve();
+            Array.prototype.forEach.call(pageEls, function(pageEl, idx) {
+                chain = chain.then(function() {
+                    return h2c(pageEl, { scale: 2, useCORS: true, backgroundColor: '#FFFFFF', windowWidth: 780 }).then(function(canvas) {
+                        if (idx > 0) pdf.addPage();
+                        var imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        var ratio = canvas.height / canvas.width;
+                        var w = availW, h = w * ratio;
+                        if (h > availH) { h = availH; w = h / ratio; }
+                        pdf.addImage(imgData, 'JPEG', (PAGE_W - w) / 2, MARGIN, w, h);
+                    });
+                });
+            });
+
+            chain.then(function() {
+                pdf.save(filename);
+                cleanup();
+            }).catch(function(err) {
+                console.error('PDF export failed:', err);
+                cleanup();
+            });
+        } else {
+            // Fallback: pipeline padrão do html2pdf com quebras de página por CSS
+            var opt = {
+                margin: [9, 9, 9, 9],
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, useCORS: true, windowWidth: 780 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+            html2pdf().set(opt).from(report).save().then(cleanup).catch(function(err) {
+                console.error('PDF export failed:', err);
+                cleanup();
+            });
+        }
     }
 
     function buildPdfFileName(data) {
