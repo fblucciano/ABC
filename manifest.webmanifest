@@ -1,0 +1,25 @@
+{
+  "name": "Venus LATAM Intelligence OS",
+  "short_name": "Venus LATAM",
+  "description": "LATAM operational intelligence dashboard for Venus Medtech",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#171434",
+  "theme_color": "#171434",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
