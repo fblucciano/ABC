@@ -5542,7 +5542,7 @@ if (typeof window !== 'undefined') {
     window.BUILTIN_IMPLANTS_2026 = BUILTIN_IMPLANTS_2026;
 }
 </script>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.49.0/dist/apexcharts.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -5716,12 +5716,8 @@ if (typeof window !== 'undefined') {
         /* CHART CONTAINER */
         .trend-chart-wrap { position: relative; margin-bottom: 50px; }
         #trend-chart-container { min-height: 500px; height: 560px; width: 100%; background: #fff; border: 1px solid var(--v-border); border-radius: 12px; padding: 15px; box-sizing: border-box; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        .trend-chart-legend { position: absolute; top: 18px; right: 28px; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: flex-end; max-width: 58%; pointer-events: none; }
-        .trend-chart-legend-item { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #575567; cursor: pointer; user-select: none; border: none; background: transparent; padding: 3px 6px; border-radius: 4px; transition: opacity 0.15s ease, background 0.15s ease; }
-        .trend-chart-legend-item:hover { background: #f1f5f9; }
-        .trend-chart-legend-item.is-hidden { opacity: 0.4; text-decoration: line-through; }
-        .trend-chart-legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
-        .trend-chart-legend-swatch.line { height: 3px; border-radius: 2px; }
+        #trend-apex-chart { height: 100%; min-height: 480px; }
+        .apexcharts-tooltip.trend-valve-tooltip { padding: 0 !important; border: none !important; box-shadow: none !important; background: transparent !important; }
 
         .hidden { display: none !important; }
         #error-alert { background: #FEF2F2; color: #991B1B; padding: 15px; font-size: 14px; font-weight: bold; display: none; margin-bottom: 20px; border-radius: 8px; border: 1px solid #F87171;}
@@ -5923,7 +5919,6 @@ if (typeof window !== 'undefined') {
         <div class="section-dash" style="margin-top:5px;">—</div>
         
         <div class="trend-chart-wrap">
-            <div id="trend-chart-legend" class="trend-chart-legend"></div>
             <div id="trend-chart-container"><div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div></div>
         </div>
 
@@ -7297,7 +7292,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let gHospMap = {}, gImpMap = {}, gSpecMap = {}, gProcMap = {};
     let leafletMap = null, modalMiniMap = null, proctorFeeDB = {};
     let activeDistFilter = null, activeValveFilter = null; 
-    let chartsLoaded = false;
+    let chartsLoaded = typeof ApexCharts !== 'undefined';
+    let trendApexChart = null;
+    let trendChartTooltipCtx = null;
     let activeYears = [];
     let activeCountryExpanded = null;
     let activeTabId = 'tab-ops';
@@ -7306,7 +7303,6 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let activeSOPValve = null; 
     let activeSOPDistributor = null;
     let showForecastLines = false;
-    let trendChartSeriesHidden = {};
 
     // Tab 05 - Clinical Excellence & Device Safety
     let activeClinicalValve = null;
@@ -7315,12 +7311,15 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let clinicalSortCol = null;       // null | 'date' | 'country' | 'hospital' | 'physician' | 'valve' | 'severity'
     let clinicalSortMode = 0;         // 0 = default, 1 = desc (L3 first for severity), 2 = asc (L1 first)
 
-    // INITIALIZE GOOGLE CHARTS
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(() => {
-        chartsLoaded = true;
-        if (processedData && processedData.length > 0) renderTrendChart();
-    });
+    // INITIALIZE APEXCHARTS (Growth Trend chart)
+    if (!chartsLoaded) {
+        window.addEventListener('load', () => {
+            chartsLoaded = typeof ApexCharts !== 'undefined';
+            if (processedData && processedData.length > 0) renderTrendChart();
+        });
+    } else if (processedData && processedData.length > 0) {
+        renderTrendChart();
+    }
 
     // LOAD MAP DATA
     fetch('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson')
@@ -8279,10 +8278,6 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function toggleForecastLines() {
         showForecastLines = !showForecastLines;
-        if (!showForecastLines) {
-            trendChartSeriesHidden.projected = false;
-            trendChartSeriesHidden.required = false;
-        }
         let btn = document.getElementById('toggle-forecast-btn');
         if(btn) {
             btn.innerText = showForecastLines ? 'HIDE FORECAST' : 'SHOW FORECAST';
@@ -8291,27 +8286,6 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             btn.classList.toggle('active', showForecastLines);
         }
         renderTrendChart();
-    }
-
-    function toggleTrendChartSeries(seriesKey) {
-        trendChartSeriesHidden[seriesKey] = !trendChartSeriesHidden[seriesKey];
-        renderTrendChart();
-    }
-
-    function renderTrendChartLegend(legendDefs) {
-        let legendEl = document.getElementById('trend-chart-legend');
-        if (!legendEl) return;
-        if (!legendDefs.length) {
-            legendEl.innerHTML = '';
-            return;
-        }
-        legendEl.innerHTML = legendDefs.map(def => {
-            let hidden = !!trendChartSeriesHidden[def.key];
-            let swatchClass = def.type === 'line' ? 'trend-chart-legend-swatch line' : 'trend-chart-legend-swatch';
-            return `<button type="button" class="trend-chart-legend-item${hidden ? ' is-hidden' : ''}" onclick="toggleTrendChartSeries('${def.key}')" title="Click to ${hidden ? 'show' : 'hide'}">
-                <span class="${swatchClass}" style="background:${def.color};"></span>${def.label}
-            </button>`;
-        }).join('');
     }
 
     // --- S&OP HARE-NIEMEYER MATHEMATICAL DISTRIBUTION ---
@@ -9544,16 +9518,37 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return values.length > 0 ? Math.round(sum / values.length) : Math.round(ytdTotal / Math.max(endMonth, 1));
     }
 
+    function buildTrendValveTooltipHtml(year, mName, tot, vMap) {
+        if (!tot) return '';
+        let h = `<div style="padding:12px; font-family:'Inter', sans-serif; min-width:160px; background:#fff; border:1px solid #E2E8F0; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+            <div style="font-weight:800; color:#171434; margin-bottom:8px; border-bottom:1px solid #E2E8F0; padding-bottom:5px; font-size:13px;">${mName} ${year} - ${tot} Cases</div>`;
+        ['Venus A', 'Venus P', 'PowerX', 'Vitae'].forEach(v => {
+            if (vMap[v] > 0) {
+                let c = '#0284C7';
+                if (v === 'Venus P') c = '#9333EA';
+                if (v === 'PowerX') c = '#16A34A';
+                if (v === 'Vitae') c = '#DC2626';
+                h += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                    <span style="color:#575567; display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${c};"></span>${v}</span>
+                    <strong style="color:#302B6A;">${vMap[v]}</strong>
+                </div>`;
+            }
+        });
+        h += `</div>`;
+        return h;
+    }
+
     function renderTrendChart() {
-        if(!chartsLoaded || !google || !google.visualization) return;
+        if (!chartsLoaded || typeof ApexCharts === 'undefined') return;
 
         let chartData = fullyFilteredData;
         let container = document.getElementById('trend-chart-container');
-        if(!container) return;
+        if (!container) return;
 
-        if(chartData.length === 0 || activeYears.length === 0) {
+        if (chartData.length === 0 || activeYears.length === 0) {
+            if (trendApexChart) { trendApexChart.destroy(); trendApexChart = null; }
             container.innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div>`;
-            renderTrendChartLegend([]);
+            trendChartTooltipCtx = null;
             return;
         }
 
@@ -9568,64 +9563,61 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let totalComp = 0;
         let maxMonthActive = 0;
 
-        for(let i=1; i<=12; i++) {
-            vCountsPrimary[i] = {"Venus A":0, "Venus P":0, "PowerX":0, "Vitae":0};
-            vCountsComp[i] = {"Venus A":0, "Venus P":0, "PowerX":0, "Vitae":0};
+        for (let i = 1; i <= 12; i++) {
+            vCountsPrimary[i] = {"Venus A": 0, "Venus P": 0, "PowerX": 0, "Vitae": 0};
+            vCountsComp[i] = {"Venus A": 0, "Venus P": 0, "PowerX": 0, "Vitae": 0};
         }
 
         chartData.forEach(d => {
             let parts = d.date.split('/');
-            if(parts.length === 3) {
+            if (parts.length === 3) {
                 let m = parseInt(parts[1], 10);
                 let y = parseInt(parts[2], 10);
                 let vb = d.valveBase || 'Venus A';
-                
+
                 if (!isNaN(m) && !isNaN(y)) {
                     if (y === primaryYear) {
                         monthCountsPrimary[m] = (monthCountsPrimary[m] || 0) + 1;
-                        if(vCountsPrimary[m][vb] !== undefined) vCountsPrimary[m][vb]++;
+                        if (vCountsPrimary[m][vb] !== undefined) vCountsPrimary[m][vb]++;
                         totalPrimary++;
-                        if(m > maxMonthActive) maxMonthActive = m;
+                        if (m > maxMonthActive) maxMonthActive = m;
                     } else if (y === compYear) {
                         monthCountsComp[m] = (monthCountsComp[m] || 0) + 1;
-                        if(vCountsComp[m][vb] !== undefined) vCountsComp[m][vb]++;
+                        if (vCountsComp[m][vb] !== undefined) vCountsComp[m][vb]++;
                         totalComp++;
                     }
                 }
             }
         });
 
-        // Target Math
         let filterLabel = activeCountryExpanded ? activeCountryExpanded.toUpperCase() : 'LATAM REGION';
         if (activeValveFilter) filterLabel += ` | ${activeValveFilter}`;
         let chartTitle = `${filterLabel} Pipeline: ${primaryYear} (${totalPrimary} cases)`;
-        
+
         if (compYear) {
             let doneCompYTD = 0;
-            for(let m = 1; m <= maxMonthActive; m++) {
-                doneCompYTD += (monthCountsComp[m] || 0);
-            }
+            for (let m = 1; m <= maxMonthActive; m++) doneCompYTD += (monthCountsComp[m] || 0);
             let yoy = doneCompYTD > 0 ? (((totalPrimary / doneCompYTD) - 1) * 100) : 0;
             let sign = yoy >= 0 ? '+' : '';
             let monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            let periodText = `Jan-${monthNamesShort[maxMonthActive-1]}`;
-            
+            let periodText = `Jan-${monthNamesShort[maxMonthActive - 1]}`;
             chartTitle = `${filterLabel} YoY Comparison (YTD ${periodText}): ${compYear} (${doneCompYTD} cases) vs ${primaryYear} (${totalPrimary} cases) | Growth: ${sign}${yoy.toFixed(1)}%`;
         }
 
         let opsTargetInput = document.getElementById('ops-target-input');
         let targetUnits = opsTargetInput ? (Number(opsTargetInput.value) || 399) : 399;
         if (activeValveFilter || activeCountryExpanded) {
-            let mixData = {vBase: {}, cBase: {}};
+            let mixData = { vBase: {}, cBase: {} };
             processedData.forEach(c => {
                 mixData.vBase[c.valveBase] = (mixData.vBase[c.valveBase] || 0) + 1;
                 mixData.cBase[c.country] = (mixData.cBase[c.country] || 0) + 1;
             });
-            let totHist = Object.values(mixData.vBase).reduce((a,b)=>a+b, 0);
-            let cPct = 1; if (activeCountryExpanded && totHist > 0) cPct = (mixData.cBase[activeCountryExpanded] || 0) / totHist;
+            let totHist = Object.values(mixData.vBase).reduce((a, b) => a + b, 0);
+            let cPct = 1;
+            if (activeCountryExpanded && totHist > 0) cPct = (mixData.cBase[activeCountryExpanded] || 0) / totHist;
             let vPct = 1;
             if (activeValveFilter) {
-                let localMix = {vBase: {}};
+                let localMix = { vBase: {} };
                 let localCases = activeCountryExpanded ? processedData.filter(c => c.country === activeCountryExpanded) : processedData;
                 let localTot = localCases.length;
                 localCases.forEach(c => localMix.vBase[c.valveBase] = (localMix.vBase[c.valveBase] || 0) + 1);
@@ -9633,176 +9625,222 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             }
             targetUnits = Math.round(targetUnits * cPct * vPct);
         }
-        
+
         let monthsPassed = maxMonthActive || 1;
         let totalPrimaryYTD = 0;
         for (let m = 1; m <= monthsPassed; m++) totalPrimaryYTD += (monthCountsPrimary[m] || 0);
 
-        // Trailing 3-month average avoids a single weak month (e.g. August dip) distorting the run-rate
         let runRatePerMonth = getTrailingMonthlyRunRate(monthCountsPrimary, monthsPassed, totalPrimaryYTD);
-        let remainingUnits = targetUnits - totalPrimaryYTD; if (remainingUnits < 0) remainingUnits = 0;
-        let remainingMonths = 12 - monthsPassed; if (remainingMonths < 1) remainingMonths = 1;
+        let remainingUnits = targetUnits - totalPrimaryYTD;
+        if (remainingUnits < 0) remainingUnits = 0;
+        let remainingMonths = 12 - monthsPassed;
+        if (remainingMonths < 1) remainingMonths = 1;
         let targetPerMonth = Math.round(remainingUnits / remainingMonths);
 
         container.style.height = showForecastLines ? '580px' : '520px';
+        container.innerHTML = '<div id="trend-apex-chart"></div>';
 
-        let dataTable = [];
         let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        let compSeriesData = monthNames.map((_, idx) => monthCountsComp[idx + 1] || 0);
+        let primarySeriesData = monthNames.map((_, idx) => monthCountsPrimary[idx + 1] || 0);
 
-        const genTooltip = (year, mName, tot, vMap) => {
-            if(tot === 0) return '';
-            let h = `<div style="padding:12px; font-family:'Inter', sans-serif; min-width:160px; background:#fff; border:1px solid #E2E8F0; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-                <div style="font-weight:800; color:#171434; margin-bottom:8px; border-bottom:1px solid #E2E8F0; padding-bottom:5px; font-size:13px;">${mName} ${year} - ${tot} Cases</div>`;
-            ['Venus A', 'Venus P', 'PowerX', 'Vitae'].forEach(v => {
-                if(vMap[v] > 0) {
-                    let c = '#0284C7';
-                    if(v==='Venus P') c = '#9333EA';
-                    if(v==='PowerX') c = '#16A34A';
-                    if(v==='Vitae') c = '#DC2626';
-                    h += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
-                        <span style="color:#575567; display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${c};"></span>${v}</span>
-                        <strong style="color:#302B6A;">${vMap[v]}</strong>
-                    </div>`;
-                }
-            });
-            h += `</div>`;
-            return h;
+        let projectedData = monthNames.map((_, idx) => (idx + 1 > maxMonthActive ? runRatePerMonth : null));
+        let requiredData = monthNames.map((_, idx) => (idx + 1 > maxMonthActive ? targetPerMonth : null));
+
+        trendChartTooltipCtx = {
+            monthNames,
+            compYear,
+            primaryYear,
+            vCountsComp,
+            vCountsPrimary
         };
 
-        let legendDefs = [];
+        let series = [];
+        let colors = [];
 
         if (compYear) {
-            // YOY Setup (2 Bars side by side, Custom HTML tooltips)
-            let header = ['Month', String(compYear), {role: 'tooltip', p:{html:true}}, { role: 'annotation' }, String(primaryYear), {role: 'tooltip', p:{html:true}}, { role: 'annotation' }];
-            if (showForecastLines) header.push('Projected Target Run-Rate', { role: 'annotation' }, 'Required Target', { role: 'annotation' });
-            dataTable.push(header);
-
-            for(let m=1; m<=12; m++) {
-                let hp = monthCountsPrimary[m] || 0;
-                let hc = monthCountsComp[m] || 0;
-                
-                let lblP = hp > 0 ? String(hp) : null;
-                let lblC = hc > 0 ? String(hc) : null;
-
-                if (hp > 0 && hc > 0) {
-                    let growth = ((hp / hc) - 1) * 100;
-                    let sign = growth >= 0 ? '+' : '';
-                    lblP = `${hp} (${sign}${growth.toFixed(0)}%)`;
-                }
-                
-                let ttC = genTooltip(compYear, monthNames[m-1], hc, vCountsComp[m]);
-                let ttP = genTooltip(primaryYear, monthNames[m-1], hp, vCountsPrimary[m]);
-
-                let row = [monthNames[m-1], hc, ttC, lblC, hp, ttP, lblP];
-                if (showForecastLines) {
-                    // Forecast lines start after the last closed month so a weak final bar
-                    // (e.g. August dip) does not visually drag the trajectory down.
-                    if (m <= maxMonthActive) row.push(null, null, null, null);
-                    else row.push(runRatePerMonth, null, targetPerMonth, null);
-                }
-                dataTable.push(row);
-            }
-
-            legendDefs.push({ key: 'comp', label: String(compYear), color: '#cbd5e1', type: 'bars', cols: [1, 2, 3] });
-            legendDefs.push({ key: 'primary', label: String(primaryYear), color: '#302B6A', type: 'bars', cols: [4, 5, 6] });
-            if (showForecastLines) {
-                legendDefs.push({ key: 'projected', label: 'Projected Target Run-Rate', color: '#94A3B8', type: 'line', cols: [7, 8], lineDash: [4, 4] });
-                legendDefs.push({ key: 'required', label: 'Required Target', color: '#FAA74A', type: 'line', cols: [9, 10], lineDash: [6, 4] });
-            }
-
-        } else {
-            // Single Year Setup (Solid Blue Bar, Custom HTML tooltips)
-            let header = ['Month', String(primaryYear), {role: 'tooltip', p:{html:true}}, { role: 'annotation' }];
-            if (showForecastLines) header.push('Projected Target Run-Rate', { role: 'annotation' }, 'Required Target', { role: 'annotation' });
-            dataTable.push(header);
-
-            for(let m=1; m<=12; m++) {
-                let hp = monthCountsPrimary[m] || 0;
-                let ann = hp > 0 ? String(hp) : null;
-                let ttP = genTooltip(primaryYear, monthNames[m-1], hp, vCountsPrimary[m]);
-
-                let row = [monthNames[m-1], hp, ttP, ann];
-
-                if (showForecastLines) {
-                    if (m <= maxMonthActive) row.push(null, null, null, null);
-                    else row.push(runRatePerMonth, null, targetPerMonth, null);
-                }
-                dataTable.push(row);
-            }
-
-            legendDefs.push({ key: 'primary', label: String(primaryYear), color: '#302B6A', type: 'bars', cols: [1, 2, 3] });
-            if (showForecastLines) {
-                legendDefs.push({ key: 'projected', label: 'Projected Target Run-Rate', color: '#94A3B8', type: 'line', cols: [4, 5], lineDash: [4, 4] });
-                legendDefs.push({ key: 'required', label: 'Required Target', color: '#FAA74A', type: 'line', cols: [6, 7], lineDash: [6, 4] });
-            }
-        }
-
-        renderTrendChartLegend(legendDefs);
-
-        let visibleLegendDefs = legendDefs.filter(def => !trendChartSeriesHidden[def.key]);
-        if (visibleLegendDefs.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">All series hidden — click a legend item to show data.</div>`;
-            return;
-        }
-
-        let filteredTable = [];
-        let headerRow = ['Month'];
-        visibleLegendDefs.forEach(def => {
-            def.cols.forEach(colIdx => headerRow.push(dataTable[0][colIdx]));
-        });
-        filteredTable.push(headerRow);
-
-        for (let r = 1; r < dataTable.length; r++) {
-            let row = [dataTable[r][0]];
-            visibleLegendDefs.forEach(def => {
-                def.cols.forEach(colIdx => row.push(dataTable[r][colIdx]));
+            series.push({
+                name: String(compYear),
+                type: 'column',
+                data: compSeriesData
             });
-            filteredTable.push(row);
+            colors.push('#cbd5e1');
         }
 
-        let seriesConfig = {};
-        let colorsConfig = [];
-        visibleLegendDefs.forEach((def, idx) => {
-            if (def.type === 'bars') {
-                seriesConfig[idx] = { type: 'bars' };
-            } else {
-                seriesConfig[idx] = {
-                    type: 'line',
-                    lineDashStyle: def.lineDash || [4, 4],
-                    pointSize: 6,
-                    lineWidth: def.key === 'required' ? 4 : 3
-                };
-            }
-            colorsConfig.push(def.color);
+        series.push({
+            name: String(primaryYear),
+            type: 'column',
+            data: primarySeriesData
         });
+        colors.push('#302B6A');
 
-        let data = google.visualization.arrayToDataTable(filteredTable);
-        
+        if (showForecastLines) {
+            series.push({
+                name: 'Projected Target Run-Rate',
+                type: 'line',
+                data: projectedData
+            });
+            colors.push('#94A3B8');
+            series.push({
+                name: 'Required Target',
+                type: 'line',
+                data: requiredData
+            });
+            colors.push('#FAA74A');
+        }
+
         let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
-        if(showForecastLines) { allValues.push(targetPerMonth, runRatePerMonth); }
+        if (showForecastLines) allValues.push(targetPerMonth, runRatePerMonth);
         let maxDataVal = allValues.length > 0 ? Math.max(...allValues) : 0;
-        let viewMax = maxDataVal + (maxDataVal * 0.1) + 5; 
-        
-        let chartTop = showForecastLines ? 105 : 72;
+        let viewMax = maxDataVal + (maxDataVal * 0.1) + 5;
+
         let options = {
-            title: chartTitle,
-            titleTextStyle: { color: '#171434', fontName: 'Space Mono', fontSize: 14, bold: true },
-            chartArea: {width: '88%', height: showForecastLines ? '58%' : '68%', top: chartTop, left: 60, right: 24},
-            legend: { position: 'none' },
-            colors: colorsConfig,
-            seriesType: 'bars',
-            series: seriesConfig,
-            focusTarget: 'datum',
-            tooltip: { isHtml: true },
-            vAxis: { minValue: 0, viewWindow: { max: viewMax }, textStyle: {color: '#575567', fontName: 'Space Mono', fontSize: 13}, gridlines: {color: '#E2E8F0'} },
-            hAxis: { textStyle: {color: '#575567', fontName: 'Space Mono', fontSize: 12} },
-            annotations: { alwaysOutside: true, textStyle: { fontName: 'Space Mono', fontSize: 11, bold: true, color: '#171434' } },
-            backgroundColor: 'transparent',
-            animation: { startup: true, duration: 800, easing: 'out' }
+            series,
+            chart: {
+                type: 'line',
+                height: showForecastLines ? 540 : 480,
+                fontFamily: 'Inter, sans-serif',
+                toolbar: { show: false },
+                animations: { enabled: true, easing: 'easeinout', speed: 800 },
+                background: 'transparent'
+            },
+            colors,
+            title: {
+                text: chartTitle,
+                align: 'left',
+                margin: 10,
+                offsetX: 0,
+                style: {
+                    fontFamily: 'Space Mono, monospace',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#171434'
+                }
+            },
+            legend: {
+                show: true,
+                position: 'top',
+                horizontalAlign: 'right',
+                offsetY: -4,
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 700,
+                fontSize: '12px',
+                labels: { colors: '#575567' },
+                markers: { width: 12, height: 12, radius: 3, offsetX: -2 }
+            },
+            stroke: {
+                width: series.map(s => s.type === 'line' ? (s.name === 'Required Target' ? 4 : 3) : 0),
+                dashArray: series.map(s => {
+                    if (s.name === 'Required Target') return 6;
+                    if (s.name === 'Projected Target Run-Rate') return 4;
+                    return 0;
+                })
+            },
+            markers: {
+                size: series.map(s => s.type === 'line' ? 5 : 0),
+                strokeWidth: 0,
+                hover: { size: 6 }
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: compYear ? '38%' : '48%',
+                    borderRadius: 4,
+                    borderRadiusApplication: 'end'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val, opts) {
+                    if (!val) return '';
+                    let primaryIdx = compYear ? 1 : 0;
+                    if (opts.seriesIndex === primaryIdx && compYear) {
+                        let monthIdx = opts.dataPointIndex + 1;
+                        let hc = monthCountsComp[monthIdx] || 0;
+                        if (hc > 0) {
+                            let growth = ((val / hc) - 1) * 100;
+                            let sign = growth >= 0 ? '+' : '';
+                            return `${val} (${sign}${growth.toFixed(0)}%)`;
+                        }
+                    }
+                    return String(val);
+                },
+                offsetY: -10,
+                style: {
+                    fontFamily: 'Space Mono, monospace',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    colors: ['#171434']
+                },
+                background: { enabled: false }
+            },
+            xaxis: {
+                categories: monthNames,
+                labels: {
+                    style: {
+                        fontFamily: 'Space Mono, monospace',
+                        fontSize: '12px',
+                        colors: '#575567'
+                    }
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: {
+                min: 0,
+                max: viewMax,
+                labels: {
+                    style: {
+                        fontFamily: 'Space Mono, monospace',
+                        fontSize: '12px',
+                        colors: '#575567'
+                    },
+                    formatter: (val) => Math.round(val)
+                }
+            },
+            grid: {
+                borderColor: '#E2E8F0',
+                strokeDashArray: 0,
+                xaxis: { lines: { show: false } },
+                padding: { top: 8, right: 8, bottom: 0, left: 8 }
+            },
+            tooltip: {
+                shared: false,
+                intersect: true,
+                custom: function({ seriesIndex, dataPointIndex, w }) {
+                    let ctx = trendChartTooltipCtx;
+                    if (!ctx) return '';
+                    let seriesName = w.globals.seriesNames[seriesIndex];
+                    let val = w.globals.series[seriesIndex][dataPointIndex];
+                    if (val === null || val === undefined) return '';
+                    let mName = ctx.monthNames[dataPointIndex];
+                    if (seriesName === String(ctx.compYear)) {
+                        return buildTrendValveTooltipHtml(ctx.compYear, mName, val, ctx.vCountsComp[dataPointIndex + 1]);
+                    }
+                    if (seriesName === String(ctx.primaryYear)) {
+                        return buildTrendValveTooltipHtml(ctx.primaryYear, mName, val, ctx.vCountsPrimary[dataPointIndex + 1]);
+                    }
+                    if (seriesName === 'Projected Target Run-Rate') {
+                        return `<div style="padding:10px 12px;font-family:Inter,sans-serif;font-size:12px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;"><strong>${mName}</strong><br/>Projected run-rate: <strong>${val}</strong> cases/mo</div>`;
+                    }
+                    if (seriesName === 'Required Target') {
+                        return `<div style="padding:10px 12px;font-family:Inter,sans-serif;font-size:12px;background:#fff;border:1px solid #E2E8F0;border-radius:8px;"><strong>${mName}</strong><br/>Required pace: <strong>${val}</strong> cases/mo</div>`;
+                    }
+                    return '';
+                }
+            },
+            states: {
+                hover: { filter: { type: 'lighten', value: 0.04 } },
+                active: { filter: { type: 'none' } }
+            }
         };
-        
-        let chart = new google.visualization.ComboChart(container);
-        chart.draw(data, options);
+
+        if (trendApexChart) {
+            trendApexChart.destroy();
+            trendApexChart = null;
+        }
+
+        trendApexChart = new ApexCharts(document.getElementById('trend-apex-chart'), options);
+        trendApexChart.render();
     }
 
     function updateMapData(mapObj, dataSubset, isMainMap) {
