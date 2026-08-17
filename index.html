@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VenusMedtech - LATAM Intelligence OS</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Venus LATAM">
+    <meta name="theme-color" content="#171434">
+    <meta name="application-name" content="Venus LATAM">
     
     <!-- BRAND FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5793,9 +5800,35 @@ if (typeof window !== 'undefined') {
         .clinical-narrative-wrap .narr-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--v-text-mutated); margin-bottom: 6px; }
         .clinical-narrative-wrap .narr-text { font-size: 13px; line-height: 1.55; color: var(--v-text-dark); }
         .builtin-badge { font-size: 9px; background: #ede9fe; color: #5b21b6; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 800; }
+
+        /* ACCESS GATE (private PWA) */
+        #access-gate { display: none; position: fixed; inset: 0; z-index: 100000000; background: var(--v-deep-blue); color: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; box-sizing: border-box; }
+        #access-gate.active { display: flex; }
+        .access-gate-card { width: min(100%, 380px); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 36px 28px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+        .access-gate-card img { max-width: 180px; margin-bottom: 20px; }
+        .access-gate-card h2 { font-size: 22px; font-weight: 800; margin: 0 0 6px 0; }
+        .access-gate-card p { opacity: 0.75; font-size: 14px; margin: 0 0 24px 0; }
+        .access-input { width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; font-family: 'Space Mono', monospace; font-size: 16px; margin-bottom: 12px; }
+        .access-input::placeholder { color: rgba(255,255,255,0.45); }
+        .access-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; background: var(--v-yellow); color: var(--v-deep-blue); font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .access-btn:hover { filter: brightness(1.05); }
+        .access-error { color: #fca5a5; font-size: 13px; font-weight: 700; min-height: 20px; margin-top: 12px; }
+        body.gate-locked #main-app,
+        body.gate-locked #startup-screen { display: none !important; }
     </style>
 </head>
-<body>
+<body class="gate-locked">
+
+<div id="access-gate" class="active" aria-hidden="false">
+    <div class="access-gate-card">
+        <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech">
+        <h2>LATAM Intelligence OS</h2>
+        <p>Private access — Galera only</p>
+        <input type="password" id="access-password" class="access-input" placeholder="Enter access code" autocomplete="current-password" onkeydown="if(event.key==='Enter') submitAccessGate()">
+        <button type="button" class="access-btn" onclick="submitAccessGate()">Enter Dashboard</button>
+        <div id="access-error" class="access-error"></div>
+    </div>
+</div>
 
 <!-- WELCOME SCREEN (DRAG & DROP) -->
 <div id="startup-screen">
@@ -7307,6 +7340,44 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let activeSOPValve = null; 
     let activeSOPDistributor = null;
     let showForecastLines = false;
+
+    const VENUS_ACCESS_TOKEN = 'venus_galera_v1';
+    const VENUS_ACCESS_CODE = 'galera2026';
+
+    function unlockAccessGate() {
+        document.body.classList.remove('gate-locked');
+        let gate = document.getElementById('access-gate');
+        if (gate) {
+            gate.classList.remove('active');
+            gate.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function submitAccessGate() {
+        let input = document.getElementById('access-password');
+        let err = document.getElementById('access-error');
+        if (!input) return;
+        if (input.value === VENUS_ACCESS_CODE) {
+            localStorage.setItem('venus_latam_access', VENUS_ACCESS_TOKEN);
+            if (err) err.textContent = '';
+            unlockAccessGate();
+        } else {
+            if (err) err.textContent = 'Invalid access code. Try again.';
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    function initAccessGate() {
+        if (localStorage.getItem('venus_latam_access') === VENUS_ACCESS_TOKEN) {
+            unlockAccessGate();
+            return;
+        }
+        document.body.classList.add('gate-locked');
+        let gate = document.getElementById('access-gate');
+        if (gate) gate.classList.add('active');
+        setTimeout(() => document.getElementById('access-password')?.focus(), 120);
+    }
 
     // Tab 05 - Clinical Excellence & Device Safety
     let activeClinicalValve = null;
@@ -11360,6 +11431,8 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             counter.innerText = `(${visible} of ${contextTotal} cases in the selected period${ctx.length ? ' | Filter: ' + ctx.join(' + ') : ''})`;
         }
     }
+
+    initAccessGate();
 </script>
 
 </body>
