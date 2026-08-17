@@ -6144,7 +6144,7 @@ if (typeof window !== 'undefined') {
 
 <script>
 // Auto-generated from Consolidated LATAM Problem Report EN Interactive (1287.pdf)
-// 44 embedded problem cases: 38 reported + 5 structured signals + Panama Case 01
+// 43 embedded problem cases: 38 reported + 4 structured signals + Panama Case 01
 const BUILTIN_PROBLEM_CASES = [
   {
     "id": "INC-2025-01",
@@ -7027,28 +7027,6 @@ const BUILTIN_PROBLEM_CASES = [
     "_builtin": true
   },
   {
-    "id": "PROC-350",
-    "date": "28/07/2026",
-    "hospital": "Instituto Diagnóstico de La Plata",
-    "country": "Argentina",
-    "dist": "Medical World AS",
-    "valve": "PowerX32",
-    "valveBase": "PowerX",
-    "serial": "32AB1000250028",
-    "implanter": "Agustin Hauqui",
-    "specialist": "Sonia Grosso, Laura Zemp",
-    "proctor": "True",
-    "severityLabel": "Level 1 - Minor (Structured signal)",
-    "survival": "YES (Survived)",
-    "clusterIssue": "Structured finding: permanent pacemaker",
-    "commentOriginal": "Caso exitoso. Se recapturó parcialmente la válvula 2 veces.",
-    "commentEn": "Successful case. The valve was partially recaptured twice.",
-    "commentLang": "es",
-    "comment": "Permanent pacemaker field marked Yes (structured clinical signal). Case described as successful with two partial recaptures.",
-    "source": "Consolidated LATAM Problem Report 2025-2026 — Structured signal S04",
-    "_builtin": true
-  },
-  {
     "id": "PROC-372",
     "date": "12/08/2026",
     "hospital": "Hospital Salvalus",
@@ -7128,14 +7106,14 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     const LOGOS = {
         "VIP Medical": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20Vip%20Medical.png" class="dist-logo-img">`,
-        "MKS": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20MKS%20.png" class="dist-logo-img" style="transform: scale(1.5);">`,
+        "MKS Medical Technologies": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/5251e3e81ca8580d29177b80abf68e6277a90c30/Logo%20MKS%20.png" class="dist-logo-img" style="transform: scale(1.5);">`,
         "Sellmed": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Logo%20Sellmed.jpg" class="dist-logo-img" style="transform: scale(1.3);">`,
         "Camir": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/Camir%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
         "DDM": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/DDM%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
         "GPM Medical": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/GPM%20Medical%20Logo.jpg" class="dist-logo-img" style="transform: scale(1.2);">`,
         "Medical World AS": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/MW%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
         "HOMAC": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/e957a1d0ad1c6838be37d2732ddba9de7d711d54/Homac%20Logo.png" class="dist-logo-img" style="transform: scale(1.3);">`,
-        "Medinistros": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Medinistros%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
+        "Medinistros": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/e957a1d0ad1c6838be37d2732ddba9de7d711d54/Medinistros%20Logo.png" class="dist-logo-img" style="transform: scale(1.1);">`,
         "Meixomed": `<span style="font-size:11px; font-weight:900; color:var(--v-deep-blue); letter-spacing:0.3px;">Meixomed</span>`,
         "Venus Medtech": `<img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" class="dist-logo-img">`
     };
@@ -7341,7 +7319,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     };
 
     const BR_TERRITORIES = {
-        "PR": "MKS", "SC": "MKS", "RS": "MKS",
+        "PR": "MKS Medical Technologies", "SC": "MKS Medical Technologies", "RS": "MKS Medical Technologies",
         "MG": "VIP Medical", "RJ": "VIP Medical", "ES": "VIP Medical",
         "SP": "Sellmed", "MS": "Sellmed", "MT": "Sellmed", "GO": "Sellmed", "DF": "Sellmed",
         "BA": "Sellmed", "SE": "Sellmed", "AL": "Sellmed", "PE": "Sellmed", "PB": "Sellmed", "RN": "Sellmed",
@@ -7519,7 +7497,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let c = cleanStr(raw);
         if (c.includes('ddm')) return 'DDM';
         if (c.includes('homac')) return 'HOMAC';
-        if (c.includes('mks')) return 'MKS';
+        if (c.includes('mks')) return 'MKS Medical Technologies';
         if (c.includes('sellmed')) return 'Sellmed';
         if (c.includes('vip')) return 'VIP Medical';
         if (c.includes('medical world')) return 'Medical World AS';
@@ -7580,6 +7558,21 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function compareValveSizes(a, b) {
         return valveSizeSortKey(a) - valveSizeSortKey(b);
+    }
+
+    function formatValveSizeLabel(szName) {
+        let s = String(szName ?? '').trim();
+        if (!s) return s;
+        s = s.replace(/Venus\s+PowerX\s+PowerX\s*(\d+)/gi, 'Venus PowerX $1');
+        s = s.replace(/^PowerX\s+PowerX\s*(\d+)/gi, 'Venus PowerX $1');
+        s = s.replace(/^PowerX(\d{2})$/i, 'Venus PowerX $1');
+        return s;
+    }
+
+    function normalizeDistDisplayName(distName) {
+        let c = cleanStr(distName);
+        if (c.includes('mks')) return 'MKS Medical Technologies';
+        return distName;
     }
 
     function normalizeYear(y) {
@@ -8023,7 +8016,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         el.style.borderColor = '#c4b5fd';
         el.style.color = '#5b21b6';
         el.style.display = 'block';
-        el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases from the Consolidated LATAM Problem Report (38 reported + 5 structured signals + Panama) are always loaded. Uploading the same case again will <strong>merge</strong>, never duplicate.`;
+        el.innerHTML = `🛡️ <strong>Embedded Clinical Memory:</strong> ${n} problem cases from the Consolidated LATAM Problem Report (38 reported + 4 structured signals + Panama) are always loaded. Uploading the same case again will <strong>merge</strong>, never duplicate.`;
     }
 
     function rebuildAllCasesGlobal() {
@@ -8327,7 +8320,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         if(c.includes('gpm')) return img('https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/GPM%20Medical%20Logo.jpg', 1.2);
         if(c.includes('medical world')) return img('https://raw.githubusercontent.com/fblucciano/imagens-venus/d075a644e1cff2e86cbe7cf0684eb30533c39102/MW%20Logo.png', 1.1);
         if(c.includes('homac')) return img('https://raw.githubusercontent.com/fblucciano/imagens-venus/e957a1d0ad1c6838be37d2732ddba9de7d711d54/Homac%20Logo.png', 1.3);
-        if(c.includes('medinst')) return img('https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Medinistros%20Logo.png', 1.1);
+        if(c.includes('medinst')) return img('https://raw.githubusercontent.com/fblucciano/imagens-venus/e957a1d0ad1c6838be37d2732ddba9de7d711d54/Medinistros%20Logo.png', 1.1);
         if(c.includes('meixomed')) return `<span style="font-size:11px; font-weight:900; color:var(--v-deep-blue);">Meixomed</span>`;
         return '';
     }
@@ -8336,7 +8329,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let logo = getDistLogoHTML(distName);
         return `<div style="display:flex; align-items:center; gap:10px;">
             <div style="height:${logoHeight}px; min-width:${logoHeight * 2.2}px; display:flex; align-items:center; justify-content:flex-start;">${logo || `<span style="font-size:9px; color:var(--v-text-mutated);">●</span>`}</div>
-            <span style="font-size:11px; font-family:'Inter',sans-serif; color:var(--v-deep-blue); text-transform:uppercase; font-weight:800; line-height:1.2;">${escapeHtml(String(distName ?? ''))}</span>
+            <span style="font-size:11px; font-family:'Inter',sans-serif; color:var(--v-deep-blue); text-transform:uppercase; font-weight:800; line-height:1.2;">${escapeHtml(normalizeDistDisplayName(distName))}</span>
         </div>`;
     }
 
@@ -8574,7 +8567,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 12px 18px; background: #f8fafc; border-radius: 10px;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <img src="${baseImg}" style="height: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
-                            <span style="font-weight: 800; font-size: 15px; color: var(--v-deep-blue);">${szName}</span>
+                            <span style="font-weight: 800; font-size: 15px; color: var(--v-deep-blue);">${formatValveSizeLabel(szName)}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap: 15px;">
                             <div style="text-align:right;">
@@ -10576,7 +10569,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 trHtml += `<tr style="border-left: 4px solid ${distColor};">
                     <td style="text-align:left; padding-left:15px; padding-top:12px; padding-bottom:12px;">
                         <div style="display:flex; flex-direction:column; gap:8px;">
-                            <div><span style="font-size:11px; font-weight:800; padding:4px 10px; border-radius:12px; ${vBadgeStyle}">${item.vBase} ${item.sz}</span></div>
+                            <div><span style="font-size:11px; font-weight:800; padding:4px 10px; border-radius:12px; ${vBadgeStyle}">${formatValveSizeLabel(item.vBase + ' ' + item.sz)}</span></div>
                             ${distLabelHtml}
                         </div>
                     </td>
@@ -10809,6 +10802,24 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return fileUploads[BUILTIN_REGISTRY_KEY] || [];
     }
 
+    function shouldSurfaceEmbeddedClinicalCase(c) {
+        if (!c) return false;
+        let sig = getClinicalSignals(c);
+        if (sig.level <= 0) return false;
+        let label = cleanStr(c.severityLabel || '');
+        let cluster = cleanStr(c.clusterIssue || '');
+        if (/structured/.test(label) || /structured finding/.test(cluster)) {
+            let narrative = String(c.commentOriginal || c.comment || '');
+            if (/caso exitoso|successful case|sem complica|no complications|sin complicaciones/i.test(narrative)) {
+                if (!narrativeSuggestsAdverseEvent(narrative)) {
+                    let surv = cleanStr(c.survival || '');
+                    if (!surv || /(yes|survived|sobrev)/.test(surv)) return false;
+                }
+            }
+        }
+        return true;
+    }
+
     function getClinicalProblemLog() {
         const passYear = (c) => {
             if (activeYears.length > 0) {
@@ -10837,7 +10848,10 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         };
 
         // Authoritative embedded Problem Report — year-scoped only (not hidden by Ops geo filters)
-        getEmbeddedProblemCases().forEach(c => add(c, 1, passYear));
+        getEmbeddedProblemCases().forEach(c => {
+            if (!shouldSurfaceEmbeddedClinicalCase(c)) return;
+            add(c, getClinicalSignals(c).level, passYear);
+        });
 
         // Upload-sourced complications (merged clinical metadata on implant rows)
         allCasesGlobal.forEach(c => {

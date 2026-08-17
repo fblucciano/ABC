@@ -117,7 +117,7 @@ const CITY_STATE_MAP = {
 };
 
 const BR_TERRITORIES = {
-    PR: 'MKS', SC: 'MKS', RS: 'MKS',
+    PR: 'MKS Medical Technologies', SC: 'MKS Medical Technologies', RS: 'MKS Medical Technologies',
     MG: 'VIP Medical', RJ: 'VIP Medical', ES: 'VIP Medical',
     SP: 'Sellmed', MS: 'Sellmed', MT: 'Sellmed', GO: 'Sellmed', DF: 'Sellmed',
     BA: 'Sellmed', SE: 'Sellmed', AL: 'Sellmed', PE: 'Sellmed', PB: 'Sellmed', RN: 'Sellmed',
@@ -183,7 +183,7 @@ function stdDist(caseObj) {
     const c = cleanStr(raw);
     if (c.includes('ddm')) return 'DDM';
     if (c.includes('homac')) return 'HOMAC';
-    if (c.includes('mks')) return 'MKS';
+    if (c.includes('mks')) return 'MKS Medical Technologies';
     if (c.includes('sellmed')) return 'Sellmed';
     if (c.includes('vip')) return 'VIP Medical';
     if (c.includes('medical world')) return 'Medical World AS';
@@ -201,7 +201,11 @@ function stdHosp(raw) {
     if (!raw) return 'Unknown Hospital';
     raw = fixBrokenHospitalChars(fixMojibake(String(raw))).trim();
     let c = cleanStr(raw);
-    if (c.includes('incor') || c.includes('in cor')) return c.includes('natal') ? 'InCor Natal' : 'InCor SP';
+    if (c.includes('incor') || c.includes('in cor')) {
+        if (c.includes('natal')) return 'InCor Natal';
+        if (c.includes('sao paulo') || c.includes('são paulo')) return 'InCor SP';
+        return 'InCor Natal';
+    }
     if ((c.includes('torax') || c.includes('troax')) && !c.includes('cardiolog') && !c.includes('pediatr')) return CHILE_INT;
     for (const k of HOSPITAL_KEYS) if (c.includes(k)) return HOSPITAL_ALIASES[k];
     return raw.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');

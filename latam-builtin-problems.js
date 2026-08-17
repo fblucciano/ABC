@@ -1,5 +1,5 @@
 // Auto-generated from Consolidated LATAM Problem Report EN Interactive (1287.pdf)
-// 44 embedded problem cases: 38 reported + 5 structured signals + Panama Case 01
+// 43 embedded problem cases: 38 reported + 4 structured signals + Panama Case 01
 const BUILTIN_PROBLEM_CASES = [
   {
     "id": "INC-2025-01",
@@ -879,28 +879,6 @@ const BUILTIN_PROBLEM_CASES = [
     "commentLang": "pt",
     "comment": "Permanent pacemaker field marked Yes (structured clinical signal). No complication narrative provided.",
     "source": "Consolidated LATAM Problem Report 2025-2026 — Structured signal S03",
-    "_builtin": true
-  },
-  {
-    "id": "PROC-350",
-    "date": "28/07/2026",
-    "hospital": "Instituto Diagnostico De La Plata",
-    "country": "Argentina",
-    "dist": "Medical World AS",
-    "valve": "PowerX32",
-    "valveBase": "PowerX",
-    "serial": "32AB1000250028",
-    "implanter": "Agustin Hauqui",
-    "specialist": "Sonia Grosso, Laura Zemp",
-    "proctor": "True",
-    "severityLabel": "Level 1 - Minor (Structured signal)",
-    "survival": "YES (Survived)",
-    "clusterIssue": "Structured finding: permanent pacemaker",
-    "commentOriginal": "Caso exitoso. Se recapturó parcialmente la válvula 2 veces.",
-    "commentEn": "Successful case. The valve was partially recaptured twice.",
-    "commentLang": "es",
-    "comment": "Permanent pacemaker field marked Yes (structured clinical signal). Case described as successful with two partial recaptures.",
-    "source": "Consolidated LATAM Problem Report 2025-2026 — Structured signal S04",
     "_builtin": true
   },
   {

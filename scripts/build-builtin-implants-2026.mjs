@@ -50,7 +50,9 @@ function parseValve(raw) {
     if (u.includes('POWERX') || u.includes('POWER X')) base = 'PowerX';
     else if (u.includes('VENUS P')) base = 'Venus P';
     else if (u.includes('VENUS A')) base = 'Venus A';
-    return { valve: String(raw).replace(/\s*\|\s*/g, ' ').trim(), valveBase: base };
+    let valve = String(raw).replace(/\s*\|\s*/g, ' ').trim();
+    if (base === 'PowerX') valve = valve.replace(/Venus\s+PowerX\s+PowerX/gi, 'Venus PowerX').replace(/PowerX\s+PowerX/gi, 'PowerX');
+    return { valve, valveBase: base };
 }
 
 function cleanPerson(raw) {
