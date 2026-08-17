@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no">
+    <title>VenusMedtech - VenusP Planning Report</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg-white: #F8F9FA;
+            --panel-bg: #FFFFFF;
+            --panel-border: #E5E7EB;
+            --venus-deep-blue: #171434;
+            --venus-blue: #302B6A;
+            --venus-yellow: #E68A2E;
+            --input-bg: #F3F4F6;
+            --input-border: #D1D5DB;
+            --text-main: #1F2937;
+            --text-grey: #6B7280;
+            --white: #FFFFFF;
+        }
+
+        body { font-family: 'Circular', 'Yu Gothic UI', -apple-system, sans-serif; background-color: var(--bg-white); margin: 0; padding: 35px 20px; display: flex; justify-content: center; color: var(--text-main); box-sizing: border-box; min-height: 100vh; align-items: center; }
+        
+        #login-screen { width: 100%; max-width: 400px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 20px; padding: 30px; text-align: center; box-shadow: 0 10px 25px rgba(23, 20, 52, 0.08); box-sizing: border-box; }
+        .login-logo { height: 45px; margin-bottom: 20px; }
+        .login-title { font-size: 20px; font-weight: 800; color: var(--venus-deep-blue); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .login-subtitle { font-size: 12px; color: var(--text-grey); margin: 0 0 25px 0; line-height: 1.4; }
+        .login-input { width: 100%; padding: 14px; border: 1px solid var(--input-border); border-radius: 12px; font-size: 15px; text-align: center; box-sizing: border-box; outline: none; font-family: 'Space Mono', monospace; background: var(--input-bg); color: var(--venus-deep-blue); margin-bottom: 15px; transition: border-color 0.2s; }
+        .login-input:focus { border-color: var(--venus-blue); background: #FFFFFF; }
+        .login-btn { width: 100%; background-color: var(--venus-deep-blue); color: #FFFFFF; border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.2s; }
+        .login-btn:hover { background-color: var(--venus-blue); }
+        .error-msg { color: #C62828; font-size: 11px; margin-top: 10px; display: none; font-weight: 600; }
+
+        #app-content { display: none; width: 100%; max-width: 740px; flex-direction: column; gap: 15px; background-color: var(--bg-white); margin: 0 auto; box-sizing: border-box; }
+        #app-content.pdf-print-mode { max-width: 740px !important; width: 740px !important; display: flex !important; flex-direction: column !important; gap: 15px !important; margin: 0 !important; padding: 10px !important; position: relative !important; left: 0 !important; box-sizing: border-box !important; overflow: visible !important; }
+        .pdf-print-mode .theo-select, .pdf-print-mode .morph-select, .pdf-print-mode .no-pdf { appearance: none; -webkit-appearance: none; -moz-appearance: none; border: none !important; background: transparent !important; pointer-events: none; }
+        .panel, .creator-section, .footer { page-break-inside: avoid; }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 0 5px; }
+        .logo { height: 28px; }
+        .btn-action { background-color: var(--venus-deep-blue); color: var(--white); border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: opacity 0.2s; }
+        .btn-action:hover { opacity: 0.8; }
+        .btn-action.reset-btn { background-color: var(--venus-yellow); color: var(--venus-deep-blue); }
+        .btn-action.export-btn { background-color: #2E7D32; color: var(--white); }
+        .btn-action.add-btn { background-color: var(--input-bg); color: var(--venus-blue); border: 1px dashed var(--venus-blue); margin-top: 10px; width: 100%; padding: 12px; }
+        .btn-action.add-btn:hover { background-color: #E2E8F0; }
+
+        .panel { background-color: var(--panel-bg); border-radius: 12px; padding: 18px; border: 1px solid var(--panel-border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); box-sizing: border-box; }
+        .panel-title { color: var(--venus-blue); font-size: 15px; font-weight: bold; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { color: var(--text-grey); font-size: 11px; font-weight: 600; text-align: center; min-height: 34px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; line-height: 1.2; }
+        .input-group input, .input-group select { background-color: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; padding: 12px 8px; text-align: center; color: var(--venus-deep-blue); font-family: 'Space Mono', monospace; font-weight: bold; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
+        .input-group textarea { background-color: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; padding: 12px; color: var(--venus-deep-blue); font-family: 'Circular', sans-serif; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; resize: vertical; min-height: 70px; line-height: 1.4; text-align: left; }
+        .input-group.text-area-group label { justify-content: flex-start; text-align: left; align-items: center; min-height: 24px; padding-left: 4px; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--venus-blue); background-color: var(--white); }
+
+        .upload-zone { border: 2px dashed var(--input-border); border-radius: 8px; background-color: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.2s; box-sizing: border-box; }
+        .upload-zone:hover { border-color: var(--venus-blue); }
+        .upload-zone span { font-size: 10px; font-weight: bold; color: var(--text-grey); text-transform: uppercase; padding: 5px; text-align: center; pointer-events: none;}
+        .upload-zone img { width: 100%; height: 100%; object-fit: contain; background-color: #000; box-sizing: border-box; }
+        .upload-clear { font-size: 10px; color: #C62828; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        .recommendation-card { background-color: var(--venus-blue); border: 2px solid var(--venus-yellow); border-radius: 12px; padding: 15px; text-align: center; color: var(--white); box-shadow: 0 4px 15px rgba(48, 43, 106, 0.2); box-sizing: border-box; transition: transform 0.2s;}
+        .recommendation-card:hover { transform: translateY(-2px); }
+        .rec-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-grey); margin-bottom: 5px; }
+        .rec-sku { font-family: 'Space Mono', monospace; font-size: 26px; font-weight: bold; color: var(--venus-yellow); margin: 4px 0; cursor: pointer; }
+        .rec-ds { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--white); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
+        .rec-warning { display: none; color: #171434; font-size: 10px; font-weight: bold; background: #FFD54F; padding: 4px 8px; border-radius: 4px; margin-top: 5px; letter-spacing: 0.5px; text-transform: uppercase; }
+        
+        .valve-img-container { width: 100%; height: 85px; margin: 6px 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .valve-img-container img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
+        .rec-details { display: flex; justify-content: space-around; font-size: 11px; font-family: 'Space Mono', monospace; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+
+        .result-card { background-color: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; padding: 14px 8px; text-align: center; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 80px; }
+        .result-title { color: var(--text-grey); font-size: 9px; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase; transition: color 0.3s; }
+        .result-value { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: bold; color: var(--venus-deep-blue); transition: color 0.3s; }
+
+        .cmr-conclusion-container { display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
+        .cmr-conclusion-card { background-color: var(--bg-white); border: 1px solid var(--input-border); border-radius: 10px; padding: 12px 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100px; box-sizing: border-box; }
+        .cmr-conclusion-card.highlight { background-color: var(--venus-blue); border: 2px solid var(--venus-yellow); color: white; }
+        .cmr-conclusion-card.highlight .result-title { color: rgba(255,255,255,0.7); margin-bottom: 6px;}
+        
+        .morph-img { height: 35px; object-fit: contain; margin-bottom: 4px; }
+        .morph-incidence { font-size: 9px; color: var(--text-grey); font-weight: bold; margin-top: 3px; letter-spacing: 0.5px;}
+        .morph-select { background: transparent; border: 1px dashed var(--input-border); border-radius: 4px; padding: 2px; font-family: 'Circular', sans-serif; font-size: 11px; font-weight: 800; text-transform: uppercase; outline: none; cursor: pointer; text-align: center; width: 100%; max-width: 170px; margin-bottom: 2px;}
+        .morph-select:hover { border-color: var(--venus-blue); }
+        .theo-select { background-color: rgba(255,255,255,0.1); color: var(--venus-yellow); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px 8px; font-family: 'Space Mono', monospace; font-size: 18px; font-weight: bold; outline: none; cursor: pointer; text-align: center; margin-bottom: 4px; }
+
+        .table-container { overflow-x: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--panel-border); }
+        .cmr-table { width: 100%; border-collapse: collapse; font-size: 10px; text-align: center; min-width: 500px; }
+        .cmr-table th { background-color: var(--venus-deep-blue); color: var(--white); padding: 10px 4px; font-weight: bold; text-transform: uppercase; font-size: 11px;}
+        .cmr-table td { padding: 6px 4px; border-bottom: 1px solid var(--panel-border); background-color: var(--white); vertical-align: middle; position: relative;}
+        .cmr-table .row-title { text-align: left; font-weight: bold; color: var(--venus-blue); padding-left: 12px; font-size: 11px;}
+        
+        .cmr-input { width: 50px; padding: 6px; text-align: center; border: 1px solid var(--input-border); border-radius: 4px; background-color: var(--input-bg); font-family: 'Space Mono', monospace; font-weight: bold; color: var(--venus-deep-blue); font-size: 13px; transition: all 0.2s;}
+        .cmr-input:focus { border-color: var(--venus-blue); background-color: #fff; outline: none; box-shadow: 0 0 0 2px rgba(48, 43, 106, 0.1);}
+        
+        .row-name-input { width: 100%; font-family: 'Circular', sans-serif; font-size: 11px; font-weight: bold; color: var(--venus-blue); text-transform: uppercase; border: 1px dashed transparent; background: transparent; padding: 4px; text-align: left;}
+        .row-name-input:focus { border-color: var(--input-border); background: var(--bg-white); border-radius: 4px;}
+        
+        .btn-delete-row { position: absolute; right: 5px; top: 35%; color: #C62828; cursor: pointer; font-size: 12px; font-weight: bold; opacity: 0.5; border: none; background: none;}
+        .btn-delete-row:hover { opacity: 1; }
+
+        .length-row td { background-color: var(--bg-white); border-top: 2px solid var(--panel-border); border-bottom: none;}
+        .length-title { color: var(--text-main); font-weight: bold; padding-left: 12px; text-align: left; font-size: 11px;}
+        .length-inputs { display: flex; justify-content: center; gap: 15px; align-items: center; }
+
+        .chart-container { position: relative; width: 100%; max-width: 100%; height: 260px; background-color: var(--white); border-radius: 8px; padding: 10px 10px 0 10px; box-sizing: border-box; border: 1px solid var(--panel-border); margin-top: 15px; border-bottom: none; border-bottom-left-radius: 0; border-bottom-right-radius: 0;}
+        .custom-legend { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; padding: 10px 5px; background: #FFFFFF; border: 1px solid var(--panel-border); border-top: none; border-radius: 0 0 8px 8px; box-sizing: border-box; }
+        .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: #4B5563; font-family: 'Circular', sans-serif;}
+        .legend-line-box { width: 25px; height: 10px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .legend-dot { width: 7px; height: 7px; border-radius: 50%; position: absolute; }
+
+        .preview-container { background: #FFFFFF; border: 1px solid var(--input-border); border-radius: 0 0 10px 10px; padding: 0; text-align: center; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative; border-top: none;}
+        canvas { background: #FFFFFF; width: 100%; max-width: 740px; height: auto; border-radius: 0 0 10px 10px; }
+        
+        .view-tabs { display: flex; gap: 8px; background: var(--venus-deep-blue); padding: 8px 8px 0 8px; border-radius: 10px 10px 0 0; width: 100%; box-sizing: border-box; }
+        .tab-btn { flex: 1; background: transparent; border: none; padding: 14px 0; font-size: 12px; font-weight: bold; color: white; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;}
+        .tab-btn.active { background: var(--venus-yellow); color: var(--venus-deep-blue); }
+
+        .phase-toggle { background: var(--input-bg); border-radius: 8px; display: flex; justify-content: center; align-items: center; gap: 15px; border: 1px solid var(--input-border); padding: 8px; margin: 10px 15px; }
+
+        /* CREATOR SECTION CENTRALIZADA COM ESTILO ORIGINAL DO VENUSP */
+        .creator-section { background-color: var(--venus-blue); border: 2px solid var(--venus-yellow); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(48, 43, 106, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; box-sizing: border-box; }
+        .creator-avatar { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--venus-yellow); object-fit: cover; object-position: center 15%; cursor: pointer; }
+        .creator-info { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: rgba(255, 255, 255, 0.9); align-items: center; }
+        .creator-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255, 255, 255, 0.6); font-weight: bold; margin-bottom: 4px; }
+        .creator-name { font-size: 15px; font-weight: bold; color: var(--venus-yellow); display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
+        .flag-icon { width: 16px; border-radius: 2px; }
+        .creator-info a { color: rgba(255, 255, 255, 0.9) !important; text-decoration: none; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.75); justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background-color: var(--white); padding: 20px; border-radius: 12px; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .btn-close-modal { background-color: var(--venus-deep-blue); color: var(--white); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; margin-top: 15px; width: auto; transition: opacity 0.2s; }
+        .btn-close-modal:hover { opacity: 0.8; }
+        
+        .footer { background-color: var(--panel-bg); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 12px; margin-top: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .footer-text { color: var(--text-grey); font-size: 10px; text-align: center; line-height: 1.4; }
+
+        .dynamic-images-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; }
+        
+        /* Modal de Specs Personalizado */
+        .modal-branded { background-color: var(--white); padding: 30px; border-radius: 12px; max-width: 450px; width: 100%; text-align: left; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border-top: 4px solid var(--venus-yellow); box-sizing: border-box; }
+
+        /* ============================================================
+           PDF PROFORMA REPORT (usado apenas durante o Export PDF)
+           Reproduz o layout do "VenusP-Valve Pre-Implantation Planning
+           Proforma V1" preenchido com os dados do app.
+           ============================================================ */
+        #pdf-report { width: 740px; background: #FFFFFF; color: var(--text-main); font-family: 'Circular', 'Yu Gothic UI', -apple-system, sans-serif; box-sizing: border-box; }
+        .pdf-page { width: 740px; min-height: 1072px; box-sizing: border-box; padding: 16px 26px 48px 26px; background: #FFFFFF; page-break-after: always; position: relative; }
+        .pdf-page.pdf-page-last { page-break-after: auto; }
+        .pdf-head-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pdf-head-top img { height: 24px; }
+        .pdf-head-page { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-grey); letter-spacing: 1px; font-weight: bold; }
+        .pdf-head-bar { background: var(--venus-deep-blue); color: #FFFFFF; font-weight: bold; font-size: 12px; letter-spacing: 1.5px; padding: 8px 12px; border-radius: 4px; text-transform: uppercase; }
+        .pdf-head-sub { font-size: 8.5px; color: var(--text-grey); border-bottom: 2px solid var(--venus-yellow); padding: 5px 2px 6px 2px; margin-bottom: 14px; }
+        .pdf-foot { position: absolute; bottom: 14px; left: 0; width: 100%; text-align: center; font-size: 9px; color: var(--text-grey); font-family: 'Space Mono', monospace; }
+        .pdf-sec { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; color: var(--venus-deep-blue); letter-spacing: 1px; margin: 2px 0 12px 0; text-transform: uppercase; }
+        .pdf-sec-num { background: var(--venus-yellow); color: var(--venus-deep-blue); min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; font-family: 'Space Mono', monospace; font-size: 14px; }
+        .pdf-sub { font-size: 11px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--panel-border); padding-bottom: 4px; margin: 16px 0 8px 0; }
+        .pdf-intro { font-size: 10px; color: var(--text-grey); line-height: 1.5; margin: 0 0 10px 0; }
+        .pdf-fields { border: 1px solid var(--panel-border); border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
+        .pdf-field { display: flex; border-bottom: 1px solid var(--panel-border); page-break-inside: avoid; }
+        .pdf-field:last-child { border-bottom: none; }
+        .pdf-field-l { width: 185px; min-width: 185px; background: var(--input-bg); font-size: 8.5px; font-weight: 700; color: var(--text-grey); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px; display: flex; align-items: center; line-height: 1.35; box-sizing: border-box; }
+        .pdf-field-v { flex: 1; padding: 8px 10px; font-size: 11px; color: var(--venus-deep-blue); font-weight: 600; line-height: 1.45; box-sizing: border-box; }
+        .pdf-field-v.mono { font-family: 'Space Mono', monospace; }
+        .pdf-field-v .pdf-empty { color: #C4C8CF; font-weight: 400; }
+        .pdf-note { border: 1px solid #F3DFC0; background: #FFF8EC; border-left: 4px solid var(--venus-yellow); border-radius: 4px; padding: 8px 10px; font-size: 9.5px; color: var(--text-main); line-height: 1.55; margin-top: 14px; page-break-inside: avoid; }
+        .pdf-note b { text-transform: uppercase; letter-spacing: 0.5px; color: var(--venus-deep-blue); }
+        .pdf-check { display: inline-block; margin: 3px 12px 3px 0; font-size: 10.5px; font-weight: 600; color: var(--text-grey); }
+        .pdf-check.on { color: var(--venus-blue); font-weight: 800; }
+        .pdf-table { width: 100%; border-collapse: collapse; font-size: 10px; text-align: center; page-break-inside: avoid; }
+        .pdf-table th { background: var(--venus-deep-blue); color: #FFFFFF; padding: 7px 4px; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--venus-deep-blue); }
+        .pdf-table td { border: 1px solid var(--panel-border); padding: 6px 4px; font-family: 'Space Mono', monospace; font-weight: 700; color: var(--venus-deep-blue); font-size: 10px; }
+        .pdf-table td.lvl { text-align: left; font-family: 'Circular', sans-serif; color: var(--venus-blue); padding-left: 8px; font-size: 9.5px; text-transform: uppercase; }
+        .pdf-table td.blank { height: 22px; }
+        .pdf-table td.txt { font-family: 'Circular', sans-serif; font-weight: 600; font-size: 9px; text-align: left; padding-left: 8px; color: var(--text-main); text-transform: none; }
+        .pdf-grabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pdf-grab { border: 1px solid var(--panel-border); border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
+        .pdf-grab-title { background: var(--input-bg); font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--venus-blue); padding: 6px 8px; letter-spacing: 0.5px; }
+        .pdf-grab-img { height: 168px; display: flex; align-items: center; justify-content: center; background: #000; }
+        .pdf-grab-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .pdf-grab-empty { height: 168px; display: flex; align-items: center; justify-content: center; background: var(--input-bg); color: var(--text-grey); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .pdf-grab-cap { font-size: 8.5px; color: var(--text-grey); padding: 5px 8px; border-top: 1px solid var(--panel-border); }
+        .pdf-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0 0 0; }
+        .pdf-card { border: 1px solid var(--panel-border); border-radius: 6px; padding: 9px 6px; text-align: center; background: var(--bg-white); box-sizing: border-box; page-break-inside: avoid; }
+        .pdf-card.hl { background: var(--venus-blue); border: 2px solid var(--venus-yellow); }
+        .pdf-card-t { font-size: 7.5px; font-weight: 700; text-transform: uppercase; color: var(--text-grey); letter-spacing: 0.5px; margin-bottom: 5px; }
+        .pdf-card.hl .pdf-card-t { color: rgba(255,255,255,0.75); }
+        .pdf-card-v { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: var(--venus-deep-blue); }
+        .pdf-card.hl .pdf-card-v { color: var(--venus-yellow); }
+        .pdf-card-s { font-size: 8px; color: var(--text-grey); margin-top: 3px; }
+        .pdf-card.hl .pdf-card-s { color: rgba(255,255,255,0.75); }
+        .pdf-plot { border: 1px solid var(--panel-border); border-radius: 6px; padding: 8px; background: #FFFFFF; page-break-inside: avoid; }
+        .pdf-plot img { width: 100%; display: block; }
+        .pdf-plot-cap { font-size: 8.5px; color: var(--text-grey); padding-top: 6px; border-top: 1px solid var(--panel-border); margin-top: 6px; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/Venus_logo_OG_adj.2026_logo_sec.png" alt="VenusMedtech" crossorigin="anonymous" class="login-logo">
+    <h2 class="login-title">VenusP Planning Report</h2>
+    <p class="login-subtitle">Enter corporate access password to continue</p>
+    <form onsubmit="checkPassword(event)">
+        <input type="password" id="password-input" class="login-input" placeholder="••••••••" required autocomplete="off">
+        <button type="submit" class="login-btn">Access Calculator</button>
+        <div id="error-msg" class="error-msg">Incorrect password. Please try again.</div>
+    </form>
+</div>
+
+<div class="app-container" id="app-content">
+    
+    <div class="top-bar">
+        <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/Venus_logo_OG_adj.2026_logo_sec.png" crossorigin="anonymous" alt="VenusMedtech" class="logo">
+        <div class="top-bar-buttons" id="action-buttons" style="display:flex; gap:8px;">
+            <button class="btn-action export-btn" onclick="exportToPDF()">Export PDF</button>
+            <button class="btn-action reset-btn" onclick="resetFields()">Reset</button>
+        </div>
+    </div>
+
+    <!-- CLINICAL DATA PANEL -->
+    <div class="panel" id="panel-clinical">
+        <h2 class="panel-title">CLINICAL DATA & IMAGING</h2>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Patient ID / Name</label>
+                <input type="text" id="in-patient" placeholder="e.g. Venus-P_ARGENTINA">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Referring Centre</label>
+                <input type="text" id="in-ref-centre" placeholder="e.g. Heart Institute...">
+            </div>
+        </div>
+        <div class="input-group text-area-group">
+            <label>Diagnosis & Clinical History</label>
+            <textarea id="in-diagnosis" placeholder="Patient history, symptoms, previous interventions..."></textarea>
+        </div>
+    </div>
+
+    <!-- CT/CMR IMAGING & COMMENTS PANEL (DYNAMIC) -->
+    <div class="panel" id="panel-imaging">
+        <h2 class="panel-title">CT/CMR IMAGING & COMMENTS</h2>
+        
+        <div id="dynamic-images-container" class="dynamic-images-grid" style="margin-bottom: 12px;">
+            <!-- Javascript vai injetar os quadros aqui -->
+        </div>
+        <button class="btn-action add-btn" style="margin-top: 0; margin-bottom: 15px;" onclick="addImageBlock()">+ Add Image</button>
+
+        <div class="input-group text-area-group">
+            <label>Morphology & Additional Comments</label>
+            <textarea id="in-comments" placeholder="Describe specific anatomical challenges, calcification distribution, etc..."></textarea>
+        </div>
+    </div>
+
+    <!-- CT/CMR DYNAMIC TABLE PANEL -->
+    <div class="panel" id="panel-cmr">
+        <h2 class="panel-title">DYNAMIC RVOT / MPA DIMENSIONAL ANALYSIS</h2>
+        <div class="table-container">
+            <table class="cmr-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding-left: 12px;">Structure & Distance (mm)</th>
+                        <th>RVOT1(S) [Dp]</th>
+                        <th>RVOT2(S) [Dsa]</th>
+                        <th>RVOT1(D) [Dp]</th>
+                        <th>RVOT2(D) [Dsa]</th>
+                    </tr>
+                </thead>
+                <tbody id="dynamic-tbody">
+                    <!-- Javascript vai preencher aqui -->
+                </tbody>
+                <tbody>
+                    <tr class="length-row">
+                        <td colspan="2" class="length-title">
+                            <input type="text" id="len-name" class="row-name-input" style="width: 250px; color: var(--text-main); padding-left: 0; font-family: 'Circular', sans-serif;" value="LENGTH (valve-PA bifurcation start/end)" onchange="updateUI()">
+                        </td>
+                        <td colspan="3">
+                            <div class="length-inputs">
+                                <span>Start:</span>
+                                <input type="number" class="cmr-input" id="len-start" value="0" style="width: 60px;" onchange="updateUI()">
+                                <span>End:</span>
+                                <input type="number" class="cmr-input" id="len-end" value="35" style="width: 60px;" onchange="updateUI()">
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button class="btn-action add-btn" onclick="addNewPlane()">+ Add Measurement Plane</button>
+        
+        <div class="chart-container">
+            <canvas id="cmrChart"></canvas>
+        </div>
+        
+        <div class="custom-legend">
+            <div class="legend-item"><div class="legend-line-box" style="background-image: linear-gradient(to right, #FF8A80 50%, transparent 50%); background-size: 8px 100%;"><div class="legend-dot" style="background-color: #FF8A80;"></div></div><span>Dp (S)</span></div>
+            <div class="legend-item"><div class="legend-line-box" style="background-color: #D50000; height: 2px;"><div class="legend-dot" style="background-color: #D50000;"></div></div><span>Dsa (S)</span></div>
+            <div class="legend-item"><div class="legend-line-box" style="background-color: #B71C1C; height: 4px;"><div class="legend-dot" style="background-color: #B71C1C;"></div></div><span>Mean S</span></div>
+            <div class="legend-item"><div class="legend-line-box" style="background-image: linear-gradient(to right, #82B1FF 50%, transparent 50%); background-size: 8px 100%;"><div class="legend-dot" style="background-color: #82B1FF;"></div></div><span>Dp (D)</span></div>
+            <div class="legend-item"><div class="legend-line-box" style="background-color: #2979FF; height: 2px;"><div class="legend-dot" style="background-color: #2979FF;"></div></div><span>Dsa (D)</span></div>
+            <div class="legend-item"><div class="legend-line-box" style="background-color: #2E7D32; height: 4px;"><div class="legend-dot" style="background-color: #2E7D32;"></div></div><span>Mean D</span></div>
+        </div>
+
+        <div style="margin-top: 15px; border-radius: 10px; overflow: hidden; border: 1px solid var(--panel-border);">
+            <div class="view-tabs" style="margin-bottom: 0; border-radius: 0; background-color: var(--venus-deep-blue); padding: 5px;">
+                <button class="tab-btn active" id="tab-anatomy" onclick="setCanvasView('anatomy')" style="background-color: var(--venus-yellow); color: var(--venus-deep-blue);">1. Anatomy</button>
+                <button class="tab-btn" id="tab-valve" onclick="setCanvasView('valve')" style="color:white;">2. Valve Specs</button>
+                <button class="tab-btn" id="tab-deploy" onclick="setCanvasView('deploy')" style="color:white;">3. Deployment Match</button>
+            </div>
+            
+            <div class="preview-container">
+                <div class="phase-toggle" style="margin-bottom: 0; width: 100%; display: flex; justify-content: center; gap: 20px; padding: 12px 0; border-bottom: 1px solid var(--panel-border); background: #F8F9FA;">
+                    <label style="font-size: 14px; font-weight: bold; cursor: pointer; color: var(--venus-deep-blue); display: flex; align-items: center; gap: 5px;">
+                        <input type="radio" name="cardiac_phase" value="systole" checked onchange="updateUI()"> Systole
+                    </label>
+                    <label style="font-size: 14px; font-weight: bold; cursor: pointer; color: var(--venus-deep-blue); display: flex; align-items: center; gap: 5px;">
+                        <input type="radio" name="cardiac_phase" value="diastole" onchange="updateUI()"> Diastole
+                    </label>
+                </div>
+                <canvas id="deploymentCanvas" width="740" height="600"></canvas>
+            </div>
+            <div id="preview-caption" style="font-size: 14px; color: var(--text-grey); font-family: 'Space Mono', monospace; padding: 12px; font-weight: bold; background: #FFFFFF; border-top: 1px solid var(--panel-border); text-align: center;">
+                Select a tab above to analyze pulmonary anatomy and valve dimensions.
+            </div>
+        </div>
+
+        <div class="cmr-conclusion-container" id="cmr-prediction-box">
+            <div class="cmr-conclusion-card">
+                <div class="result-title">PREDICTED MORPHOLOGY</div>
+                <img id="cmr-morph-img" class="morph-img" crossorigin="anonymous" src="" alt="Morphology Type" style="display:none;">
+                <select id="cmr-morph-select" class="morph-select" onchange="updateMorphUI()">
+                    <option value="type1">Type I (Pyramidal)</option>
+                    <option value="type2">Type II (Cylindrical)</option>
+                    <option value="type3">Type III (Inverted Pyramid)</option>
+                    <option value="type4">Type IV (Fusiform)</option>
+                    <option value="type5">Type V (Concave)</option>
+                </select>
+                <div class="morph-incidence" id="cmr-morph-incidence"></div>
+            </div>
+            
+            <div class="cmr-conclusion-card">
+                <div class="result-title">CT/CMR VIRTUAL WAIST</div>
+                <div class="result-value" id="cmr-virtual-waist">--</div>
+                <div class="result-title" style="margin-top: 10px;">CT/CMR MPA LENGTH</div>
+                <div class="result-value" id="cmr-mpa-length">--</div>
+            </div>
+            
+            <div class="cmr-conclusion-card highlight">
+                <div class="result-title">PREDICTED VALVE (CT/CMR)</div>
+                <select id="cmr-theo-sku" class="theo-select" onchange="checkTheoWarning()">
+                    <option value="P24-20">P24-20</option><option value="P24-25">P24-25</option>
+                    <option value="P26-20">P26-20</option><option value="P26-25">P26-25</option>
+                    <option value="P28-20">P28-20</option><option value="P28-25" selected>P28-25</option><option value="P28-30">P28-30</option>
+                    <option value="P30-20">P30-20</option><option value="P30-25">P30-25</option><option value="P30-30">P30-30</option>
+                    <option value="P32-25">P32-25</option><option value="P32-30">P32-30</option>
+                    <option value="P34-20">P34-20</option><option value="P34-25">P34-25</option><option value="P34-30">P34-30</option>
+                    <option value="P36-25">P36-25</option><option value="P36-30">P36-30</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- INTRA-OP SIZING PANEL -->
+    <div class="panel" id="panel-sizing">
+        <h2 class="panel-title">INTRA-OP SIZING (BALLOON CONFIRMATION)</h2>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group">
+                <label>Waist of MPA with Balloon (mm)</label>
+                <input type="number" id="in-waist" placeholder="e.g. 25.5" oninput="updateUI()">
+            </div>
+            <div class="input-group">
+                <label>Confirmed MPA Length (mm)</label>
+                <input type="number" id="in-length" placeholder="e.g. 35" oninput="updateUI()">
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="input-group">
+                <label>Oversizing Strategy</label>
+                <select id="in-strategy" onchange="updateUI()">
+                    <option value="auto">Table Default (2-4mm)</option>
+                    <option value="2">Target +2 mm</option>
+                    <option value="4">Target +4 mm</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Manual SKU Override</label>
+                <select id="in-pref" onchange="updateUI()">
+                    <option value="Automatic" selected>Auto Calculation</option>
+                    <option value="P24-20">P24-20</option><option value="P24-25">P24-25</option>
+                    <option value="P26-20">P26-20</option><option value="P26-25">P26-25</option>
+                    <option value="P28-20">P28-20</option><option value="P28-25">P28-25</option><option value="P28-30">P28-30</option>
+                    <option value="P30-20">P30-20</option><option value="P30-25">P30-25</option><option value="P30-30">P30-30</option>
+                    <option value="P32-25">P32-25</option><option value="P32-30">P32-30</option>
+                    <option value="P34-20">P34-20</option><option value="P34-25">P34-25</option><option value="P34-30">P34-30</option>
+                    <option value="P36-25">P36-25</option><option value="P36-30">P36-30</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- FINAL RECOMMENDATION PANEL -->
+    <div class="panel" id="panel-rec">
+        <h2 class="panel-title">FINAL VENUSP SYSTEM RECOMMENDATION</h2>
+        <!-- Modificado: Adicionado onclick para abrir o Modal -->
+        <div class="recommendation-card" onclick="openValveDetails()" style="cursor: pointer;" title="Click to view detailed specs">
+            <div class="rec-title">Optimal Selection & Delivery System</div>
+            <div class="rec-sku" id="res-sku">P28-25</div>
+            <div class="rec-ds" id="res-ds">DS: DS22-P70B</div>
+            <div class="valve-img-container"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/9069e63d44d56d54148b383861cc14fa9af2d3b0/Venus%20P_Final.png" crossorigin="anonymous" alt="VenusP Valve"></div>
+            <div class="rec-details"><span id="res-diameter">Straight Section OD: 28 mm</span><span id="res-stent">Straight Length: 25 mm</span></div>
+        </div>
+        
+        <div class="grid-2" style="margin-top: 15px;">
+            <div class="result-card"><div class="result-title" id="res-oversize-title">FINAL OVERSIZING</div><div class="result-value" id="res-oversize">+2.5 mm</div></div>
+            <div class="result-card"><div class="result-title">FINAL LENGTH MATCH</div><div class="result-value" id="res-match" style="color: #2E7D32;">Match OK (35mm MPA)</div></div>
+        </div>
+    </div>
+
+    <!-- CREATOR SECTION ORIGINAL CENTRALIZADA -->
+    <div class="creator-section">
+        <div class="creator-title">Designed & Developed by</div>
+        <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/a2309b9d3a7fe352cb10acc6f1b9a4785fa8bb66/Image.jpeg" crossorigin="anonymous" alt="Fabio Silva" class="creator-avatar" onclick="openCreatorModal()" title="Click to view full image">
+        <div class="creator-info">
+            <div class="creator-name">
+                Fabio Silva
+                <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/4a254e93a90f6225406d11dafa8c519437a99e9b/Bandeira-Nacionalsi%CC%81mbolo-maior-da-Pa%CC%81tria-Brasileira-Foto-Divulgac%CC%A7a%CC%83o.jpg" crossorigin="anonymous" alt="Brazil" class="flag-icon">
+                <span style="font-weight: normal; font-size: 13px; color: rgba(255, 255, 255, 0.9);">Brazil</span>
+            </div>
+            <div>✉️ <a href="mailto:fabio.dasilva@venusmedtech.eu">fabio.dasilva@venusmedtech.eu</a></div>
+            <div>📞 <a href="tel:+5511974103530">+55 11 97410-3530</a></div>
+        </div>
+    </div>
+
+</div> 
+
+<!-- MODAL DE PERFIL COMO NO SEU ORIGINAL -->
+<div class="modal-overlay" id="creatorModal" onclick="closeCreatorModal(event)">
+    <div style="display: flex; flex-direction: column; align-items: center; max-width: 95%; max-height: 95%;">
+        <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/a2309b9d3a7fe352cb10acc6f1b9a4785fa8bb66/Image.jpeg" crossorigin="anonymous" alt="Fabio Silva Full" style="max-width: 100%; max-height: 75vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;">
+        <button class="btn-close-modal" onclick="closeCreatorModalDirect()" style="margin-top: 15px; width: auto; padding: 10px 30px;">Close Profile</button>
+    </div>
+</div>
+
+<!-- MODAL DE DETALHES DA VÁLVULA VENUSP -->
+<div class="modal-overlay" id="valveModal" onclick="closeValveDetails(event)">
+    <div class="modal-branded" style="background: #fff; padding: 30px; border-radius: 12px; max-width: 400px; width: 100%; border-top: 4px solid var(--venus-yellow); box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: left;">
+        <h3 id="modalTitle" style="color: var(--venus-deep-blue); font-size: 18px; margin-top: 0; margin-bottom: 15px; font-weight: bold;">VenusP Specs</h3>
+        <div id="modalData" style="font-family: 'Space Mono', monospace; font-size: 13px; color: var(--text-main);"></div>
+        <button class="btn-close-modal" onclick="closeModalDirect()" style="margin-top: 20px;">Close Specs</button>
+    </div>
+</div>
+
+<script>
+    var MASTER_PASSWORD = "venus2026";
+    var currentCanvasView = 'anatomy'; 
+    var cmrChart;
+    var imageBlocks = [];
+
+    var tablePlanes = [
+        { id: generateId(), name: "Subvalvar", dist: -10, s1: 32, s2: 32, d1: 33, d2: 33, isFixed: false },
+        { id: 'valvar', name: "Valvar *", dist: 0, s1: 28, s2: 28, d1: 29, d2: 29, isFixed: true },
+        { id: generateId(), name: "Mid MPA", dist: 12, s1: 25.5, s2: 25.5, d1: 26.5, d2: 26.5, isFixed: false },
+        { id: generateId(), name: "Distal MPA", dist: 22, s1: 28, s2: 28, d1: 29, d2: 29, isFixed: false },
+        { id: generateId(), name: "Bifurcation", dist: 30, s1: 32, s2: 32, d1: 33, d2: 33, isFixed: false }
+    ];
+
+    function generateId() { return 'p_' + Math.random().toString(36).substr(2, 9); }
+    function generateImgId() { return 'img_' + Math.random().toString(36).substr(2, 9); }
+
+    function checkPassword(event) {
+        event.preventDefault();
+        if (document.getElementById('password-input').value === MASTER_PASSWORD) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'flex';
+            initApp();
+        } else {
+            document.getElementById('error-msg').style.display = 'block';
+            document.getElementById('password-input').value = '';
+        }
+    }
+
+    function initApp() {
+        renderTable();
+        initChart();
+        initImageBlocks();
+        updateUI();
+    }
+
+    // =====================================================================
+    // EXPORT PDF — "VENUSP-VALVE PRE-IMPLANTATION PLANNING PROFORMA"
+    // Gera um relatório de 6 páginas com o layout do proforma oficial,
+    // preenchido automaticamente com os dados do app. O app em si não muda.
+    // =====================================================================
+    var VENUS_LOGO_URL = "https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/Venus_logo_OG_adj.2026_logo_sec.png";
+    var VENUSP_VALVE_IMG_URL = "https://raw.githubusercontent.com/fblucciano/imagens-venus/9069e63d44d56d54148b383861cc14fa9af2d3b0/Venus%20P_Final.png";
+    var LENGTH_E_MAP = { "P28-25": 53, "P28-30": 60, "P30-25": 54, "P30-30": 60, "P32-25": 58, "P32-30": 65, "P34-25": 62, "P34-30": 67, "P36-25": 63, "P36-30": 67 };
+
+    function exportToPDF() {
+        var exportBtn = document.querySelector('.export-btn');
+        if (exportBtn) { exportBtn.disabled = true; exportBtn.innerText = 'Generating...'; }
+
+        updateUI(); // garante resultados atualizados antes do snapshot
+
+        var assets = captureReportAssets();
+        var data = collectReportData();
+        var report = buildProformaReport(data, assets);
+
+        var app = document.getElementById('app-content');
+        document.body.appendChild(report);
+        app.style.display = 'none';
+
+        var opt = {
+            margin: [10, 10, 10, 10],
+            filename: buildPdfFileName(data),
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, windowWidth: 780 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
+        };
+
+        function cleanup() {
+            if (report.parentNode) report.parentNode.removeChild(report);
+            app.style.display = 'flex';
+            if (exportBtn) { exportBtn.disabled = false; exportBtn.innerText = 'Export PDF'; }
+        }
+
+        html2pdf().set(opt).from(report).save().then(cleanup).catch(function(err) {
+            console.error('PDF export failed:', err);
+            cleanup();
+        });
+    }
+
+    function buildPdfFileName(data) {
+        var base = 'VenusP_Planning_Proforma';
+        if (data.caseId) {
+            var safe = data.caseId.replace(/[^a-zA-Z0-9_\-]+/g, '_').replace(/^_+|_+$/g, '');
+            if (safe) base += '_' + safe;
+        }
+        return base + '.pdf';
+    }
+
+    // Captura o gráfico e as 3 vistas do canvas (anatomy / valve / deploy)
+    function captureReportAssets() {
+        var assets = { chart: '', anatomy: '', valve: '', deploy: '' };
+        try { if (cmrChart) assets.chart = cmrChart.toBase64Image(); } catch (e) { console.warn(e); }
+        var canvas = document.getElementById('deploymentCanvas');
+        if (canvas) {
+            var savedView = currentCanvasView;
+            ['anatomy', 'valve', 'deploy'].forEach(function(v) {
+                try {
+                    currentCanvasView = v;
+                    drawRVOTCanvas();
+                    assets[v] = canvas.toDataURL('image/png');
+                } catch (e) { console.warn(e); }
+            });
+            currentCanvasView = savedView;
+            drawRVOTCanvas();
+        }
+        return assets;
+    }
+
+    function collectReportData() {
+        var morphNames = { type1: "Type I (Pyramidal)", type2: "Type II (Cylindrical)", type3: "Type III (Inverted Pyramid)", type4: "Type IV (Fusiform)", type5: "Type V (Concave)" };
+        var morphIncidences = { type1: "44.6%", type2: "16.9%", type3: "3.6%", type4: "19.3%", type5: "13.3%" };
+
+        function v(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+        function t(id) { var el = document.getElementById(id); return el ? String(el.innerText || '').trim() : ''; }
+        function selText(id) { var el = document.getElementById(id); return (el && el.selectedIndex >= 0) ? el.options[el.selectedIndex].text : ''; }
+
+        var lenStart = parseFloat(v('len-start')) || 0;
+        var lenEnd = parseFloat(v('len-end')) || 0;
+        var cmrLen = (lenEnd > lenStart) ? (lenEnd - lenStart) : lenEnd;
+
+        var morphKey = v('cmr-morph-select') || 'type2';
+        var phaseEl = document.querySelector('input[name="cardiac_phase"]:checked');
+        var phase = phaseEl ? phaseEl.value : 'systole';
+
+        var sku = t('res-sku') || 'P28-25';
+        var straightOD = parseInt(sku.split('-')[0].replace('P', '')) || 28;
+        var stentLen = parseInt(sku.split('-')[1]) || 25;
+
+        var balloonWaist = parseFloat(v('in-waist'));
+        var confirmedLen = parseFloat(v('in-length'));
+        var virtualWaist = (window.currentWaistMean && window.currentWaistMean > 0) ? window.currentWaistMean : NaN;
+        var activeLen = (!isNaN(confirmedLen) && confirmedLen > 0) ? confirmedLen : cmrLen;
+
+        var planes = tablePlanes.slice().sort(function(a, b) { return a.dist - b.dist; });
+
+        return {
+            caseId: v('in-patient'),
+            refCentre: v('in-ref-centre'),
+            reviewDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            diagnosis: v('in-diagnosis'),
+            comments: v('in-comments'),
+            morphKey: morphKey,
+            morphName: morphNames[morphKey] || morphKey,
+            morphIncidence: morphIncidences[morphKey] || '',
+            morphNames: morphNames,
+            morphIncidences: morphIncidences,
+            phase: phase,
+            planes: planes,
+            lenName: v('len-name') || 'LENGTH (valve-PA bifurcation start/end)',
+            lenStart: lenStart,
+            lenEnd: lenEnd,
+            cmrLen: cmrLen,
+            virtualWaist: virtualWaist,
+            predictedSku: v('cmr-theo-sku') || sku,
+            balloonWaist: balloonWaist,
+            confirmedLen: confirmedLen,
+            activeLen: activeLen,
+            strategyText: selText('in-strategy'),
+            overrideText: selText('in-pref'),
+            overrideValue: v('in-pref'),
+            sku: sku,
+            ds: (t('res-ds') || '').replace(/^DS:\s*/, '') || getRecommendedDS(sku),
+            straightOD: straightOD,
+            stentLen: stentLen,
+            totalLenText: LENGTH_E_MAP[sku] ? (LENGTH_E_MAP[sku] + ' mm') : 'TBD (Expanded)',
+            oversizeTitle: t('res-oversize-title') || 'FINAL OVERSIZING',
+            oversizeValue: t('res-oversize') || '--',
+            lengthMatch: t('res-match') || '--',
+            images: imageBlocks.slice()
+        };
+    }
+
+    function pdfEsc(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function pdfLines(s, emptyLabel) {
+        var txt = String(s == null ? '' : s).trim();
+        if (!txt) return '<span class="pdf-empty">' + (emptyLabel || '—') + '</span>';
+        return pdfEsc(txt).replace(/\n/g, '<br>');
+    }
+
+    function pdfField(label, valueHtml, minHeight) {
+        var style = minHeight ? ' style="min-height:' + minHeight + 'px;"' : '';
+        return '<div class="pdf-field"><div class="pdf-field-l">' + label + '</div><div class="pdf-field-v"' + style + '>' + valueHtml + '</div></div>';
+    }
+
+    function pdfHeader(pageNum, totalPages) {
+        return '<div class="pdf-head-top">' +
+                   '<img src="' + VENUS_LOGO_URL + '" crossorigin="anonymous" alt="VenusMedtech">' +
+                   '<div class="pdf-head-page">PAGE ' + pageNum + ' OF ' + totalPages + '</div>' +
+               '</div>' +
+               '<div class="pdf-head-bar">VENUSP-VALVE | PRE-IMPLANTATION PLANNING</div>' +
+               '<div class="pdf-head-sub">Clinical planning document &nbsp;|&nbsp; Verify against current IFU and local requirements &nbsp;|&nbsp; Page ' + pageNum + ' of ' + totalPages + '</div>';
+    }
+
+    function pdfFooter(pageNum, totalPages) {
+        return '<div class="pdf-foot">— ' + pageNum + ' of ' + totalPages + ' —</div>';
+    }
+
+    function pdfSection(num, title) {
+        return '<div class="pdf-sec"><span class="pdf-sec-num">' + num + '</span>' + title + '</div>';
+    }
+
+    function buildProformaReport(d, assets) {
+        var TOTAL = 6;
+        var pages = [
+            reportPageCover(d, 1, TOTAL),
+            reportPageClinical(d, 2, TOTAL),
+            reportPageImages(d, assets, 3, TOTAL),
+            reportPageMeasurements(d, assets, 4, TOTAL),
+            reportPageRisk(d, assets, 5, TOTAL),
+            reportPageSignOff(d, assets, 6, TOTAL)
+        ];
+        var el = document.createElement('div');
+        el.id = 'pdf-report';
+        el.innerHTML = pages.join('');
+        return el;
+    }
+
+    // ---------------- PAGE 1 — COVER / CASE IDENTIFICATION ----------------
+    function reportPageCover(d, n, total) {
+        var html = '<div class="pdf-page">' + pdfHeader(n, total);
+
+        html += '<div style="text-align:center; margin: 46px 0 34px 0;">' +
+                    '<div style="font-size:11px; font-weight:800; letter-spacing:3px; color:var(--venus-yellow); text-transform:uppercase; margin-bottom:10px;">VENUSP-VALVE &bull; CASE PLANNING PROFORMA</div>' +
+                    '<div style="font-size:30px; font-weight:800; color:var(--venus-deep-blue); letter-spacing:2px; text-transform:uppercase;">PRE-IMPLANTATION PLANNING</div>' +
+                    '<div style="font-size:11px; color:var(--text-grey); margin-top:10px;">Structured physician review for patient-specific pulmonary valve case planning</div>' +
+                    '<div style="margin-top:22px;"><img src="' + VENUSP_VALVE_IMG_URL + '" crossorigin="anonymous" alt="VenusP Valve" style="height:110px; object-fit:contain;"></div>' +
+                '</div>';
+
+        html += '<div class="pdf-sub">Case identification</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('REFERRING CENTRE', pdfLines(d.refCentre), 20) +
+                    pdfField('CASE ID', '<span class="mono" style="font-family:\'Space Mono\', monospace;">' + pdfLines(d.caseId, 'Venus-P_') + '</span>', 20) +
+                    pdfField('REVIEW DATE', pdfEsc(d.reviewDate), 20) +
+                    pdfField('PLANNING CLINICIAN(S)', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                    pdfField('MULTIDISCIPLINARY TEAM / MEETING', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                '</div>';
+
+        html += '<div class="pdf-sub">Document purpose</div>' +
+                '<p class="pdf-intro" style="font-size:10.5px; color:var(--text-main);">Use this proforma to document imaging review, key measurements, anatomical risk assessment, device-planning rationale and the agreed procedural strategy. This report was generated automatically by the <b>VenusP Planning Report</b> application from the data entered for this case.</p>';
+
+        html += '<div class="pdf-note"><b>CLINICAL CONTROL</b> &nbsp;This template supports, but does not replace, physician judgement, the current device instructions for use, local regulatory requirements or institutional protocols.</div>';
+
+        html += pdfFooter(n, total) + '</div>';
+        return html;
+    }
+
+    // ---------------- PAGE 2 — 1. CLINICAL & IMAGING REVIEW ----------------
+    function reportPageClinical(d, n, total) {
+        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(1, 'CLINICAL & IMAGING REVIEW');
+
+        html += '<div class="pdf-sub">Clinical context</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('AGE / SEX', '<span class="pdf-empty">&nbsp;</span>', 20) +
+                    pdfField('DIAGNOSIS &amp; CLINICAL HISTORY', pdfLines(d.diagnosis), 44) +
+                    pdfField('PRIOR INTERVENTION(S) / REPAIR', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                    pdfField('INDICATION FOR CURRENT REVIEW', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                    pdfField('ADDITIONAL RISK FACTORS / COMORBIDITIES', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                '</div>';
+
+        html += '<div class="pdf-sub">Imaging dataset(s) reviewed</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('CARDIAC CT / CMR', 'Study date: ______________ &nbsp;&nbsp; Series / phase: ______________', 20) +
+                    pdfField('ECHOCARDIOGRAPHY', 'Study date: ______________ &nbsp;&nbsp; Modality: ______________', 20) +
+                    pdfField('MRI / ANGIOGRAPHY / CATHETER DATA', 'Study date: ______________ &nbsp;&nbsp; Details: ______________', 20) +
+                    pdfField('IMAGE QUALITY / LIMITATIONS', '<span class="pdf-empty">&nbsp;</span>', 22) +
+                '</div>';
+
+        var morphChecks = '';
+        var keys = ['type1', 'type2', 'type3', 'type4', 'type5'];
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var on = (k === d.morphKey);
+            morphChecks += '<span class="pdf-check' + (on ? ' on' : '') + '">' + (on ? '&#9745;' : '&#9744;') + ' ' + pdfEsc(d.morphNames[k]) + ' <span style="font-weight:400; font-size:8.5px;">(' + d.morphIncidences[k] + ')</span></span>';
+        }
+
+        html += '<div class="pdf-sub">Anatomical classification</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('MORPHOLOGY<br>(APP PREDICTION — SCHIEVANO)', '<div style="line-height:1.8;">' + morphChecks + '</div>') +
+                    pdfField('PA ANATOMY',
+                        '<div style="line-height:1.8;">' +
+                        '<span class="pdf-check">&#9744; No issue</span>' +
+                        '<span class="pdf-check">&#9744; Folding of LPA on top of RPA</span>' +
+                        '<span class="pdf-check">&#9744; Bifurcation folding</span>' +
+                        '<span class="pdf-check">&#9744; PA stenosis</span>' +
+                        '</div>') +
+                '</div>';
+
+        html += '<div class="pdf-sub">Image-review observations</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('MORPHOLOGY / PA ANATOMY NOTES', pdfLines(d.comments), 40) +
+                    pdfField('CORONARY COURSE AND PROXIMITY', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                    pdfField('OTHER RELEVANT FINDINGS', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                '</div>';
+
+        html += '<div class="pdf-note"><b>NOTE</b> &nbsp;Record the source series, cardiac phase and reconstruction method for measurements that inform the final plan.</div>';
+
+        html += pdfFooter(n, total) + '</div>';
+        return html;
+    }
+
+    // ---------------- PAGE 3 — 2. IMAGE DOCUMENTATION & PERIMETER PLOT ----------------
+    function reportPageImages(d, assets, n, total) {
+        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(2, 'IMAGE DOCUMENTATION & PERIMETER PLOT');
+
+        html += '<p class="pdf-intro">Representative planning images captured in the application. Record the source series and cardiac phase for each capture.</p>';
+
+        html += '<div class="pdf-sub">Planning image screen grabs</div><div class="pdf-grabs">';
+        var imgs = d.images && d.images.length ? d.images : [];
+        for (var i = 0; i < imgs.length; i++) {
+            var b = imgs[i];
+            html += '<div class="pdf-grab">' +
+                        '<div class="pdf-grab-title">' + pdfEsc(b.title || ('Image ' + (i + 1))) + '</div>' +
+                        (b.dataUrl
+                            ? '<div class="pdf-grab-img"><img src="' + b.dataUrl + '" alt="' + pdfEsc(b.title) + '"></div>'
+                            : '<div class="pdf-grab-empty">NO IMAGE UPLOADED</div>') +
+                        '<div class="pdf-grab-cap">Source / series / phase: ____________________</div>' +
+                    '</div>';
+        }
+        if (imgs.length === 0) {
+            html += '<div class="pdf-grab"><div class="pdf-grab-title">Screen grab</div><div class="pdf-grab-empty">NO IMAGE UPLOADED</div><div class="pdf-grab-cap">Source / series / phase: ____________________</div></div>';
+        }
+        html += '</div>';
+
+        html += '<div class="pdf-sub">Diameter plot of the anatomy</div>' +
+                '<div class="pdf-plot">' +
+                    (assets.chart ? '<img src="' + assets.chart + '" alt="Dynamic RVOT dimensions plot">' : '<div class="pdf-grab-empty" style="height:120px;">PLOT NOT AVAILABLE</div>') +
+                    '<div class="pdf-plot-cap">Dynamic RVOT / MPA dimensional analysis — Dp / Dsa and mean diameters per plane (Systole &amp; Diastole), as entered in the application.</div>' +
+                '</div>';
+
+        html += '<div class="pdf-note"><b>NOTE</b> &nbsp;Use the diameter plot to show the measured contour and its relationship to the proposed landing zone.</div>';
+
+        html += pdfFooter(n, total) + '</div>';
+        return html;
+    }
+
+    // ---------------- PAGE 4 — 3. CT MEASUREMENTS & SIZING SYNTHESIS ----------------
+    function reportPageMeasurements(d, assets, n, total) {
+        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(3, 'CT/CMR MEASUREMENTS & SIZING SYNTHESIS');
+
+        html += '<div class="pdf-note" style="margin-top:0; margin-bottom:12px;"><b>MEASUREMENT CONVENTION</b> &nbsp;Dimensions recorded in millimetres. RVOT1 = Dp and RVOT2 = Dsa, in Systole (S) and Diastole (D), consistent with the application&rsquo;s dynamic dimensional analysis.</div>';
+
+        html += '<div class="pdf-sub">Pulmonary artery / landing-zone measurements</div>' +
+                '<table class="pdf-table"><thead><tr>' +
+                    '<th style="text-align:left; padding-left:8px;">Anatomical level</th><th>Dist (mm)</th>' +
+                    '<th>Dp (S)</th><th>Dsa (S)</th><th>Mean (S)</th>' +
+                    '<th>Dp (D)</th><th>Dsa (D)</th><th>Mean (D)</th>' +
+                '</tr></thead><tbody>';
+
+        for (var i = 0; i < d.planes.length; i++) {
+            var p = d.planes[i];
+            var meanS = ((p.s1 + p.s2) / 2).toFixed(1);
+            var meanD = ((p.d1 + p.d2) / 2).toFixed(1);
+            html += '<tr>' +
+                        '<td class="lvl">' + pdfEsc(p.name) + '</td>' +
+                        '<td>' + (p.dist > 0 ? '+' : '') + p.dist + '</td>' +
+                        '<td>' + p.s1 + '</td><td>' + p.s2 + '</td><td style="background:#FDECEA;">' + meanS + '</td>' +
+                        '<td>' + p.d1 + '</td><td>' + p.d2 + '</td><td style="background:#E8F5E9;">' + meanD + '</td>' +
+                    '</tr>';
+        }
+        html += '<tr>' +
+                    '<td class="lvl" colspan="2">' + pdfEsc(d.lenName) + '</td>' +
+                    '<td class="txt" colspan="6" style="text-align:center;">Start: ' + d.lenStart + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; End: ' + d.lenEnd + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; Length: <b>' + d.cmrLen + ' mm</b></td>' +
+                '</tr>';
+        html += '</tbody></table>';
+
+        html += '<div class="pdf-cards">' +
+                    '<div class="pdf-card"><div class="pdf-card-t">Predicted morphology</div><div class="pdf-card-v" style="font-size:10.5px;">' + pdfEsc(d.morphName) + '</div><div class="pdf-card-s">Incidence: ' + d.morphIncidence + '</div></div>' +
+                    '<div class="pdf-card"><div class="pdf-card-t">CT/CMR virtual waist</div><div class="pdf-card-v">' + (isNaN(d.virtualWaist) ? '--' : d.virtualWaist.toFixed(1) + ' mm') + '</div><div class="pdf-card-s">Mean of Dp/Dsa (S+D)</div></div>' +
+                    '<div class="pdf-card"><div class="pdf-card-t">CT/CMR MPA length</div><div class="pdf-card-v">' + (d.cmrLen > 0 ? d.cmrLen + ' mm' : '--') + '</div><div class="pdf-card-s">' + pdfEsc(d.lenName) + '</div></div>' +
+                    '<div class="pdf-card hl"><div class="pdf-card-t">Predicted valve (CT/CMR)</div><div class="pdf-card-v">' + pdfEsc(d.predictedSku) + '</div><div class="pdf-card-s">Pre-balloon estimate</div></div>' +
+                '</div>';
+
+        html += '<div class="pdf-sub">Intra-op sizing (balloon confirmation)</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('WAIST OF MPA WITH BALLOON', (!isNaN(d.balloonWaist) && d.balloonWaist > 0) ? ('<span style="font-family:\'Space Mono\', monospace;">' + d.balloonWaist + ' mm</span>') : '<span class="pdf-empty">Not yet performed</span>', 18) +
+                    pdfField('CONFIRMED MPA LENGTH', (!isNaN(d.confirmedLen) && d.confirmedLen > 0) ? ('<span style="font-family:\'Space Mono\', monospace;">' + d.confirmedLen + ' mm</span>') : '<span class="pdf-empty">Not yet performed</span>', 18) +
+                    pdfField('OVERSIZING STRATEGY', pdfEsc(d.strategyText), 18) +
+                    pdfField('MANUAL SKU OVERRIDE', pdfEsc(d.overrideText), 18) +
+                '</div>';
+
+        var refWaistTxt = (!isNaN(d.balloonWaist) && d.balloonWaist > 0)
+            ? d.balloonWaist + ' mm (balloon waist)'
+            : (isNaN(d.virtualWaist) ? '—' : d.virtualWaist.toFixed(1) + ' mm (CT/CMR mean virtual waist)');
+        var rationale = 'Reference waist: ' + refWaistTxt +
+            ' &bull; Straight section OD: ' + d.straightOD + ' mm &rarr; ' + pdfEsc(d.oversizeTitle) + ': <b>' + pdfEsc(d.oversizeValue) + '</b>' +
+            ' &bull; MPA length used: ' + (d.activeLen > 0 ? d.activeLen + ' mm' : '—') + ' vs straight length ' + d.stentLen + ' mm &rarr; <b>' + pdfEsc(d.lengthMatch) + '</b>' +
+            ' &bull; Selection mode: ' + (d.overrideValue === 'Automatic' ? 'automatic calculation (' + pdfEsc(d.strategyText) + ')' : 'manual override (' + pdfEsc(d.overrideText) + ')') + '.';
+
+        html += '<div class="pdf-sub">Sizing synthesis</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('CANDIDATE VALVE SIZE(S)', '<span style="font-family:\'Space Mono\', monospace;">' + pdfEsc(d.predictedSku) + ' (CT/CMR) &nbsp;&bull;&nbsp; ' + pdfEsc(d.sku) + ' (final)</span>', 18) +
+                    pdfField('SIZING RATIONALE AND ASSUMPTIONS', rationale, 34) +
+                    pdfField('FURTHER IMAGING / TESTING REQUIRED', '<span class="pdf-empty">&nbsp;</span>', 22) +
+                '</div>';
+
+        html += pdfFooter(n, total) + '</div>';
+        return html;
+    }
+
+    // ---------------- PAGE 5 — 4. RISK ASSESSMENT & PROCEDURAL STRATEGY ----------------
+    function reportPageRisk(d, assets, n, total) {
+        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(4, 'RISK ASSESSMENT & PROCEDURAL STRATEGY');
+
+        html += '<div class="pdf-sub">Anatomical and procedural risk review</div>' +
+                '<table class="pdf-table"><thead><tr>' +
+                    '<th style="text-align:left; padding-left:8px; width:150px;">Domain</th><th>Assessment / evidence</th><th>Mitigation / test</th><th style="width:110px;">Status</th>' +
+                '</tr></thead><tbody>' +
+                    '<tr><td class="lvl">Landing-zone shape and stability</td><td class="txt blank">' + pdfEsc(d.morphName) + ' — virtual waist ' + (isNaN(d.virtualWaist) ? '—' : d.virtualWaist.toFixed(1) + ' mm') + '</td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="lvl">Coronary proximity / compression risk</td><td class="blank"></td><td class="blank"></td><td class="txt" style="text-align:center; text-transform:none;">&#9744; Very high risk<br>&#9744; Low risk</td></tr>' +
+                    '<tr><td class="lvl">Branch PA anatomy and access route</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="lvl">Other patient-specific factors</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
+                '</tbody></table>';
+
+        html += '<div class="pdf-sub">Procedural strategy</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('PREFERRED PA APPROACH / ACCESS', '<span class="pdf-empty">&nbsp;</span>', 20) +
+                    pdfField('INTENDED LANDING POSITION', 'See deployment simulation below (virtual waist at ' + (isNaN(d.virtualWaist) ? '—' : d.virtualWaist.toFixed(1) + ' mm') + ')', 20) +
+                    pdfField('BALLOON TESTING / CORONARY ASSESSMENT', (!isNaN(d.balloonWaist) && d.balloonWaist > 0) ? ('Balloon waist confirmed: ' + d.balloonWaist + ' mm') : '<span class="pdf-empty">&nbsp;</span>', 20) +
+                    pdfField('IMAGING AND ANGIOGRAPHIC STRATEGY', '<span class="pdf-empty">&nbsp;</span>', 20) +
+                    pdfField('EQUIPMENT / CONTINGENCY PLAN', '<span class="pdf-empty">&nbsp;</span>', 20) +
+                '</div>';
+
+        html += '<div class="pdf-sub">Anatomy &amp; deployment simulation (' + (d.phase === 'systole' ? 'Systole' : 'Diastole') + ')</div>' +
+                '<div class="pdf-grabs">' +
+                    '<div class="pdf-grab"><div class="pdf-grab-title">Anatomy reconstruction</div>' +
+                        (assets.anatomy ? '<div style="background:#fff;"><img src="' + assets.anatomy + '" style="width:100%; display:block;" alt="Anatomy"></div>' : '<div class="pdf-grab-empty">NOT AVAILABLE</div>') +
+                    '</div>' +
+                    '<div class="pdf-grab"><div class="pdf-grab-title">Deployment match</div>' +
+                        (assets.deploy ? '<div style="background:#fff;"><img src="' + assets.deploy + '" style="width:100%; display:block;" alt="Deployment match"></div>' : '<div class="pdf-grab-empty">NOT AVAILABLE</div>') +
+                    '</div>' +
+                '</div>';
+
+        html += '<div class="pdf-note"><b>WORKING PLAN</b> &nbsp;Document any test or imaging result that conditions the recommendation, together with the agreed contingency if the planned strategy is not supported.</div>';
+
+        html += pdfFooter(n, total) + '</div>';
+        return html;
+    }
+
+    // ---------------- PAGE 6 — 5. FINAL DECISION & SIGN-OFF ----------------
+    function reportPageSignOff(d, assets, n, total) {
+        var html = '<div class="pdf-page pdf-page-last">' + pdfHeader(n, total) + pdfSection(5, 'FINAL DECISION & SIGN-OFF');
+
+        html += '<p class="pdf-intro">Complete this section after the imaging, sizing, risk and procedural reviews have been reconciled.</p>';
+
+        html += '<div class="pdf-sub">Final planning summary</div>' +
+                '<div class="pdf-fields">' +
+                    pdfField('RECOMMENDATION / DECISION', '<span style="font-family:\'Space Mono\', monospace; font-size:13px;">VenusP <b>' + pdfEsc(d.sku) + '</b> &nbsp;&bull;&nbsp; Delivery System: <b>' + pdfEsc(d.ds) + '</b></span>', 20) +
+                    pdfField('SELECTED VALVE SIZE (AFTER VERIFICATION)', 'Straight Section OD (B): <b>' + d.straightOD + ' mm</b> &nbsp;&bull;&nbsp; Straight Length (D): <b>' + d.stentLen + ' mm</b> &nbsp;&bull;&nbsp; Flared Inflow/Outflow (A/C): <b>' + (d.straightOD + 10) + ' mm</b> &nbsp;&bull;&nbsp; Total Expanded Length (E): <b>' + pdfEsc(d.totalLenText) + '</b>', 24) +
+                    pdfField(pdfEsc(d.oversizeTitle) + ' / LENGTH MATCH', '<span style="font-family:\'Space Mono\', monospace;">' + pdfEsc(d.oversizeValue) + ' &nbsp;&bull;&nbsp; ' + pdfEsc(d.lengthMatch) + '</span>', 18) +
+                    pdfField('RATIONALE / OUTSTANDING CONDITIONS', '<span class="pdf-empty">&nbsp;</span>', 26) +
+                '</div>';
+
+        if (assets.valve) {
+            html += '<div class="pdf-plot" style="margin-top:12px;"><img src="' + assets.valve + '" alt="Valve specifications" style="width:62%; margin:0 auto;">' +
+                    '<div class="pdf-plot-cap" style="text-align:center;">VenusP ' + pdfEsc(d.sku) + ' — dimensional specifications (A/C flares, B waist, D stent length, E total expanded length).</div></div>';
+        }
+
+        html += '<div class="pdf-sub">Pre-finalisation checks</div>' +
+                '<table class="pdf-table"><thead><tr><th style="text-align:left; padding-left:8px;">Check</th><th style="width:220px;">Confirmation / evidence</th><th style="width:110px;">Initials / date</th></tr></thead><tbody>' +
+                    '<tr><td class="txt">Current IFU, local requirements and device availability checked</td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="txt">Measurements, definitions and source series reviewed</td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="txt">Risk mitigation and any required testing agreed</td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="txt">Final device, access and contingency plan recorded</td><td class="blank"></td><td class="blank"></td></tr>' +
+                '</tbody></table>';
+
+        html += '<div class="pdf-sub">Multidisciplinary review &amp; sign-off</div>' +
+                '<table class="pdf-table"><thead><tr><th style="text-align:left; padding-left:8px; width:170px;">Role</th><th style="width:150px;">Name</th><th>Decision / comment</th><th style="width:80px;">Date</th></tr></thead><tbody>' +
+                    '<tr><td class="txt">Interventional cardiologist</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="txt">Imaging reviewer</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="txt">Additional heart-team reviewer</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
+                '</tbody></table>';
+
+        html += '<div class="pdf-note"><b>FINAL VERIFICATION</b> &nbsp;Before use, reconcile measurements and the proposed strategy with the current VenusP-Valve IFU, local device availability, regulatory status and institutional practice.</div>';
+
+        html += pdfFooter(n, total) + '</div>';
+        return html;
+    }
+    // ================== FIM DO EXPORT PDF PROFORMA ==================
+
+    function openCreatorModal() { document.getElementById('creatorModal').style.display = 'flex'; }
+    function closeCreatorModal(e) { if (e.target.id === 'creatorModal') document.getElementById('creatorModal').style.display = 'none'; }
+    function closeCreatorModalDirect() { document.getElementById('creatorModal').style.display = 'none'; }
+    // -------------------------------------------------
+
+    function resetFields() {
+        var textIds = ['in-patient', 'in-ref-centre', 'in-diagnosis', 'in-comments'];
+        for(var i=0; i<textIds.length; i++) {
+            var el = document.getElementById(textIds[i]);
+            if(el) el.value = '';
+        }
+        
+        var waistEl = document.getElementById('in-waist');
+        if (waistEl) waistEl.value = '';
+        var lenEl = document.getElementById('in-length');
+        if (lenEl) lenEl.value = '';
+        
+        document.getElementById('in-strategy').value = 'auto';
+        document.getElementById('in-pref').value = 'Automatic';
+        
+        tablePlanes = [
+            { id: generateId(), name: "Subvalvar", dist: -10, s1: 32, s2: 32, d1: 33, d2: 33, isFixed: false },
+            { id: 'valvar', name: "Valvar *", dist: 0, s1: 28, s2: 28, d1: 29, d2: 29, isFixed: true },
+            { id: generateId(), name: "Mid MPA", dist: 12, s1: 25.5, s2: 25.5, d1: 26.5, d2: 26.5, isFixed: false },
+            { id: generateId(), name: "Distal MPA", dist: 22, s1: 28, s2: 28, d1: 29, d2: 29, isFixed: false },
+            { id: generateId(), name: "Bifurcation", dist: 30, s1: 32, s2: 32, d1: 33, d2: 33, isFixed: false }
+        ];
+        
+        document.getElementById('len-name').value = "LENGTH (valve-PA bifurcation start/end)";
+        document.getElementById('len-start').value = "0";
+        document.getElementById('len-end').value = "35";
+
+        renderTable();
+        initImageBlocks(); 
+        updateUI();
+    }
+
+    // --- FUNÇÕES DE IMAGEM DINÂMICA ---
+    function initImageBlocks() {
+        imageBlocks = [
+            { id: generateImgId(), title: "3D Recon 1", dataUrl: "" },
+            { id: generateImgId(), title: "Sagittal (Systole)", dataUrl: "" },
+            { id: generateImgId(), title: "Axial (Systole)", dataUrl: "" }
+        ];
+        renderImageBlocks();
+    }
+
+    function addImageBlock(title) {
+        if (!title || typeof title !== 'string') title = "New Image View";
+        imageBlocks.push({ id: generateImgId(), title: title, dataUrl: "" });
+        renderImageBlocks();
+    }
+
+    function removeImageBlock(id) {
+        imageBlocks = imageBlocks.filter(function(b) { return b.id !== id; });
+        renderImageBlocks();
+    }
+
+    function updateImageTitle(id, newTitle) {
+        var block = imageBlocks.find(function(b) { return b.id === id; });
+        if (block) block.title = newTitle;
+    }
+
+    function handleImageUpload(event, id) {
+        var file = event.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var block = imageBlocks.find(function(b) { return b.id === id; });
+            if (block) {
+                block.dataUrl = e.target.result;
+                renderImageBlocks();
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function clearImageBlock(event, id) {
+        event.stopPropagation();
+        var block = imageBlocks.find(function(b) { return b.id === id; });
+        if (block) {
+            block.dataUrl = "";
+            renderImageBlocks();
+        }
+    }
+
+    function renderImageBlocks() {
+        var container = document.getElementById('dynamic-images-container');
+        container.innerHTML = '';
+        imageBlocks.forEach(function(block) {
+            var div = document.createElement('div');
+            div.className = 'input-group';
+            div.style.position = 'relative';
+            
+            var titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.value = block.title;
+            titleInput.className = 'row-name-input';
+            titleInput.style.textAlign = 'center';
+            titleInput.style.marginBottom = '6px';
+            titleInput.onchange = function(e) { updateImageTitle(block.id, e.target.value); };
+
+            var deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete-row';
+            deleteBtn.style.top = '0';
+            deleteBtn.style.right = '0';
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.title = 'Remove Block';
+            deleteBtn.onclick = function() { removeImageBlock(block.id); };
+
+            var uploadZone = document.createElement('div');
+            uploadZone.className = 'upload-zone';
+            uploadZone.style.height = '120px';
+            uploadZone.onclick = function() { document.getElementById('file_' + block.id).click(); };
+
+            var fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.id = 'file_' + block.id;
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            fileInput.onchange = function(e) { handleImageUpload(e, block.id); };
+
+            if (block.dataUrl) {
+                var img = document.createElement('img');
+                img.src = block.dataUrl;
+                
+                var clearBtn = document.createElement('div');
+                clearBtn.className = 'upload-clear';
+                clearBtn.style.position = 'absolute';
+                clearBtn.style.top = '5px';
+                clearBtn.style.right = '5px';
+                clearBtn.style.background = '#fff';
+                clearBtn.style.padding = '2px 6px';
+                clearBtn.style.borderRadius = '4px';
+                clearBtn.style.zIndex = '10';
+                clearBtn.innerHTML = 'X';
+                clearBtn.title = 'Clear Image';
+                clearBtn.onclick = function(e) { clearImageBlock(e, block.id); };
+
+                uploadZone.appendChild(img);
+                uploadZone.appendChild(clearBtn);
+            } else {
+                var span = document.createElement('span');
+                span.innerHTML = 'Click to Upload';
+                uploadZone.appendChild(span);
+            }
+
+            uploadZone.appendChild(fileInput);
+            div.appendChild(titleInput);
+            div.appendChild(deleteBtn);
+            div.appendChild(uploadZone);
+            container.appendChild(div);
+        });
+    }
+    // --- FIM DAS FUNÇÕES DE IMAGEM ---
+
+    function renderTable() {
+        var tbody = document.getElementById('dynamic-tbody');
+        tbody.innerHTML = '';
+        tablePlanes.sort(function(a, b) { return a.dist - b.dist; });
+        for (var i = 0; i < tablePlanes.length; i++) {
+            var p = tablePlanes[i];
+            var tr = document.createElement('tr');
+            var nameField = p.isFixed ? p.name : '<input type="text" class="row-name-input" value="'+p.name+'" onchange="updatePlaneData(\''+p.id+'\', \'name\', this.value)">';
+            var distField = p.isFixed ? 
+                '<input type="number" class="cmr-input" value="0" disabled style="width: 45px; padding: 2px 4px; font-size: 10px; height: auto;">' : 
+                '<input type="number" class="cmr-input" value="'+p.dist+'" onchange="updatePlaneData(\''+p.id+'\', \'dist\', this.value)" style="width: 45px; padding: 2px 4px; font-size: 10px; height: auto;">';
+            var deleteBtn = p.isFixed ? '' : '<button class="btn-delete-row" onclick="deletePlane(\''+p.id+'\')">🗑️</button>';
+            tr.innerHTML = `<td class="row-title">${nameField} ${deleteBtn}<br><div style="font-weight: normal; margin-top: 4px; font-size: 9px; color: var(--text-grey);">Dist: ${distField} mm</div></td>
+                <td><input type="number" class="cmr-input" value="${p.s1}" oninput="updatePlaneData('${p.id}', 's1', this.value)"></td>
+                <td><input type="number" class="cmr-input" value="${p.s2}" oninput="updatePlaneData('${p.id}', 's2', this.value)"></td>
+                <td><input type="number" class="cmr-input" value="${p.d1}" oninput="updatePlaneData('${p.id}', 'd1', this.value)"></td>
+                <td><input type="number" class="cmr-input" value="${p.d2}" oninput="updatePlaneData('${p.id}', 'd2', this.value)"></td>`;
+            tbody.appendChild(tr);
+        }
+    }
+
+    function updatePlaneData(id, field, value) {
+        for(var i=0; i<tablePlanes.length; i++){
+            if(tablePlanes[i].id === id){
+                if(field === 'name') tablePlanes[i][field] = value;
+                else tablePlanes[i][field] = parseFloat(value) || 0;
+                break;
+            }
+        }
+        if(field === 'dist') { renderTable(); }
+        updateUI();
+    }
+
+    function addNewPlane() {
+        tablePlanes.push({ id: generateId(), name: "New Plane", dist: 10, s1: 30, s2: 30, d1: 30, d2: 30, isFixed: false });
+        renderTable();
+        updateUI();
+    }
+
+    function deletePlane(id) {
+        tablePlanes = tablePlanes.filter(function(p) { return p.id !== id; });
+        renderTable();
+        updateUI();
+    }
+
+    function updateUI() {
+        updateChart();
+        runCmrPrediction();
+        runSizingEngine();
+    }
+
+    var phuocGradientPlugin = {
+        id: 'phuocGradientPlugin',
+        beforeDraw: function(chart) {
+            var ctx = chart.ctx;
+            var chartArea = chart.chartArea;
+            if (!chartArea) return;
+            ctx.save();
+            var gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+            gradient.addColorStop(0, '#FFF3E0'); gradient.addColorStop(0.25, '#FF5252'); gradient.addColorStop(0.5, '#E53935'); gradient.addColorStop(0.75, '#FF9800'); gradient.addColorStop(1, '#FFCC80');    
+            ctx.fillStyle = gradient; ctx.fillRect(chartArea.left, chartArea.top, chartArea.width, chartArea.height);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 1;
+            var xTicks = chart.scales.x.ticks;
+            for (var i = 0; i < xTicks.length; i++) {
+                var x = chart.scales.x.getPixelForTick(i);
+                ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom); ctx.stroke();
+            }
+            ctx.restore();
+        }
+    };
+
+    function initChart() {
+        var ctx = document.getElementById('cmrChart').getContext('2d');
+        cmrChart = new Chart(ctx, {
+            type: 'line', plugins: [phuocGradientPlugin],
+            data: { labels: [], datasets: [ 
+                { label: 'Dp (S)', data: [], borderColor: '#FF8A80', backgroundColor: '#FF8A80', borderDash: [5, 5], tension: 0, pointRadius: 5, borderWidth: 2 }, 
+                { label: 'Dsa (S)', data: [], borderColor: '#D50000', backgroundColor: '#D50000', tension: 0, pointRadius: 5, borderWidth: 2 }, 
+                { label: 'Dp (D)', data: [], borderColor: '#82B1FF', backgroundColor: '#82B1FF', borderDash: [5, 5], tension: 0, pointRadius: 5, borderWidth: 2 }, 
+                { label: 'Dsa (D)', data: [], borderColor: '#2979FF', backgroundColor: '#2979FF', tension: 0, pointRadius: 5, borderWidth: 2 }, 
+                { label: 'Mean S', data: [], borderColor: '#B71C1C', backgroundColor: '#B71C1C', borderWidth: 3.5, tension: 0, pointRadius: 6 }, 
+                { label: 'Mean D', data: [], borderColor: '#2E7D32', backgroundColor: '#2E7D32', borderWidth: 3.5, tension: 0, pointRadius: 6 } 
+            ]},
+            options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'DYNAMIC RVOT DIMENSIONS', font: { size: 15, family: 'Circular, sans-serif', weight: 'bold' }, color: '#4B5563', padding: { top: 5, bottom: 20 } } }, scales: { y: { suggestedMin: 14, suggestedMax: 38, grid: { color: 'rgba(255,255,255,0.4)', drawBorder: false }, ticks: { color: '#4B5563', font: { family: 'Space Mono, monospace', size: 10 } } }, x: { grid: { display: false }, ticks: { color: '#4B5563', font: { size: 9, family: 'Circular, sans-serif', weight: 'bold' } } } } }
+        });
+    }
+
+    function updateChart() {
+        if (!cmrChart) return;
+        var labels = [], s1 = [], s2 = [], d1 = [], d2 = [], mS = [], mD = [];
+        for (var i = 0; i < tablePlanes.length; i++) {
+            var p = tablePlanes[i];
+            labels.push(p.name + " (" + (p.dist > 0 ? '+' : '') + p.dist + "mm)");
+            s1.push(p.s1); s2.push(p.s2); d1.push(p.d1); d2.push(p.d2);
+            mS.push((p.s1 + p.s2) / 2); mD.push((p.d1 + p.d2) / 2);
+        }
+        cmrChart.data.labels = labels;
+        cmrChart.data.datasets[0].data = s1; cmrChart.data.datasets[1].data = s2; cmrChart.data.datasets[2].data = d1; cmrChart.data.datasets[3].data = d2; cmrChart.data.datasets[4].data = mS; cmrChart.data.datasets[5].data = mD;
+        cmrChart.update();
+    }
+
+    function updateMorphUI() {
+        var morphData = { "type1": { color: "#D97706", img: "https://raw.githubusercontent.com/fblucciano/imagens-venus/dfd4d0f45b44f875cf87026f971effbafacef56d/IMG_7387.png", inc: "Incidence: 44.6%" }, "type2": { color: "var(--venus-deep-blue)", img: "https://raw.githubusercontent.com/fblucciano/imagens-venus/fd5c7f766d4c5e6170d3917736d8b76daa3557d6/IMG_7392.png", inc: "Incidence: 16.9%" }, "type3": { color: "#2E7D32", img: "https://raw.githubusercontent.com/fblucciano/imagens-venus/2d1989088b63da10247784e567f3e569131fda75/IMG_7390.png", inc: "Incidence: 3.6%" }, "type4": { color: "#E65100", img: "https://raw.githubusercontent.com/fblucciano/imagens-venus/911e23ee6a674e17ff869203696fe6af433a64de/IMG_7394.png", inc: "Incidence: 19.3%" }, "type5": { color: "var(--venus-blue)", img: "https://raw.githubusercontent.com/fblucciano/imagens-venus/baa9ec3f6d13abd5562650d1d8a4b045884b4102/IMG_7396.png", inc: "Incidence: 13.3%" } };
+        var selectEl = document.getElementById('cmr-morph-select');
+        if(!selectEl) return;
+        var data = morphData[selectEl.value];
+        if(!data) return;
+        selectEl.style.color = data.color; 
+        document.getElementById('cmr-morph-img').src = data.img; document.getElementById('cmr-morph-img').style.display = "block";
+        document.getElementById('cmr-morph-incidence').innerText = data.inc;
+    }
+
+    // --- NOVA LÓGICA DE PREVISÃO MORFOLÓGICA (SCHIEVANO) ---
+    function runCmrPrediction() {
+        if(tablePlanes.length < 3) return; 
+        
+        var valvar = 0, others = [];
+        var postValvarPlanes = [];
+        
+        for (var i = 0; i < tablePlanes.length; i++) {
+            var mean = (tablePlanes[i].s1 + tablePlanes[i].s2 + tablePlanes[i].d1 + tablePlanes[i].d2) / 4;
+            if (tablePlanes[i].id === 'valvar') {
+                valvar = mean;
+            } else if (tablePlanes[i].dist > 0) {
+                others.push(mean); 
+                postValvarPlanes.push({ dist: tablePlanes[i].dist, mean: mean });
+            }
+        }
+        
+        if (others.length === 0) others.push(valvar);
+        var minCenter = Math.min(valvar, ...others);
+        
+        window.currentWaistMean = minCenter; 
+        document.getElementById('cmr-prediction-box').style.display = "grid";
+
+        postValvarPlanes.sort(function(a, b) { return a.dist - b.dist; });
+        var mid = valvar, distal = valvar;
+        
+        if (postValvarPlanes.length >= 2) {
+            mid = postValvarPlanes[0].mean;
+            distal = postValvarPlanes[postValvarPlanes.length - 1].mean;
+        } else if (postValvarPlanes.length === 1) {
+            mid = postValvarPlanes[0].mean;
+            distal = postValvarPlanes[0].mean;
+        }
+
+        var morphType = "type2"; // Default Cylindrical
+        var tol = 1.5; // Tolerância milimétrica de Schievano (1.5mm)
+        
+        if (mid > valvar + tol && mid > distal + tol) {
+            morphType = "type4"; // Tipo IV - Fusiforme
+        } else if (mid < valvar - tol && mid < distal - tol) {
+            morphType = "type5"; // Tipo V - Côncavo
+        } else if (valvar > distal + (tol * 1.5)) {
+            morphType = "type1"; // Tipo I - Piramidal
+        } else if (distal > valvar + (tol * 1.5)) {
+            morphType = "type3"; // Tipo III - Pirâmide Invertida
+        } else {
+            morphType = "type2"; // Tipo II - Cilíndrica
+        }
+        
+        var morphSel = document.getElementById('cmr-morph-select');
+        if(morphSel) morphSel.value = morphType; 
+        updateMorphUI();
+
+        var elLStart = document.getElementById('len-start'); 
+        var lStart = (elLStart && elLStart.value !== '') ? parseFloat(elLStart.value) : 0; 
+        var elLEnd = document.getElementById('len-end'); 
+        var lEnd = (elLEnd && elLEnd.value !== '') ? parseFloat(elLEnd.value) : 0;
+        
+        var resLength = document.getElementById('cmr-mpa-length');
+        var cmrLenCalc = (lEnd > lStart) ? (lEnd - lStart) : lEnd; 
+        if(resLength) resLength.innerText = cmrLenCalc > 0 ? (cmrLenCalc + " mm") : "--";
+    }
+
+    function checkTheoWarning() {
+        document.getElementById('in-pref').value = document.getElementById('cmr-theo-sku').value;
+        runSizingEngine();
+    }
+
+    function getRecommendedDS(sku) { 
+        var dsMap = { "P24-20": "DS22-P70B", "P24-25": "DS22-P77B", "P26-20": "DS22-P70B", "P26-25": "DS22-P77B", "P28-20": "DS22-P65B", "P28-25": "DS22-P70B", "P28-30": "DS22-P77B", "P30-20": "DS22-P65B", "P30-25": "DS22-P70B", "P30-30": "DS22-P77B", "P32-25": "DS24-P75B", "P32-30": "DS24-P81B", "P34-20": "DS24-P75B", "P34-25": "DS24-P81B", "P34-30": "DS24-P87B", "P36-25": "DS24-P81B", "P36-30": "DS24-P87B" }; 
+        return dsMap[sku] || "DS22-P70B"; 
+    }
+
+    function runSizingEngine() {
+        var intraOpWaistEl = document.getElementById('in-waist');
+        var intraOpLengthEl = document.getElementById('in-length');
+        
+        var waist = parseFloat(intraOpWaistEl.value);
+        var mpaLen = parseFloat(intraOpLengthEl.value);
+        
+        var pref = document.getElementById('in-pref').value;
+        var strategy = document.getElementById('in-strategy').value;
+
+        var activeWaist = (!isNaN(waist) && waist > 0) ? waist : window.currentWaistMean;
+        
+        var elLStart = document.getElementById('len-start'); 
+        var elLEnd = document.getElementById('len-end'); 
+        var cmrLen = ((elLEnd && elLEnd.value !== '') ? parseFloat(elLEnd.value) : 0) - ((elLStart && elLStart.value !== '') ? parseFloat(elLStart.value) : 0);
+        if (cmrLen < 0) cmrLen = Math.abs(cmrLen);
+        var activeLen = (!isNaN(mpaLen) && mpaLen > 0) ? mpaLen : cmrLen;
+
+        var resSku = document.getElementById('res-sku');
+        var resDs = document.getElementById('res-ds');
+        var resDiam = document.getElementById('res-diameter');
+        var resStent = document.getElementById('res-stent');
+        var resOversize = document.getElementById('res-oversize');
+        var resMatch = document.getElementById('res-match');
+        var titleEl = document.getElementById('res-oversize-title');
+        
+        if (!activeWaist || activeWaist <= 0) return;
+
+        var finalOD;
+        var skuFinal;
+
+        if (pref === 'Automatic') {
+            if (strategy === 'auto') { 
+                if (activeWaist < 22) finalOD = 24; else if (activeWaist < 24) finalOD = 26; else if (activeWaist < 26) finalOD = 28; else if (activeWaist < 28) finalOD = 30; else if (activeWaist < 30) finalOD = 32; else if (activeWaist < 32) finalOD = 34; else finalOD = 36;
+            } else { 
+                var rawTarget = activeWaist + parseInt(strategy); 
+                finalOD = Math.round(rawTarget / 2) * 2; 
+                if (finalOD < 24) finalOD = 24; if (finalOD > 36) finalOD = 36; 
+            }
+            
+            var finalLen = 25; 
+            skuFinal = "P" + finalOD + "-" + finalLen; 
+            if (document.getElementById('cmr-theo-sku')) document.getElementById('cmr-theo-sku').value = skuFinal;
+        } else {
+            skuFinal = pref;
+        }
+
+        var dsFinal = getRecommendedDS(skuFinal);
+        var straightOD = parseInt(skuFinal.split('-')[0].replace('P', '')) || 28; 
+        var stentLenVal = parseInt(skuFinal.split('-')[1]) || 25;
+        
+        if(resSku) resSku.innerText = skuFinal; 
+        if(resDs) resDs.innerText = "DS: " + dsFinal; 
+        if(resDiam) resDiam.innerText = "Straight Section OD (B): " + straightOD + " mm"; 
+        if(resStent) resStent.innerText = "Straight Length (D): " + stentLenVal + " mm";
+
+        var diff = straightOD - activeWaist; 
+        
+        if (diff < 0) {
+            if(titleEl) titleEl.innerText = "FINAL UNDERSIZING";
+            if(resOversize) { resOversize.innerText = "-" + Math.abs(diff).toFixed(1) + " mm"; resOversize.style.color = '#C62828'; }
+        } else {
+            if(titleEl) titleEl.innerText = "FINAL OVERSIZING";
+            if(resOversize) { resOversize.innerText = "+" + diff.toFixed(1) + " mm"; resOversize.style.color = (diff >= 1.5 && diff <= 5) ? '#2E7D32' : '#E65100'; }
+        }
+
+        if (!isNaN(activeLen) && activeLen > 0) { 
+            if(resMatch) {
+                resMatch.innerText = activeLen >= stentLenVal ? "Match OK (" + activeLen + "mm MPA)" : "Caution (MPA < Stent)"; 
+                resMatch.style.color = activeLen >= stentLenVal ? '#2E7D32' : '#C62828'; 
+            }
+        } else { 
+            if(resMatch) {
+                resMatch.innerText = 'Enter MPA Length'; 
+                resMatch.style.color = 'var(--text-grey)'; 
+            }
+        }
+        
+        drawRVOTCanvas();
+    }
+
+    // --- FUNÇÕES DO MODAL DE ESPECIFICAÇÕES VENUSP ---
+    function openValveDetails() {
+        var sku = document.getElementById('res-sku').innerText;
+        if(sku === '--' || !sku) return;
+        
+        var straightOD = parseInt(sku.split('-')[0].replace('P', '')) || 28;
+        var stentLenVal = parseInt(sku.split('-')[1]) || 25;
+        
+        // Mapeamento de comprimentos expandidos da VenusP
+        var lengthEMap = { "P28-25": 53, "P28-30": 60, "P30-25": 54, "P30-30": 60, "P32-25": 58, "P32-30": 65, "P34-25": 62, "P34-30": 67, "P36-25": 63, "P36-30": 67 };
+        var totalLenText = lengthEMap[sku] ? (lengthEMap[sku] + " mm") : "TBD (Expanded)";
+        
+        document.getElementById('modalTitle').innerText = 'VenusP Valve - ' + sku;
+        document.getElementById('modalData').innerHTML = `
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding: 8px 0;"><span>Straight Section OD:</span> <strong>${straightOD} mm</strong></div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding: 8px 0;"><span>Straight Length:</span> <strong>${stentLenVal} mm</strong></div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding: 8px 0;"><span>Flared Outflow (A):</span> <strong>${straightOD + 10} mm</strong></div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding: 8px 0;"><span>Flared Inflow (C):</span> <strong>${straightOD + 10} mm</strong></div>
+            <div style="display:flex; justify-content:space-between; padding: 8px 0;"><span>Total Expanded Length:</span> <strong style="color:var(--venus-yellow);">${totalLenText}</strong></div>
+        `;
+        document.getElementById('valveModal').style.display = 'flex';
+    }
+
+    function closeValveDetails(e) { if(e.target.id === 'valveModal') closeModalDirect(); }
+    function closeModalDirect() { document.getElementById('valveModal').style.display = 'none'; }
+
+    function setCanvasView(view) {
+        currentCanvasView = view;
+        var btns = document.querySelectorAll('.tab-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.remove('active'); btns[i].style.color = "white"; btns[i].style.backgroundColor = "transparent"; btns[i].style.boxShadow = "none";
+        }
+        var activeBtn = document.getElementById('tab-' + view);
+        if (activeBtn) { activeBtn.classList.add('active'); activeBtn.style.color = "var(--venus-deep-blue)"; activeBtn.style.backgroundColor = "var(--venus-yellow)"; activeBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)"; }
+        drawRVOTCanvas(); 
+    }
+
+    function drawStrokeText(ctx, text, x, y, color, strokeColor, lineWidth) {
+        if(!strokeColor) strokeColor = '#FFFFFF'; if(!lineWidth) lineWidth = 4;
+        ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth; ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+        ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
+    }
+
+    function drawHorizontalCaliperLeft(ctx, xEnd, y, label, color) {
+        var xStart = xEnd - 20; 
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(xStart, y); ctx.lineTo(xEnd, y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = 'bold 12px "Space Mono", monospace'; 
+        ctx.textAlign = 'right';
+        drawStrokeText(ctx, label, xStart - 5, y + 4, color);
+    }
+
+    function drawVerticalCaliper(ctx, x, yStart, yEnd, label, color) {
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(x, yStart); ctx.lineTo(x, yEnd); ctx.stroke();
+        ctx.setLineDash([]); ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x - 5, yStart); ctx.lineTo(x + 5, yStart); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - 5, yEnd); ctx.lineTo(x + 5, yEnd); ctx.stroke();
+        ctx.save(); ctx.translate(x + 12, (yStart + yEnd) / 2); ctx.rotate(-Math.PI / 2);
+        ctx.font = 'bold 15px "Space Mono", monospace'; ctx.textAlign = 'center';
+        drawStrokeText(ctx, label, 0, 0, color);
+        ctx.restore();
+    }
+
+    function drawAnatomyPath(ctx, centerX, yLevels, radii, roofY) {
+        var last = yLevels.length - 1;
+        ctx.moveTo(centerX - radii[0], yLevels[0] + 30);
+        for(var i=0; i<=last; i++) { ctx.lineTo(centerX - radii[i], yLevels[i]); }
+        ctx.lineTo(centerX - radii[last] - 80, roofY - 60); ctx.lineTo(centerX - radii[last] - 50, roofY - 100);
+        ctx.lineTo(centerX, roofY); 
+        ctx.lineTo(centerX + radii[last] + 50, roofY - 100); ctx.lineTo(centerX + radii[last] + 80, roofY - 60);
+        for(var j=last; j>=0; j--) { ctx.lineTo(centerX + radii[j], yLevels[j]); }
+        ctx.lineTo(centerX + radii[0], yLevels[0] + 30);
+    }
+
+    function drawValvePath(ctx, centerX, radStraight, radFlare, yStraightTop, yStraightBottom, yOutflowTop, yInflowBottom, pxFlareLen) {
+        ctx.moveTo(centerX - radFlare, yInflowBottom);
+        ctx.bezierCurveTo(centerX - radFlare, yInflowBottom - (pxFlareLen / 2), centerX - radStraight, yStraightBottom + (pxFlareLen / 2), centerX - radStraight, yStraightBottom);
+        ctx.lineTo(centerX - radStraight, yStraightTop);
+        ctx.bezierCurveTo(centerX - radStraight, yStraightTop - (pxFlareLen / 2), centerX - radFlare, yOutflowTop + (pxFlareLen / 2), centerX - radFlare, yOutflowTop);
+        ctx.quadraticCurveTo(centerX, yOutflowTop + 8, centerX + radFlare, yOutflowTop);
+        ctx.bezierCurveTo(centerX + radFlare, yOutflowTop + (pxFlareLen / 2), centerX + radStraight, yStraightTop - (pxFlareLen / 2), centerX + radStraight, yStraightTop);
+        ctx.lineTo(centerX + radStraight, yStraightBottom);
+        ctx.bezierCurveTo(centerX + radStraight, yStraightBottom + (pxFlareLen / 2), centerX + radFlare, yInflowBottom - (pxFlareLen / 2), centerX + radFlare, yInflowBottom);
+        ctx.quadraticCurveTo(centerX, yInflowBottom + 8, centerX - radFlare, yInflowBottom);
+    }
+
+    function drawRVOTCanvas() {
+        var canvas = document.getElementById('deploymentCanvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        if (tablePlanes.length < 2) {
+            ctx.fillStyle = '#171434'; ctx.font = '14px "Space Mono", monospace'; ctx.textAlign = 'center';
+            ctx.fillText("Enter Valvar and at least one other plane to render anatomy.", canvas.width / 2, canvas.height / 2);
+            return;
+        }
+
+        var elLStart = document.getElementById('len-start'); 
+        var lStart = (elLStart && elLStart.value !== '') ? parseFloat(elLStart.value) : 0;
+        var elLEnd = document.getElementById('len-end'); 
+        var lEnd = (elLEnd && elLEnd.value !== '') ? parseFloat(elLEnd.value) : 35;
+
+        var maxDist = tablePlanes[tablePlanes.length - 1].dist;
+        if (lEnd > maxDist) maxDist = lEnd; 
+
+        var minDist = tablePlanes[0].dist;
+        var totalSpan = maxDist - minDist;
+        if (totalSpan < 40) totalSpan = 40; 
+        
+        var availableHeight = canvas.height - 200; 
+        var scale = availableHeight / totalSpan; 
+        if (scale > 7.0) scale = 7.0; 
+        
+        var centerX = canvas.width / 2;
+        var baseY = 120 + (maxDist * scale); 
+        var roofY = baseY - (lEnd * scale); 
+
+        var phase = document.querySelector('input[name="cardiac_phase"]:checked').value;
+        var pPrefix = phase === 'systole' ? 's' : 'd';
+
+        var yLevels = [];
+        var radii = [];
+        var minR = 999;
+        var yWaist = baseY;
+        var vwLevel = 1;
+
+        for (var i = 0; i < tablePlanes.length; i++) {
+            var p = tablePlanes[i];
+            yLevels.push(baseY - (p.dist * scale));
+            var rad = ((p[pPrefix+'1'] + p[pPrefix+'2']) / 2 * scale) / 2;
+            radii.push(rad);
+            if(p.dist >= 0 && rad < minR) { minR = rad; yWaist = baseY - (p.dist * scale); vwLevel = i; }
+        }
+
+        var last = tablePlanes.length - 1;
+        if (isNaN(roofY) || roofY > yLevels[last]) { roofY = yLevels[last] - (5 * scale); }
+
+        var finalWaistDiam = (minR * 2 / scale);
+
+        var resWaistBox = document.getElementById('cmr-virtual-waist');
+        if (resWaistBox && window.currentWaistMean > 0) {
+            var phaseTxt = phase === 'systole' ? 'Systole' : 'Diastole';
+            var phaseCol = phase === 'systole' ? '#D50000' : '#2979FF';
+            resWaistBox.innerHTML = window.currentWaistMean.toFixed(1) + " mm <div style='font-size:10px;color:var(--text-grey);font-weight:normal;display:inline;'>(Mean)</div><div style='font-size:12px;color:" + phaseCol + "; margin-top:4px;'>" + phaseTxt + ": " + finalWaistDiam.toFixed(1) + " mm</div>";
+        }
+
+        ctx.fillStyle = (currentCanvasView === 'anatomy') ? "#EAECEF" : (currentCanvasView === 'valve' ? "rgba(243, 244, 246, 0.6)" : "#F3F4F6"); 
+        ctx.strokeStyle = (currentCanvasView === 'anatomy') ? "#4B5563" : (currentCanvasView === 'valve' ? "rgba(75, 85, 99, 0.3)" : "#4B5563"); 
+        ctx.lineWidth = (currentCanvasView === 'anatomy' || currentCanvasView === 'deploy') ? 4 : 2; 
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        drawAnatomyPath(ctx, centerX, yLevels, radii, roofY);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+
+        var idxValvar = tablePlanes.findIndex(function(p) { return p.id === 'valvar'; });
+        if (idxValvar !== -1) {
+            ctx.beginPath();
+            ctx.moveTo(centerX - radii[idxValvar], yLevels[idxValvar]);
+            ctx.quadraticCurveTo(centerX - radii[idxValvar]/2, yLevels[idxValvar] + 25, centerX, yLevels[idxValvar] - 5);
+            ctx.quadraticCurveTo(centerX + radii[idxValvar]/2, yLevels[idxValvar] + 25, centerX + radii[idxValvar], yLevels[idxValvar]);
+            ctx.lineWidth = 3; ctx.strokeStyle = "rgba(75, 85, 99, 0.5)"; ctx.stroke();
+        }
+
+        ctx.save(); ctx.translate(centerX - radii[last] - 40, roofY - 35); ctx.rotate(-Math.PI / 6); drawStrokeText(ctx, "RPA", 0, 0, '#6B7280'); ctx.restore();
+        ctx.save(); ctx.translate(centerX + radii[last] + 40, roofY - 35); ctx.rotate(Math.PI / 6); drawStrokeText(ctx, "LPA", 0, 0, '#6B7280'); ctx.restore();
+
+        var sku = document.getElementById('res-sku') ? document.getElementById('res-sku').innerText : "P28-25";
+        var straightOD = parseInt(sku.split('-')[0].replace('P', '')) || 28;
+        var stentLenVal = parseInt(sku.split('-')[1]) || 25;
+        
+        var lengthEMap = { "P28-25": 53, "P28-30": 60, "P30-25": 54, "P30-30": 60, "P32-25": 58, "P32-30": 65, "P34-25": 62, "P34-30": 67, "P36-25": 63, "P36-30": 67 };
+        var totalLenDrawing = lengthEMap[sku] || (stentLenVal + 28); 
+        var totalLenText = lengthEMap[sku] ? (lengthEMap[sku] + " mm") : "TBD (Expanded)";
+
+        var pxStentLen = stentLenVal * scale;
+        var pxFlareLen = 12 * scale; 
+        var radStraight = (straightOD * scale) / 2;
+        var radFlare = ((straightOD + 10) * scale) / 2;
+
+        var yOutflowTop = roofY; 
+        var yStraightTop = yOutflowTop + pxFlareLen;
+        var yStraightBottom = yStraightTop + pxStentLen;
+        var yInflowBottom = yStraightBottom + pxFlareLen;
+
+        ctx.beginPath();
+        drawValvePath(ctx, centerX, radStraight, radFlare, yStraightTop, yStraightBottom, yOutflowTop, yInflowBottom, pxFlareLen);
+        
+        if (currentCanvasView !== 'anatomy') {
+            ctx.fillStyle = currentCanvasView === 'valve' ? "rgba(245, 158, 11, 0.5)" : "rgba(245, 158, 11, 0.4)"; 
+            ctx.fill(); 
+            ctx.lineWidth = currentCanvasView === 'valve' ? 3 : 2.5; 
+            ctx.strokeStyle = "#D97706"; 
+            ctx.stroke();
+
+            if (currentCanvasView === 'deploy') {
+                ctx.save(); 
+                ctx.clip(); 
+                ctx.strokeStyle = "rgba(217, 119, 6, 0.25)"; ctx.lineWidth = 1.0;
+                for (var y = yOutflowTop - 20; y < yInflowBottom + 20; y += 12) {
+                    for (var x = centerX - radFlare - 20; x < centerX + radFlare + 20; x += 12) {
+                        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 12, y + 12); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(x + 12, y); ctx.lineTo(x, y + 12); ctx.stroke();
+                    }
+                }
+                ctx.restore();
+            }
+
+            ctx.fillStyle = "rgba(255, 215, 0, 0.8)"; ctx.strokeStyle = "rgba(218, 165, 32, 0.8)"; ctx.lineWidth = 1.5;
+            var mX = [centerX - radStraight * 0.65, centerX, centerX + radStraight * 0.65];
+            for (var m = 0; m < 3; m++) {
+                ctx.beginPath(); ctx.rect(mX[m] - 2.5, yStraightTop - 3.5, 5, 7); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.rect(mX[m] - 2.5, yStraightBottom - 3.5, 5, 7); ctx.fill(); ctx.stroke();
+            }
+        }
+
+        if (currentCanvasView === 'anatomy' || currentCanvasView === 'deploy') {
+            for(var q=0; q<tablePlanes.length; q++) {
+                var diamValue = (radii[q]*2/scale).toFixed(1);
+                drawHorizontalCaliperLeft(ctx, centerX - radii[q] - 10, yLevels[q], tablePlanes[q].name + " (" + (tablePlanes[q].dist > 0 ? '+' : '') + tablePlanes[q].dist + "mm): " + diamValue + "mm", '#4B5563');
+            }
+
+            if (currentCanvasView === 'deploy') {
+                ctx.strokeStyle = "#9CA3AF"; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+                ctx.beginPath(); ctx.moveTo(centerX - radii[last] - 30, roofY); ctx.lineTo(centerX + radii[last] + 30, roofY); ctx.stroke(); ctx.setLineDash([]);
+                ctx.font = 'bold 13px "Space Mono", monospace'; ctx.textAlign = 'right';
+                drawStrokeText(ctx, "Anatomical Roof", centerX - radii[last] - 40, roofY + 4, '#4B5563');
+
+                ctx.strokeStyle = "#10B981"; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+                ctx.beginPath(); ctx.moveTo(centerX - radii[vwLevel] - 30, yWaist); ctx.lineTo(centerX + radii[vwLevel] + 30, yWaist); ctx.stroke(); ctx.setLineDash([]);
+                
+                ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+                drawStrokeText(ctx, "VIRTUAL WAIST", centerX, yWaist - 8, '#10B981', '#FFFFFF', 6);
+                
+                var balloonWaist = parseFloat(document.getElementById('in-waist').value);
+                var activeRefWaist = (!isNaN(balloonWaist) && balloonWaist > 0) ? balloonWaist : finalWaistDiam;
+                var oversizeRatio = ((straightOD / activeRefWaist) - 1) * 100;
+                var overColor = oversizeRatio < 0 ? "#C62828" : "#D32AA2";
+                var oversizePrefix = (!isNaN(balloonWaist) && balloonWaist > 0) ? "Balloon Waist" : "Virtual Waist";
+                
+                ctx.font = 'bold 24px "Space Mono", monospace'; ctx.textAlign = 'center';
+                drawStrokeText(ctx, oversizePrefix + " Oversize: " + (oversizeRatio > 0 ? '+' : '') + oversizeRatio.toFixed(1) + "%", centerX, yLevels[0] + 80, overColor);
+            }
+
+            if (!isNaN(lStart) && !isNaN(lEnd)) {
+                var rStartY = baseY - (lStart * scale);
+                var rEndY = baseY - (lEnd * scale);
+                var rulerX = centerX + radii[last] + 80; 
+
+                ctx.strokeStyle = '#6448FC'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]);
+                ctx.beginPath(); ctx.moveTo(rulerX, rStartY); ctx.lineTo(rulerX, rEndY); ctx.stroke(); ctx.setLineDash([]);
+                
+                ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.moveTo(rulerX - 8, rStartY); ctx.lineTo(rulerX + 8, rStartY); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(rulerX - 8, rEndY); ctx.lineTo(rulerX + 8, rEndY); ctx.stroke();
+
+                ctx.font = 'bold 16px "Space Mono", monospace'; ctx.textAlign = 'left';
+                drawStrokeText(ctx, lStart + "mm", rulerX + 15, rStartY + 5, '#6448FC', '#FFFFFF', 5);
+                drawStrokeText(ctx, lEnd + "mm", rulerX + 15, rEndY + 5, '#6448FC', '#FFFFFF', 5);
+
+                var customLenName = document.getElementById('len-name') ? document.getElementById('len-name').value : "Length Ref";
+                ctx.save(); ctx.translate(rulerX + 65, (rStartY + rEndY)/2); ctx.rotate(-Math.PI/2);
+                ctx.font = 'bold 18px "Circular", sans-serif'; ctx.textAlign = 'center';
+                drawStrokeText(ctx, customLenName + ": " + ((lEnd > lStart) ? (lEnd - lStart) : lEnd) + "mm", 0, 0, '#6448FC', '#FFFFFF', 6);
+                ctx.restore();
+            }
+        }
+        else if (currentCanvasView === 'valve') {
+            drawHorizontalCaliperLeft(ctx, centerX - radFlare - 10, yOutflowTop, "A/C Outflow: " + (straightOD + 10) + "mm", '#171434');
+            drawHorizontalCaliperLeft(ctx, centerX - radFlare - 10, yInflowBottom, "C Inflow: " + (straightOD + 10) + "mm", '#171434');
+            drawHorizontalCaliperLeft(ctx, centerX - radStraight - 10, (yStraightTop + yStraightBottom) / 2, "B Waist: " + straightOD + "mm", '#171434');
+            drawVerticalCaliper(ctx, centerX + radStraight + 30, yStraightTop, yStraightBottom, "D Stent: " + stentLenVal + "mm", '#171434');
+            drawVerticalCaliper(ctx, centerX + radFlare + 80, yOutflowTop, yInflowBottom, "E Total Length: " + totalLenText, '#D97706');
+        }
+    }
+</script>
+</body>
+</html>
