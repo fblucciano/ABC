@@ -5714,7 +5714,14 @@ if (typeof window !== 'undefined') {
         .valve-mini-row { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 8px; }
 
         /* CHART CONTAINER */
-        #trend-chart-container { min-height: 500px; height: 560px; width: 100%; background: #fff; border: 1px solid var(--v-border); border-radius: 12px; padding: 15px; box-sizing: border-box; margin-bottom: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .trend-chart-wrap { position: relative; margin-bottom: 50px; }
+        #trend-chart-container { min-height: 500px; height: 560px; width: 100%; background: #fff; border: 1px solid var(--v-border); border-radius: 12px; padding: 15px; box-sizing: border-box; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .trend-chart-legend { position: absolute; top: 18px; right: 28px; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: flex-end; max-width: 58%; pointer-events: none; }
+        .trend-chart-legend-item { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #575567; cursor: pointer; user-select: none; border: none; background: transparent; padding: 3px 6px; border-radius: 4px; transition: opacity 0.15s ease, background 0.15s ease; }
+        .trend-chart-legend-item:hover { background: #f1f5f9; }
+        .trend-chart-legend-item.is-hidden { opacity: 0.4; text-decoration: line-through; }
+        .trend-chart-legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+        .trend-chart-legend-swatch.line { height: 3px; border-radius: 2px; }
 
         .hidden { display: none !important; }
         #error-alert { background: #FEF2F2; color: #991B1B; padding: 15px; font-size: 14px; font-weight: bold; display: none; margin-bottom: 20px; border-radius: 8px; border: 1px solid #F87171;}
@@ -5911,12 +5918,14 @@ if (typeof window !== 'undefined') {
         <!-- YoY TREND CHART -->
         <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top: 40px;">
             <h2 style="margin-bottom:0;">Growth Trend & Target Trajectory <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Fair YTD Comparison)</span></h2>
-            <button id="toggle-forecast-btn" class="year-pill active" onclick="toggleForecastLines()" style="font-size:10px; padding: 4px 10px; margin:0;">HIDE FORECAST</button>
+            <button id="toggle-forecast-btn" class="year-pill" onclick="toggleForecastLines()" style="font-size:10px; padding: 4px 10px; margin:0; background:var(--v-blue); color:#fff;">SHOW FORECAST</button>
         </div>
         <div class="section-dash" style="margin-top:5px;">—</div>
         
-        <div id="trend-chart-gap-banner" style="display:none; background:#fff7ed; border:1px solid #fdba74; border-radius:8px; padding:10px 14px; margin-bottom:10px; font-size:12px; font-weight:700; color:#9a3412;"></div>
-        <div id="trend-chart-container"><div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div></div>
+        <div class="trend-chart-wrap">
+            <div id="trend-chart-legend" class="trend-chart-legend"></div>
+            <div id="trend-chart-container"><div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div></div>
+        </div>
 
         <h2 style="margin-top: 40px;">Key Players Ranking <span style="font-size:12px; font-weight:normal; color:var(--v-text-mutated);">(Click to view Dashboard)</span></h2>
         <div class="section-dash">—</div>
@@ -7296,7 +7305,8 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let activeSOPCountry = null; 
     let activeSOPValve = null; 
     let activeSOPDistributor = null;
-    let showForecastLines = true;
+    let showForecastLines = false;
+    let trendChartSeriesHidden = {};
 
     // Tab 05 - Clinical Excellence & Device Safety
     let activeClinicalValve = null;
@@ -8269,6 +8279,10 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function toggleForecastLines() {
         showForecastLines = !showForecastLines;
+        if (!showForecastLines) {
+            trendChartSeriesHidden.projected = false;
+            trendChartSeriesHidden.required = false;
+        }
         let btn = document.getElementById('toggle-forecast-btn');
         if(btn) {
             btn.innerText = showForecastLines ? 'HIDE FORECAST' : 'SHOW FORECAST';
@@ -8277,6 +8291,27 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             btn.classList.toggle('active', showForecastLines);
         }
         renderTrendChart();
+    }
+
+    function toggleTrendChartSeries(seriesKey) {
+        trendChartSeriesHidden[seriesKey] = !trendChartSeriesHidden[seriesKey];
+        renderTrendChart();
+    }
+
+    function renderTrendChartLegend(legendDefs) {
+        let legendEl = document.getElementById('trend-chart-legend');
+        if (!legendEl) return;
+        if (!legendDefs.length) {
+            legendEl.innerHTML = '';
+            return;
+        }
+        legendEl.innerHTML = legendDefs.map(def => {
+            let hidden = !!trendChartSeriesHidden[def.key];
+            let swatchClass = def.type === 'line' ? 'trend-chart-legend-swatch line' : 'trend-chart-legend-swatch';
+            return `<button type="button" class="trend-chart-legend-item${hidden ? ' is-hidden' : ''}" onclick="toggleTrendChartSeries('${def.key}')" title="Click to ${hidden ? 'show' : 'hide'}">
+                <span class="${swatchClass}" style="background:${def.color};"></span>${def.label}
+            </button>`;
+        }).join('');
     }
 
     // --- S&OP HARE-NIEMEYER MATHEMATICAL DISTRIBUTION ---
@@ -9518,6 +9553,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
         if(chartData.length === 0 || activeYears.length === 0) {
             container.innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">Waiting for data upload...</div>`;
+            renderTrendChartLegend([]);
             return;
         }
 
@@ -9608,19 +9644,6 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let remainingMonths = 12 - monthsPassed; if (remainingMonths < 1) remainingMonths = 1;
         let targetPerMonth = Math.round(remainingUnits / remainingMonths);
 
-        // Surface target gap risk in a dedicated banner (keeps the chart title readable)
-        let gapBanner = document.getElementById('trend-chart-gap-banner');
-        if (gapBanner) {
-            if (showForecastLines && targetPerMonth > runRatePerMonth) {
-                let gapPct = runRatePerMonth > 0 ? Math.round(((targetPerMonth / runRatePerMonth) - 1) * 100) : 100;
-                gapBanner.style.display = 'block';
-                gapBanner.innerHTML = `⚠ <strong>Target Gap:</strong> need <strong>${targetPerMonth}</strong> cases/mo through year-end vs <strong>${runRatePerMonth}</strong>/mo current run-rate (+${gapPct}%). Orange line = required pace; grey line = projected run-rate.`;
-            } else {
-                gapBanner.style.display = 'none';
-                gapBanner.innerHTML = '';
-            }
-        }
-
         container.style.height = showForecastLines ? '580px' : '520px';
 
         let dataTable = [];
@@ -9646,8 +9669,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             return h;
         };
 
-        let seriesConfig = {};
-        let colorsConfig = [];
+        let legendDefs = [];
 
         if (compYear) {
             // YOY Setup (2 Bars side by side, Custom HTML tooltips)
@@ -9680,13 +9702,12 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 }
                 dataTable.push(row);
             }
-            
-            colorsConfig = ['#cbd5e1', '#302B6A'];
-            seriesConfig = { 0: {type: 'bars'}, 1: {type: 'bars'} };
+
+            legendDefs.push({ key: 'comp', label: String(compYear), color: '#cbd5e1', type: 'bars', cols: [1, 2, 3] });
+            legendDefs.push({ key: 'primary', label: String(primaryYear), color: '#302B6A', type: 'bars', cols: [4, 5, 6] });
             if (showForecastLines) {
-                seriesConfig[2] = {type: 'line', lineDashStyle: [4, 4], pointSize: 6, lineWidth: 3};
-                seriesConfig[3] = {type: 'line', lineDashStyle: [6, 4], pointSize: 6, lineWidth: 4};
-                colorsConfig.push('#94A3B8', '#FAA74A');
+                legendDefs.push({ key: 'projected', label: 'Projected Target Run-Rate', color: '#94A3B8', type: 'line', cols: [7, 8], lineDash: [4, 4] });
+                legendDefs.push({ key: 'required', label: 'Required Target', color: '#FAA74A', type: 'line', cols: [9, 10], lineDash: [6, 4] });
             }
 
         } else {
@@ -9708,17 +9729,40 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 }
                 dataTable.push(row);
             }
-            
-            colorsConfig = ['#302B6A'];
-            seriesConfig = { 0: {type: 'bars'} };
+
+            legendDefs.push({ key: 'primary', label: String(primaryYear), color: '#302B6A', type: 'bars', cols: [1, 2, 3] });
             if (showForecastLines) {
-                seriesConfig[1] = {type: 'line', lineDashStyle: [4, 4], pointSize: 6, lineWidth: 3};
-                seriesConfig[2] = {type: 'line', lineDashStyle: [6, 4], pointSize: 6, lineWidth: 4};
-                colorsConfig.push('#94A3B8', '#FAA74A');
+                legendDefs.push({ key: 'projected', label: 'Projected Target Run-Rate', color: '#94A3B8', type: 'line', cols: [4, 5], lineDash: [4, 4] });
+                legendDefs.push({ key: 'required', label: 'Required Target', color: '#FAA74A', type: 'line', cols: [6, 7], lineDash: [6, 4] });
             }
         }
 
+        renderTrendChartLegend(legendDefs);
+
+        let visibleCols = [0];
+        let seriesConfig = {};
+        let colorsConfig = [];
+        let seriesIdx = 0;
+        legendDefs.forEach(def => {
+            if (trendChartSeriesHidden[def.key]) return;
+            def.cols.forEach(col => visibleCols.push(col));
+            if (def.type === 'bars') {
+                seriesConfig[seriesIdx] = { type: 'bars' };
+            } else {
+                seriesConfig[seriesIdx] = {
+                    type: 'line',
+                    lineDashStyle: def.lineDash || [4, 4],
+                    pointSize: 6,
+                    lineWidth: def.key === 'required' ? 4 : 3
+                };
+            }
+            colorsConfig.push(def.color);
+            seriesIdx++;
+        });
+
         let data = google.visualization.arrayToDataTable(dataTable);
+        let view = new google.visualization.DataView(data);
+        view.setColumns(visibleCols.length > 1 ? visibleCols : [0]);
         
         let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
         if(showForecastLines) { allValues.push(targetPerMonth, runRatePerMonth); }
@@ -9730,7 +9774,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             title: chartTitle,
             titleTextStyle: { color: '#171434', fontName: 'Space Mono', fontSize: 14, bold: true },
             chartArea: {width: '88%', height: showForecastLines ? '58%' : '68%', top: chartTop, left: 60, right: 24},
-            legend: { position: 'top', alignment: 'end', maxLines: 2, textStyle: {color: '#575567', fontName: 'Inter', fontSize: 12, bold: true} },
+            legend: { position: 'none' },
             colors: colorsConfig,
             seriesType: 'bars',
             series: seriesConfig,
@@ -9744,7 +9788,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         };
         
         let chart = new google.visualization.ComboChart(container);
-        chart.draw(data, options);
+        chart.draw(view, options);
     }
 
     function updateMapData(mapObj, dataSubset, isMainMap) {
