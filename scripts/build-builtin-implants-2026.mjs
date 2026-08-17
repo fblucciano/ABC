@@ -59,6 +59,12 @@ function cleanPerson(raw) {
     return s.split(';').map(p => p.trim()).filter(Boolean).join(', ');
 }
 
+function cleanProctor(raw) {
+    const s = String(raw ?? '').trim();
+    if (!s || /^(none reported|not reported|na|n\/a|false|no)$/i.test(s)) return 'False';
+    return s.split(';').map(p => p.trim()).filter(Boolean).join(', ');
+}
+
 const baseline = [];
 const seen = new Set();
 
@@ -85,7 +91,7 @@ for (const row of rows) {
         serial: serial || 'N/A',
         implanter: cleanPerson(row.Implanter),
         specialist: cleanPerson(row.Specialist),
-        proctor: cleanPerson(row.Proctor),
+        proctor: cleanProctor(row.Proctor),
         _sourceCaseId: caseId
     });
 }

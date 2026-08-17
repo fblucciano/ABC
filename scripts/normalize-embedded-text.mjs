@@ -42,6 +42,8 @@ const HOSPITAL_ALIASES = {
     'sanatorio san geronimo': 'Sanatorio San Gerónimo',
     'hospital gutierrez': 'Hospital de Niños Dr. Ricardo Gutiérrez',
     'hospital de ninos ricardo gutierrez': 'Hospital de Niños Dr. Ricardo Gutiérrez',
+    'hospital de ninos dr gutierrez': 'Hospital de Niños Dr. Ricardo Gutiérrez',
+    'hospital de niños dr. gutierrez': 'Hospital de Niños Dr. Ricardo Gutiérrez',
     'clinica suizo argentina': 'Clinica Suizo Argentina', 'clinica swizo': 'Clinica Suizo Argentina',
     'centro medico nacional de occidente': 'Centro Médico Nacional de Occidente',
     'fundacion favaloro': 'Fundación Favaloro',

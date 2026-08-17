@@ -796,7 +796,7 @@ const BUILTIN_PROBLEM_CASES = [
   {
     "id": "PROC-363",
     "date": "10/08/2026",
-    "hospital": "Hospital De Niños Dr. Gutierrez",
+    "hospital": "Hospital de Niños Dr. Ricardo Gutiérrez",
     "country": "Argentina",
     "dist": "Medical World AS",
     "valve": "Vitae AB23",

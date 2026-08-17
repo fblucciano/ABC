@@ -214,7 +214,9 @@ function formatImplanter(raw) {
 }
 
 function formatProctor(raw) {
-    if (!raw || /^false$/i.test(String(raw).trim()) || /^n\/?a$/i.test(String(raw).trim())) return 'False';
+    const s = String(raw ?? '').trim();
+    if (!s || /^(false|no|none reported|not reported)$/i.test(s) || /^n\/?a$/i.test(s)) return 'False';
+    if (/^(true|yes|sim|1)$/i.test(s)) return null; // boolean flag — do not overwrite named proctor
     const n = stdName(raw);
     return n || 'False';
 }
@@ -287,24 +289,21 @@ for (const row of loadCsv(implantCsv)) {
     const dateParts = pick(row, ['date']).split('/');
     let y = parseInt(dateParts[2] || '2026', 10);
     if (y < 100) y = y >= 50 ? 1900 + y : 2000 + y;
+    const proctorVal = formatProctor(pick(row, ['proctor name', 'proctor']));
     upsertCanonical(canonical, serial, {
         hospital: stdHosp(pick(row, ['hospital', 'centro'])),
         implanter: formatImplanter(pick(row, ['implanter', 'first operator'])),
-        proctor: formatProctor(pick(row, ['proctor', '1 case proctoring'])),
+        ...(proctorVal ? { proctor: proctorVal } : {}),
         specialist: expandSpecialists(pick(row, ['clinical specialist', 'specialist'])),
         year: y
     });
 }
 
-// Panama: Venus clinical specialists only (implanters are local — see Cases_Latam CSV)
-const PANAMA_SPECIALISTS = {
-    '26A00000242120': 'Fabio Silva',
-    '23A00000241065': 'Job Huiskamp',
-    '26A00000240303': 'Frederico Blanco'
-};
-for (const [serial, specialist] of Object.entries(PANAMA_SPECIALISTS)) {
+// Panama 2025: Fabio Silva + Job Huiskamp on all three cases (Venus clinical team)
+const PANAMA_SPECIALISTS = 'Fabio Silva, Job Huiskamp';
+for (const serial of ['26A00000242120', '23A00000241065', '26A00000240303']) {
     const cur = canonical.get(serial);
-    if (cur) cur.specialist = specialist;
+    if (cur) cur.specialist = PANAMA_SPECIALISTS;
 }
 
 // Collect alias candidates

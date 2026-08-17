@@ -10,21 +10,23 @@ import { fileURLToPath } from 'url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+const PANAMA_SPECIALISTS = 'Fabio Silva, Job Huiskamp';
+
 const PANAMA_BY_SERIAL = {
     '26A00000242120': {
         implanter: 'Humberto Juárez',
         proctor: 'False',
-        specialist: 'Fabio Silva'
+        specialist: PANAMA_SPECIALISTS
     },
     '23A00000241065': {
         implanter: 'Pedro Echeverria',
         proctor: 'False',
-        specialist: 'Job Huiskamp'
+        specialist: PANAMA_SPECIALISTS
     },
     '26A00000240303': {
         implanter: 'Pedro Echeverria',
         proctor: 'False',
-        specialist: 'Frederico Blanco'
+        specialist: PANAMA_SPECIALISTS
     }
 };
 
