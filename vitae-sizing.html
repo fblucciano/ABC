@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no">
+    <title>Venus Vitae Sizing App</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Bibliotecas de PDF e Visão Computacional -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <style>
+        :root {
+            --bg-white: #F8F9FA;
+            --panel-bg: #FFFFFF;
+            --panel-border: #E5E7EB;
+            --venus-deep-blue: #171434;
+            --venus-blue: #302B6A;
+            --venus-yellow: #FAA74A; 
+            --input-bg: #F3F4F6;
+            --input-border: #D1D5DB;
+            --text-main: #1F2937;
+            --text-grey: #575567;
+            --white: #FFFFFF;
+        }
+
+        body { font-family: 'Circular', 'Yu Gothic UI', -apple-system, sans-serif; background-color: var(--bg-white); margin: 0; padding: 35px 20px; display: flex; justify-content: center; color: var(--text-main); min-height: 100vh; box-sizing: border-box; align-items: center; }
+
+        #login-screen { width: 100%; max-width: 400px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 20px; padding: 30px; text-align: center; box-shadow: 0 10px 25px rgba(23, 20, 52, 0.08); box-sizing: border-box; }
+        .login-logo { height: 45px; margin-bottom: 20px; }
+        .login-title { font-size: 20px; font-weight: 800; color: var(--venus-deep-blue); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .login-subtitle { font-size: 12px; color: var(--text-grey); margin: 0 0 25px 0; line-height: 1.4; }
+        .login-input { width: 100%; padding: 14px; border: 1px solid var(--input-border); border-radius: 12px; font-size: 15px; text-align: center; box-sizing: border-box; outline: none; font-family: 'Space Mono', monospace; background: var(--input-bg); color: var(--venus-deep-blue); margin-bottom: 15px; transition: border-color 0.2s; }
+        .login-input:focus { border-color: var(--venus-blue); background: #FFFFFF; }
+        .login-btn { width: 100%; background-color: var(--venus-deep-blue); color: #FFFFFF; border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: background 0.2s; }
+        .login-btn:hover { background-color: var(--venus-blue); }
+        .error-msg { color: #C62828; font-size: 11px; margin-top: 10px; display: none; font-weight: 600; }
+        .login-back { display: inline-block; margin-top: 18px; font-size: 11px; color: var(--text-grey); text-decoration: none; }
+        .login-back:hover { color: var(--venus-blue); }
+
+        #app-content { display: none; width: 100%; max-width: 960px; flex-direction: column; gap: 15px; box-sizing: border-box; margin: 0 auto; }
+        .app-container.pdf-print-mode { max-width: 960px !important; width: 960px !important; padding: 10px !important; margin: 0 auto !important; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 0 5px; }
+        .logo { height: 26px; }
+
+        .btn-action { background-color: var(--venus-deep-blue); color: var(--white); border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-action.reset-btn { background-color: var(--venus-yellow); color: var(--venus-deep-blue); }
+        .btn-action.export-btn { background-color: #2E7D32; color: var(--white); }
+        .btn-action.nav-btn { background-color: #575567; color: var(--white); }
+
+        .panel { background-color: var(--panel-bg); border-radius: 12px; padding: 18px; border: 1px solid var(--panel-border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); box-sizing: border-box; position: relative; }
+        .panel-title { color: var(--venus-blue); font-size: 15px; font-weight: bold; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .grid-6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { color: var(--text-grey); font-size: 11px; font-weight: 600; text-align: center; min-height: 28px; display: flex; align-items: center; justify-content: center; }
+        .input-group input, .input-group select { background-color: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; padding: 12px 8px; text-align: center; color: var(--venus-deep-blue); font-family: 'Space Mono', monospace; font-weight: bold; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; transition: all 0.2s; }
+        .input-group input:focus, .input-group select:focus { border-color: var(--venus-blue); background-color: var(--white); }
+        
+        /* Highlight state via JS para os inputs */
+        .input-group input.highlight-active { background-color: rgba(250, 167, 74, 0.15); border-color: var(--venus-yellow); }
+        .input-group input.highlight-locked { background-color: rgba(250, 167, 74, 0.3); border-color: var(--venus-yellow); box-shadow: 0 0 0 2px rgba(250, 167, 74, 0.5); }
+
+        .upload-3mensio-btn { background-color: #E2E8F0; color: var(--venus-deep-blue); border: 1px dashed var(--venus-blue); padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 5px; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .upload-3mensio-btn:hover { background-color: #CBD5E1; }
+        .upload-warning { font-size: 9px; color: var(--text-grey); text-align: center; margin-bottom: 15px; font-style: italic; }
+        .app-container.pdf-print-mode .no-print { display: none !important; }
+
+        .valve-card { background-color: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; padding: 10px 4px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; transition: all 0.3s ease; opacity: 0.6; box-sizing: border-box; cursor: pointer; height: 100%; }
+        .valve-card.active { background-color: var(--venus-blue); border-color: var(--venus-yellow); box-shadow: 0 4px 12px rgba(48, 43, 106, 0.2); opacity: 1; transform: translateY(-2px); }
+        .valve-img-container { width: 100%; height: 75px; margin: 0 0 8px 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .valve-img-container img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+        .valve-title { color: var(--text-main); font-weight: bold; font-size: 15px; margin-bottom: 4px; }
+        .valve-card.active .valve-title { color: var(--white); }
+        .valve-label { color: var(--text-grey); font-size: 8.5px; text-transform: uppercase; margin-top: 4px; line-height: 1;}
+        .valve-card.active .valve-label { color: #E5E7EB; }
+        .valve-data { font-family: 'Space Mono', monospace; color: var(--text-main); font-size: 10px; font-weight: bold; margin-bottom: 2px;}
+        .valve-card.active .valve-data { color: var(--white); }
+        .valve-card.active .vitae-val { color: var(--venus-yellow); font-size: 12px;}
+
+        .preview-container { background: #FFFFFF; border: 1px solid var(--input-border); border-radius: 10px; padding: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; overflow: hidden; position: relative;}
+        canvas { background: #FFFFFF; width: 100%; max-width: 960px; height: auto; transition: opacity 0.3s; }
+
+        .view-tabs { display: flex; gap: 8px; background: var(--input-bg); padding: 5px; border-radius: 10px; margin-bottom: 12px; width: 100%; box-sizing: border-box; }
+        .tab-btn { flex: 1; background: transparent; border: none; padding: 14px 0; font-size: 13px; font-weight: bold; color: var(--text-grey); border-radius: 8px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;}
+        .tab-btn.active { background: var(--venus-deep-blue); color: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+        .result-card { background-color: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; padding: 8px 4px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; min-height: 75px; transition: all 0.2s; }
+        .result-card[onclick]:hover, .col[onclick]:hover { cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        
+        .result-card.highlight-active, .col.highlight-active { background-color: rgba(250, 167, 74, 0.15); border-color: var(--venus-yellow); }
+        .result-card.highlight-locked, .col.highlight-locked { background-color: rgba(250, 167, 74, 0.3); border-color: var(--venus-yellow); box-shadow: 0 0 0 2px rgba(250, 167, 74, 0.5); }
+        
+        .result-title { color: var(--text-grey); font-size: 7.5px; font-weight: bold; margin-bottom: 4px; letter-spacing: 0.3px; min-height: 24px; display: flex; align-items: center; justify-content: center; line-height: 1.1; text-align: center; }
+        .result-values { display: flex; justify-content: space-around; align-items: center; font-family: 'Space Mono', monospace; font-size: 14px; height: 100%; color: var(--venus-deep-blue); flex-direction: column;}
+        .result-values .col { display: flex; flex-direction: column; gap: 2px; font-size: 7.5px; color: var(--text-grey); align-items: center; padding: 4px; border-radius: 6px; transition: all 0.2s; }
+        .result-values .col span { font-size: 14px; color: var(--venus-deep-blue); font-weight: bold; }
+
+        .volume-selector { background-color: var(--white); border: 2px solid var(--venus-yellow); width: 100%; padding: 8px 2px; border-radius: 8px; color: var(--venus-deep-blue); font-weight: bold; font-family: 'Space Mono', monospace; font-size: 12px; text-align: center; text-align-last: center; outline: none; cursor: pointer; box-sizing: border-box; }
+
+        .creator-section { background-color: var(--venus-blue); border: 2px solid var(--venus-yellow); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(48, 43, 106, 0.2); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; margin-top: 5px; box-sizing: border-box; }
+        .creator-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255, 255, 255, 0.6); font-weight: bold; margin-bottom: 4px; }
+        .creator-avatar { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--venus-yellow); object-fit: cover; object-position: center 15%; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+        .creator-avatar:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(230, 138, 46, 0.3); }
+        .creator-info { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: rgba(255, 255, 255, 0.9); align-items: center; }
+        .creator-info a { color: rgba(255, 255, 255, 0.9) !important; text-decoration: none; }
+        .creator-name { font-size: 15px; font-weight: bold; color: var(--venus-yellow); display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
+        .flag-icon { width: 16px; border-radius: 2px; }
+
+        /* BRANDED MODALS */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(23, 20, 52, 0.85); justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .modal-branded { background-color: var(--white); padding: 30px; border-radius: 8px; max-width: 420px; width: 100%; text-align: left; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border-left: 4px solid var(--venus-deep-blue); box-sizing: border-box; }
+        .modal-branded-title { color: var(--venus-deep-blue); font-size: 18px; margin: 0 0 5px 0; font-weight: bold; }
+        .venus-dash { width: 30px; height: 3px; background-color: var(--venus-deep-blue); margin: 10px 0 20px 0; }
+        .venus-dash.yellow { background-color: var(--venus-yellow); }
+        .loading-bar-container { width: 100%; background-color: var(--input-bg); border-radius: 2px; height: 6px; overflow: hidden; margin: 5px 0; }
+        .loading-bar-fill { width: 0%; height: 100%; background-color: var(--venus-deep-blue); transition: width 0.3s ease; }
+        .modal-text-body { font-size: 13px; color: var(--text-main); line-height: 1.5; margin-bottom: 20px; }
+        .modal-highlight-box { background-color: rgba(250, 167, 74, 0.15); border-left: 3px solid var(--venus-yellow); padding: 12px; margin-top: 20px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--venus-deep-blue); }
+        .btn-modal-close { background-color: var(--venus-deep-blue); color: var(--white); border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; width: 100%; transition: background 0.2s; }
+        .btn-modal-close:hover { background-color: var(--venus-blue); }
+        .modal-content-img { background-color: var(--white); padding: 20px; border-radius: 12px; max-width: 600px; width: 100%; text-align: center; position: relative; box-shadow: 0 10px 35px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center;}
+        .modal-content-img img { width: 100%; max-height: 75vh; object-fit: contain; border-radius: 8px; margin: 10px 0 15px 0; }
+
+        @media (max-width: 800px) {
+            .grid-4, .grid-6, .grid-3 { grid-template-columns: 1fr 1fr; }
+            .view-tabs { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/Venus_logo_OG_adj.2026_logo_sec.png" alt="VenusMedtech" class="login-logo">
+    <h2 class="login-title">Venus Vitae Sizing</h2>
+    <p class="login-subtitle">Enter corporate access password to continue</p>
+    
+    <form onsubmit="checkPassword(event)">
+        <input type="password" id="password-input" class="login-input" placeholder="••••••••" required autocomplete="off">
+        <button type="submit" class="login-btn">Access Calculator</button>
+        <div id="error-msg" class="error-msg">Incorrect password. Please try again.</div>
+    </form>
+    <a class="login-back" href="index.html">← LATAM Intelligence OS</a>
+</div>
+
+<div id="app-content" class="app-container">
+    <div id="report-container" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+        <div class="top-bar">
+            <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/1a75aeb06adc8e2e8fbcba2fe4acebfbd0113d01/Venus_logo_OG_adj.2026_logo_sec.png" alt="VenusMedtech" class="logo">
+            <div id="action-buttons" style="display:flex; gap:8px;">
+                <a class="btn-action nav-btn" href="index.html">LATAM OS</a>
+                <button class="btn-action export-btn" onclick="exportToPDF()">Export PDF</button>
+                <button class="btn-action reset-btn" onclick="resetFields()">Reset</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-title">PATIENT & MEASUREMENTS</h2>
+            
+            <button class="upload-3mensio-btn" onclick="document.getElementById('upload-pdf').click()">
+                📄 Upload 3mensio Report (PDF)
+            </button>
+            <input type="file" id="upload-pdf" accept=".pdf" style="display:none;" onchange="handlePDFUpload(event)">
+            <button class="upload-3mensio-btn no-print" type="button" onclick="loadDemoCase()" style="border-style:solid; margin-bottom: 8px;">
+                Load demo measurements (for testing)
+            </button>
+            <div class="upload-warning">
+                * Features Advanced OCR Vision. It will scan text and images. Please verify all fields.
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 12px;">
+                <div class="input-group">
+                    <label>Patient Name (Optional)</label>
+                    <input type="text" id="in-name" placeholder="Patient Name">
+                </div>
+                <div class="input-group">
+                    <label>Preferred THV</label>
+                    <select id="in-pref" class="trigger-calc" style="text-align-last:center;">
+                        <option value="Automatic">Auto</option>
+                        <option value="AB20">AB20</option>
+                        <option value="AB23">AB23</option>
+                        <option value="AB26">AB26</option>
+                        <option value="AB29">AB29</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid-3" style="margin-bottom: 12px;">
+                <div class="input-group">
+                    <label>Annulus Area (mm²)</label>
+                    <input type="number" id="in-area" placeholder="Area" class="trigger-calc" onmouseenter="setHighlight('annulus')" onmouseleave="clearHighlight()" onclick="toggleHighlight('annulus')">
+                </div>
+                <div class="input-group">
+                    <label>Annulus Perimeter</label>
+                    <input type="number" id="in-perim" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('annulus')" onmouseleave="clearHighlight()" onclick="toggleHighlight('annulus')">
+                </div>
+                <div class="input-group">
+                    <label>Calcification</label>
+                    <input type="number" id="in-calc" placeholder="mm³" class="trigger-calc">
+                </div>
+            </div>
+            
+            <div class="grid-4" style="margin-bottom: 12px;">
+                <div class="input-group">
+                    <label>SOV Diameter Ø</label>
+                    <input type="number" id="in-sov-diam" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('sov')" onmouseleave="clearHighlight()" onclick="toggleHighlight('sov')">
+                </div>
+                <div class="input-group">
+                    <label>STJ L. Height</label>
+                    <input type="number" id="in-stjl-height" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('stjl')" onmouseleave="clearHighlight()" onclick="toggleHighlight('stjl')">
+                </div>
+                <div class="input-group">
+                    <label>STJ R. Height</label>
+                    <input type="number" id="in-stjr-height" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('stjr')" onmouseleave="clearHighlight()" onclick="toggleHighlight('stjr')">
+                </div>
+                <div class="input-group">
+                    <label>STJ Diameter Ø</label>
+                    <input type="number" id="in-stj-diam" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('stj')" onmouseleave="clearHighlight()" onclick="toggleHighlight('stj')">
+                </div>
+            </div>
+
+            <div class="grid-4">
+                <div class="input-group">
+                    <label>Asc. Aorta Ø</label>
+                    <input type="number" id="in-asc-aorta" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('asc')" onmouseleave="clearHighlight()" onclick="toggleHighlight('asc')">
+                </div>
+                <div class="input-group">
+                    <label>Asc. Aorta Height</label>
+                    <input type="number" id="in-asc-height" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('asc')" onmouseleave="clearHighlight()" onclick="toggleHighlight('asc')">
+                </div>
+                <div class="input-group">
+                    <label>LCA Height</label>
+                    <input type="number" id="in-lca" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('lca')" onmouseleave="clearHighlight()" onclick="toggleHighlight('lca')">
+                </div>
+                <div class="input-group">
+                    <label>RCA Height</label>
+                    <input type="number" id="in-rca" placeholder="mm" class="trigger-calc" onmouseenter="setHighlight('rca')" onmouseleave="clearHighlight()" onclick="toggleHighlight('rca')">
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-title">VENUS VITAE SIZE</h2>
+            <div class="grid-4">
+                <div class="valve-card" id="card-AB20" onclick="openValveDetails('AB20')">
+                    <div class="valve-img-container"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/591ee121e1d7df96fe779e66cfbd03e88685f7ae/VItae-F.png" alt="Vitae 20"></div>
+                    <div class="valve-title">AB20</div>
+                    <div class="valve-label">Area Range</div>
+                    <div class="valve-data">260 - 333</div>
+                    <div class="valve-label">Vitae Area</div>
+                    <div class="valve-data vitae-val" id="vitae-AB20">323.65</div>
+                </div>
+                <div class="valve-card" id="card-AB23" onclick="openValveDetails('AB23')">
+                    <div class="valve-img-container"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/591ee121e1d7df96fe779e66cfbd03e88685f7ae/VItae-F.png" alt="Vitae 23"></div>
+                    <div class="valve-title">AB23</div>
+                    <div class="valve-label">Area Range</div>
+                    <div class="valve-data">330 - 433</div>
+                    <div class="valve-label">Vitae Area</div>
+                    <div class="valve-data vitae-val" id="vitae-AB23">419.10</div>
+                </div>
+                <div class="valve-card" id="card-AB26" onclick="openValveDetails('AB26')">
+                    <div class="valve-img-container"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/591ee121e1d7df96fe779e66cfbd03e88685f7ae/VItae-F.png" alt="Vitae 26"></div>
+                    <div class="valve-title">AB26</div>
+                    <div class="valve-label">Area Range</div>
+                    <div class="valve-data">430 - 551</div>
+                    <div class="valve-label">Vitae Area</div>
+                    <div class="valve-data vitae-val" id="vitae-AB26">526.85</div>
+                </div>
+                <div class="valve-card" id="card-AB29" onclick="openValveDetails('AB29')">
+                    <div class="valve-img-container"><img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/591ee121e1d7df96fe779e66cfbd03e88685f7ae/VItae-F.png" alt="Vitae 29"></div>
+                    <div class="valve-title">AB29</div>
+                    <div class="valve-label">Area Range</div>
+                    <div class="valve-data">543 - 669</div>
+                    <div class="valve-label">Vitae Area</div>
+                    <div class="valve-data vitae-val" id="vitae-AB29">655.97</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-title" style="text-align: left; color: #64748B; font-size: 14px;">AORTIC ROOT & VALVE DEPLOYMENT PREVIEW</h2>
+            
+            <div class="view-tabs">
+                <button class="tab-btn active" id="tab-anatomy" onclick="setCanvasView('anatomy')">1. Anatomy</button>
+                <button class="tab-btn" id="tab-valve" onclick="setCanvasView('valve')">2. Valve Specs</button>
+                <button class="tab-btn" id="tab-clinical" onclick="setCanvasView('clinical')">3. Clearance Match</button>
+            </div>
+
+            <div class="preview-container">
+                <canvas id="deploymentCanvas" width="960" height="760"></canvas>
+                <div id="preview-caption" style="font-size: 13px; color: var(--text-grey); font-family: 'Space Mono', monospace; margin-top: 15px; font-weight: bold;">
+                    Select a tab above to analyze dynamic balloon-expansion and clearance ratios.
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-title">KEY RESULTS & DYNAMIC ADJUSTMENT</h2>
+            <div class="grid-6">
+                <div class="result-card">
+                    <div class="result-title">CORONARY<br>CLEARANCE</div>
+                    <div class="result-values" style="flex-direction: row; width: 100%; justify-content: space-evenly;">
+                        <div class="col" id="card-res-lca" onmouseenter="setHighlight('lca')" onmouseleave="clearHighlight()" onclick="toggleHighlight('lca')">LCA<span id="res-lca">--</span></div>
+                        <div class="col" id="card-res-rca" onmouseenter="setHighlight('rca')" onmouseleave="clearHighlight()" onclick="toggleHighlight('rca')">RCA<span id="res-rca">--</span></div>
+                    </div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">STJ<br>CLEARANCE</div>
+                    <div class="result-values" style="flex-direction: row; width: 100%; justify-content: space-evenly;">
+                        <div class="col" id="card-res-stjl" onmouseenter="setHighlight('stjl')" onmouseleave="clearHighlight()" onclick="toggleHighlight('stjl')">LEFT<span id="res-stjl">--</span></div>
+                        <div class="col" id="card-res-stjr" onmouseenter="setHighlight('stjr')" onmouseleave="clearHighlight()" onclick="toggleHighlight('stjr')">RIGHT<span id="res-stjr">--</span></div>
+                    </div>
+                </div>
+                <div class="result-card" id="card-res-stj-comp" onmouseenter="setHighlight('stj')" onmouseleave="clearHighlight()" onclick="toggleHighlight('stj')">
+                    <div class="result-title">STJ DIAMETER<br>VS VALVE</div>
+                    <div class="result-values" style="font-family:'Space Mono', monospace; flex-direction: column; justify-content: center;" id="res-stj-comp">--</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">CALCIFICATION<br>SEVERITY</div>
+                    <div class="result-values" style="font-size: 14px; font-weight:bold; font-family:'Circular', sans-serif;" id="res-calc">--</div>
+                </div>
+                <div class="result-card" id="card-res-oversize" onmouseenter="setHighlight('annulus')" onmouseleave="clearHighlight()" onclick="toggleHighlight('annulus')">
+                    <div class="result-title" id="res-oversize-label">OVERSIZING</div>
+                    <div class="result-values" style="font-size: 14px; font-weight:bold;" id="res-oversize-val">--</div>
+                </div>
+                <div class="result-card" style="background-color: var(--venus-blue); border: 2px solid var(--venus-yellow);">
+                    <div class="result-title" style="margin-bottom: 4px; color: var(--white);">BALLOON VOL.</div>
+                    <select class="volume-selector trigger-calc" id="in-vol"><option value="Nominal">Nominal</option></select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="creator-section">
+            <div class="creator-title">Designed & Developed by</div>
+            <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/a2309b9d3a7fe352cb10acc6f1b9a4785fa8bb66/Image.jpeg" alt="Fabio Silva" class="creator-avatar" onclick="openCreatorModal()" title="Click to view full image">
+            <div class="creator-info">
+                <div class="creator-name">
+                    Fabio Silva
+                    <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/4a254e93a90f6225406d11dafa8c519437a99e9b/Bandeira-Nacionalsi%CC%81mbolo-maior-da-Pa%CC%81tria-Brasileira-Foto-Divulgac%CC%A7a%CC%83o.jpg" alt="Brazil" class="flag-icon">
+                    <span style="font-weight: normal; font-size: 13px; color: rgba(255, 255, 255, 0.9);">Brazil</span>
+                </div>
+                <div>✉️ <a href="mailto:fabio.dasilva@venusmedtech.eu">fabio.dasilva@venusmedtech.eu</a></div>
+                <div>📞 <a href="tel:+5511974103530">+55 11 97410-3530</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="loadingModal">
+    <div class="modal-branded" style="border-left-color: var(--venus-yellow);">
+        <h3 class="modal-branded-title">System Task</h3>
+        <div class="venus-dash yellow"></div>
+        <p id="loading-status-text" style="font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-grey); margin: 0 0 15px 0;">Mounting engine...</p>
+        <div class="loading-bar-container">
+            <div class="loading-bar-fill" id="loadingBarFill"></div>
+        </div>
+        <div id="loadingPercent" style="font-family: 'Space Mono', monospace; font-size: 11px; font-weight: bold; color: var(--venus-deep-blue); text-align: right; margin-top: 5px;">0%</div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="alertModal">
+    <div class="modal-branded">
+        <h3 class="modal-branded-title" id="alert-title">System Notice</h3>
+        <div class="venus-dash"></div>
+        <div id="alert-body" class="modal-text-body"></div>
+        <button class="btn-modal-close" onclick="document.getElementById('alertModal').style.display='none'">Acknowledge</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="valveModal" onclick="closeValveDetails(event)">
+    <div class="modal-content-img" style="max-width: 600px;">
+        <h3 style="color: var(--venus-deep-blue); margin-top:0;" id="modalTitle">Venus Vitae Specifications</h3>
+        <img id="modalImg" src="" alt="Valve Specifications">
+        <button class="btn-modal-close" onclick="closeModalDirect()">Close</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="creatorModal" onclick="closeCreatorModal(event)">
+    <div style="display: flex; flex-direction: column; align-items: center; max-width: 95%; max-height: 95%;">
+        <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/a2309b9d3a7fe352cb10acc6f1b9a4785fa8bb66/Image.jpeg" alt="Fabio Silva Full" style="max-width: 100%; max-height: 75vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;">
+        <button class="btn-modal-close" onclick="closeCreatorModalDirect()" style="margin-top: 15px; width: auto; padding: 10px 30px; background-color: var(--venus-yellow); color: var(--venus-deep-blue);">Close Profile</button>
+    </div>
+</div>
+
+<script src="vitae-sizing.js"></script>
+</body>
+</html>
