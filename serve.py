@@ -42,10 +42,10 @@ def main() -> int:
         return 1
     latam = f"http://127.0.0.1:{args.port}/index.html"
     sizing = f"http://127.0.0.1:{args.port}/vitae-sizing.html"
-    print("Venus local test server")
-    print(f"  LATAM Intelligence OS : {latam}")
-    print(f"  Venus Vitae Sizing    : {sizing}")
-    print("Press Ctrl+C to stop.")
+    print("Venus local test server", flush=True)
+    print(f"  LATAM Intelligence OS : {latam}", flush=True)
+    print(f"  Venus Vitae Sizing    : {sizing}", flush=True)
+    print("Press Ctrl+C to stop.", flush=True)
 
     if not args.no_browser:
         webbrowser.open(sizing)
