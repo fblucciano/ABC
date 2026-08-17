@@ -9099,6 +9099,13 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             allCasesGlobal.forEach(renormalizeCasePersonFields);
             processedData.forEach(renormalizeCasePersonFields);
 
+            if (activeValveFilter && activeCountryExpanded) {
+                let countryHasValve = processedData.some(c =>
+                    c.country === activeCountryExpanded && c.valveBase === activeValveFilter
+                );
+                if (!countryHasValve) activeCountryExpanded = null;
+            }
+
             fullyFilteredData = processedData.filter(c => {
                 if (activeCountryExpanded && c.country !== activeCountryExpanded) return false;
                 if (activeDistFilter && c.dist !== activeDistFilter) return false;
@@ -9223,8 +9230,12 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let countryCounts = {};
         let countryProctorCounts = {};
         let filteredTotalForRankings = 0;
+
+        let sourceData = activeValveFilter
+            ? data.filter(c => c.valveBase === activeValveFilter)
+            : data;
         
-        data.forEach(d => {
+        sourceData.forEach(d => {
             let dParts = String(d.date).split('/');
             let isPrimary = false;
             if(dParts.length === 3 && parseInt(dParts[2], 10) === primaryYear) {
@@ -9248,6 +9259,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let cHtml = '';
         let sortedCountries = Object.entries(countryCounts).sort((a,b) => b[1].total - a[1].total);
 
+        if (sortedCountries.length === 0 && activeValveFilter) {
+            cHtml = `<div style="width:100%; text-align:center; padding:30px 20px; color:var(--v-text-mutated); font-size:14px; font-weight:600;">No countries with <strong style="color:var(--v-blue);">${activeValveFilter}</strong> implants in the selected period.</div>`;
+        } else {
         sortedCountries.forEach((cEntry) => {
             let cName = cEntry[0];
             let cTotal = cEntry[1].total;
@@ -9277,6 +9291,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 </div>
             `;
         });
+        }
         
         let cContainer = document.getElementById('country-cards-container');
         if(cContainer) cContainer.innerHTML = cHtml;
