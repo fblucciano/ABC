@@ -9537,6 +9537,17 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         return values.length > 0 ? Math.round(sum / values.length) : Math.round(ytdTotal / Math.max(endMonth, 1));
     }
 
+    function trendChartYAxisPadding(maxVal) {
+        if (maxVal <= 12) return 3;
+        if (maxVal <= 30) return 5;
+        return 10;
+    }
+
+    function trendChartYAxisMax(maxVal) {
+        if (maxVal <= 0) return 10;
+        return maxVal + trendChartYAxisPadding(maxVal);
+    }
+
     function computeTrendChartYMaxFromSeries(seriesArr, collapsedIndices) {
         let collapsed = collapsedIndices || [];
         let maxVal = 0;
@@ -9547,7 +9558,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 if (!isNaN(n) && n > maxVal) maxVal = n;
             });
         });
-        return maxVal > 0 ? maxVal + 10 : 10;
+        return trendChartYAxisMax(maxVal);
     }
 
     function computeTrendChartYMaxFromChart(chartContext) {
@@ -9562,7 +9573,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 if (!isNaN(n) && n > maxVal) maxVal = n;
             });
         });
-        return maxVal > 0 ? maxVal + 10 : 10;
+        return trendChartYAxisMax(maxVal);
     }
 
     function syncTrendChartYAxis(chartContext) {
@@ -9852,9 +9863,11 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 }
             },
             grid: {
+                show: true,
                 borderColor: '#E2E8F0',
                 strokeDashArray: 0,
                 xaxis: { lines: { show: false } },
+                yaxis: { lines: { show: true } },
                 padding: { top: 8, right: 8, bottom: 0, left: 8 }
             },
             tooltip: {
