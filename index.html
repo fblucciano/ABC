@@ -9739,17 +9739,34 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
         renderTrendChartLegend(legendDefs);
 
-        let visibleCols = [0];
+        let visibleLegendDefs = legendDefs.filter(def => !trendChartSeriesHidden[def.key]);
+        if (visibleLegendDefs.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--v-text-mutated); margin-top:200px;">All series hidden — click a legend item to show data.</div>`;
+            return;
+        }
+
+        let filteredTable = [];
+        let headerRow = ['Month'];
+        visibleLegendDefs.forEach(def => {
+            def.cols.forEach(colIdx => headerRow.push(dataTable[0][colIdx]));
+        });
+        filteredTable.push(headerRow);
+
+        for (let r = 1; r < dataTable.length; r++) {
+            let row = [dataTable[r][0]];
+            visibleLegendDefs.forEach(def => {
+                def.cols.forEach(colIdx => row.push(dataTable[r][colIdx]));
+            });
+            filteredTable.push(row);
+        }
+
         let seriesConfig = {};
         let colorsConfig = [];
-        let seriesIdx = 0;
-        legendDefs.forEach(def => {
-            if (trendChartSeriesHidden[def.key]) return;
-            def.cols.forEach(col => visibleCols.push(col));
+        visibleLegendDefs.forEach((def, idx) => {
             if (def.type === 'bars') {
-                seriesConfig[seriesIdx] = { type: 'bars' };
+                seriesConfig[idx] = { type: 'bars' };
             } else {
-                seriesConfig[seriesIdx] = {
+                seriesConfig[idx] = {
                     type: 'line',
                     lineDashStyle: def.lineDash || [4, 4],
                     pointSize: 6,
@@ -9757,12 +9774,9 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 };
             }
             colorsConfig.push(def.color);
-            seriesIdx++;
         });
 
-        let data = google.visualization.arrayToDataTable(dataTable);
-        let view = new google.visualization.DataView(data);
-        view.setColumns(visibleCols.length > 1 ? visibleCols : [0]);
+        let data = google.visualization.arrayToDataTable(filteredTable);
         
         let allValues = [...Object.values(monthCountsPrimary), ...Object.values(monthCountsComp)];
         if(showForecastLines) { allValues.push(targetPerMonth, runRatePerMonth); }
@@ -9788,7 +9802,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         };
         
         let chart = new google.visualization.ComboChart(container);
-        chart.draw(view, options);
+        chart.draw(data, options);
     }
 
     function updateMapData(mapObj, dataSubset, isMainMap) {
