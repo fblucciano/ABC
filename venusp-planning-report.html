@@ -12,6 +12,8 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
@@ -523,6 +525,7 @@
         var app = document.getElementById('app-content');
         document.body.appendChild(report);
         app.style.display = 'none';
+        window.scrollTo(0, 0); // evita deslocamento de captura do html2canvas
 
         var filename = buildPdfFileName(data);
 
@@ -546,7 +549,7 @@
             var chain = Promise.resolve();
             Array.prototype.forEach.call(pageEls, function(pageEl, idx) {
                 chain = chain.then(function() {
-                    return h2c(pageEl, { scale: 2, useCORS: true, backgroundColor: '#FFFFFF', windowWidth: 780 }).then(function(canvas) {
+                    return h2c(pageEl, { scale: 2, useCORS: true, backgroundColor: '#FFFFFF', windowWidth: 780, scrollX: 0, scrollY: 0 }).then(function(canvas) {
                         if (idx > 0) pdf.addPage();
                         var imgData = canvas.toDataURL('image/jpeg', 0.95);
                         var ratio = canvas.height / canvas.width;
