@@ -615,9 +615,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         .legend-dot { width: 7px; height: 7px; border-radius: 50%; position: absolute; }
 
         .preview-container { background: #FFFFFF; border: 1px solid var(--input-border); border-radius: 0 0 10px 10px; padding: 0; text-align: center; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative; border-top: none;}
-        #deploymentCanvas { background: #FFFFFF; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: block; }
-        #valve3d-container { width: 100%; max-width: 880px; height: 600px; margin: 0 auto; display: none; background: #F8F9FA; border-radius: 0 0 10px 10px; }
-        #valve3d-container canvas { display: block; width: 100% !important; height: 600px !important; }
+        #deploymentCanvas { background: #FFFFFF; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: block; touch-action: none; }
         .deployment-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; padding: 12px; background: #F8F9FA; border-radius: 10px; border: 1px solid var(--panel-border); }
         .deployment-controls .input-group label { min-height: 20px; font-size: 10px; }
         .deployment-controls input[type="range"] { width: 100%; accent-color: var(--venus-blue); }
@@ -960,6 +958,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     <label>Valve vertical offset</label>
                     <input type="range" id="in-valve-offset" min="-20" max="20" value="0" step="0.5" oninput="onValveViewerUIChange()">
                     <div class="offset-readout" id="valve-offset-label">0 mm</div>
+                    <div style="font-size:9px;color:var(--text-grey);margin-top:4px;">Or click &amp; drag the valve on canvas (tabs 2–3)</div>
                 </div>
                 <div class="input-group text-area-group">
                     <label>MPA segments (S/D model)</label>
@@ -973,7 +972,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <button class="tab-btn active" id="tab-anatomy" onclick="setCanvasView('anatomy')">1. Anatomy</button>
                 <button class="tab-btn" id="tab-valve" onclick="setCanvasView('valve')">2. Valve Tech</button>
                 <button class="tab-btn" id="tab-deploy" onclick="setCanvasView('deploy')">3. Deployment</button>
-                <button class="tab-btn" id="tab-view3d" onclick="setCanvasView('view3d')">4. 3D Rotate</button>
             </div>
             
             <div class="preview-container">
@@ -986,10 +984,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     </label>
                 </div>
                 <canvas id="deploymentCanvas" width="740" height="600"></canvas>
-                <div id="valve3d-container"></div>
             </div>
             <div id="preview-caption" style="font-size: 14px; color: var(--text-grey); font-family: 'Space Mono', monospace; padding: 12px; font-weight: bold; background: #FFFFFF; border-top: 1px solid var(--panel-border); text-align: center;">
-                Drag in <b>3D Rotate</b> to spin the stent · Use landmark + offset to position the valve
+                Landmark at <b>cylinder centre</b> · Drag valve or use slider · Tabs 2–3 for technical view
             </div>
         </div>
 
@@ -1158,11 +1155,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     </div>
 </div>
 
-<script src="vendor/three.min.js"></script>
 <script src="venusp-valve-viewer.js"></script>
 <script>
     var MASTER_PASSWORD = "venus2026";
-    var currentCanvasView = 'anatomy'; 
+    var currentCanvasView = 'anatomy';
+    window.currentCanvasView = currentCanvasView; 
     var cmrChart;
     var imageBlocks = [];
 
@@ -1277,7 +1274,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // Captura o gráfico e as 3 vistas do canvas (anatomy / valve / deploy)
     function captureReportAssets() {
-        var assets = { chart: '', anatomy: '', valve: '', deploy: '', view3d: '' };
+        var assets = { chart: '', anatomy: '', valve: '', deploy: '' };
         try { if (cmrChart) assets.chart = cmrChart.toBase64Image(); } catch (e) { console.warn(e); }
         var canvas = document.getElementById('deploymentCanvas');
         if (canvas) {
@@ -1289,9 +1286,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     assets[v] = canvas.toDataURL('image/png');
                 } catch (e) { console.warn(e); }
             });
-            try {
-                if (typeof captureValve3DImage === 'function') assets.view3d = captureValve3DImage();
-            } catch (e2) { console.warn(e2); }
             currentCanvasView = savedView;
             drawRVOTCanvas();
         }
@@ -2313,6 +2307,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     function setCanvasView(view) {
         currentCanvasView = view;
+        window.currentCanvasView = view;
         var btns = document.querySelectorAll('.tab-btn');
         for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
         var activeBtn = document.getElementById('tab-' + view);
@@ -2321,9 +2316,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         if (cap) {
             var caps = {
                 anatomy: 'Pulmonary anatomy · Segment A (annulus→ST) shorter in systole; Segment B longer in systole',
-                valve: 'Technical stent mesh · D1/D2/D3 and L1/L2/L3 (distal flare L3 longer per Dr. Phuoc)',
-                deploy: 'Deployment match with landmark + vertical offset and oversize check',
-                view3d: 'Drag to rotate the parametric stent · Use offset slider to move up/down'
+                valve: 'Technical stent mesh · D1/D2/D3 and L1/L2/L3 · Purple line = landmark at cylinder centre',
+                deploy: 'Drag valve up/down or use slider · Landmark at waist centre · Oversize check'
             };
             if (caps[view]) cap.innerHTML = caps[view];
         }
@@ -2384,18 +2378,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     function drawRVOTCanvas() {
         if (typeof readViewerStateFromUI === 'function') readViewerStateFromUI();
 
-        if (currentCanvasView === 'view3d') {
-            if (typeof showValve3DPanel === 'function') showValve3DPanel(true);
-            var phase3dEl = document.querySelector('input[name="cardiac_phase"]:checked');
-            var phase3d = phase3dEl ? phase3dEl.value : 'systole';
-            var sku3d = document.getElementById('res-sku') ? document.getElementById('res-sku').innerText : 'P28-25';
-            if (typeof updateValve3DViewer === 'function' && tablePlanes.length >= 2) {
-                updateValve3DViewer(sku3d, tablePlanes, phase3d, (valveViewerState && valveViewerState.offsetMm) || 0);
-            }
-            return;
-        }
-        if (typeof showValve3DPanel === 'function') showValve3DPanel(false);
-
         var canvas = document.getElementById('deploymentCanvas');
         if (!canvas) return;
         var ctx = canvas.getContext('2d');
@@ -2421,7 +2403,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         
         var availableHeight = canvas.height - 200; 
         var scale = availableHeight / totalSpan; 
-        if (scale > 7.0) scale = 7.0; 
+        if (scale > 7.0) scale = 7.0;
+        if (typeof valveViewerState !== 'undefined') valveViewerState.canvasScale = scale;
         
         var centerX = canvas.width / 2;
         var baseY = 120 + (maxDist * scale); 
@@ -2511,10 +2494,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var landmarkKey = (valveViewerState && valveViewerState.landmark) ? valveViewerState.landmark : 'annulus';
         var offsetMm = (valveViewerState && valveViewerState.offsetMm) ? valveViewerState.offsetMm : 0;
         var landmarkDist = (typeof getLandmarkAnchorDist === 'function') ? getLandmarkAnchorDist(tablePlanes, landmarkKey) : 0;
-        var anchorY = baseY - ((landmarkDist + offsetMm) * scale);
+        var centerY = baseY - ((landmarkDist + offsetMm) * scale);
 
         var layout = (typeof computeValveVerticalLayout === 'function')
-            ? computeValveVerticalLayout(anchorY, scale, straightOD, stentLenVal, totalLenDrawing)
+            ? computeValveVerticalLayout(centerY, scale, straightOD, stentLenVal, totalLenDrawing)
             : null;
 
         var yOutflowTop, yStraightTop, yStraightBottom, yInflowBottom, radStraight, radFlare, pxFlareOut;
@@ -2558,11 +2541,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             }
 
             if (currentCanvasView === 'deploy') {
+                var yLandmark = layout ? (layout.yCenter || (yStraightTop + yStraightBottom) / 2) : centerY;
                 ctx.strokeStyle = '#6448FC'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
-                ctx.beginPath(); ctx.moveTo(centerX - radFlare - 28, anchorY); ctx.lineTo(centerX + radFlare + 28, anchorY); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(centerX - radFlare - 28, yLandmark); ctx.lineTo(centerX + radFlare + 28, yLandmark); ctx.stroke();
                 ctx.setLineDash([]);
                 ctx.font = 'bold 12px "Space Mono", monospace'; ctx.textAlign = 'left';
-                drawStrokeText(ctx, 'Landmark: ' + landmarkKey.replace(/_/g, ' ') + (offsetMm ? (' ' + (offsetMm > 0 ? '+' : '') + offsetMm + 'mm') : ''), centerX + radFlare + 32, anchorY + 4, '#6448FC');
+                drawStrokeText(ctx, 'Landmark: ' + landmarkKey.replace(/_/g, ' ') + (offsetMm ? (' ' + (offsetMm > 0 ? '+' : '') + offsetMm + 'mm') : ''), centerX + radFlare + 32, yLandmark + 4, '#6448FC');
             }
         }
 
@@ -2636,6 +2620,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     window.drawValvePath = drawValvePath;
     window.drawHorizontalCaliperLeft = drawHorizontalCaliperLeft;
     window.drawVerticalCaliper = drawVerticalCaliper;
+    window.drawStrokeText = drawStrokeText;
     if (typeof bindValveViewerUI === 'function') bindValveViewerUI();
 </script>
 </body>

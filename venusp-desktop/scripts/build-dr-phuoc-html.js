@@ -7,13 +7,17 @@ const ROOT = path.join(__dirname, '../..');
 const SRC = path.join(ROOT, 'venusp-planning-report.html');
 const OUT = path.join(ROOT, 'Dr-Phuoc.html');
 
+function safeInlineJs(js) {
+  return js.replace(/<\/script>/gi, '<\\/script>');
+}
+
 function inlineExternalScript(html, srcAttr, filePath) {
   const abs = path.join(ROOT, filePath);
   if (!fs.existsSync(abs)) {
     console.warn('Missing inline asset:', abs);
     return html;
   }
-  const js = fs.readFileSync(abs, 'utf8');
+  const js = safeInlineJs(fs.readFileSync(abs, 'utf8'));
   const tag = '<script src="' + srcAttr + '"></script>';
   if (!html.includes(tag)) {
     console.warn('Tag not found for inline:', tag);
@@ -24,7 +28,6 @@ function inlineExternalScript(html, srcAttr, filePath) {
 
 let html = fs.readFileSync(SRC, 'utf8');
 
-html = inlineExternalScript(html, 'vendor/three.min.js', 'vendor/three.min.js');
 html = inlineExternalScript(html, 'venusp-valve-viewer.js', 'venusp-valve-viewer.js');
 
 html = html
