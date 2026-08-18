@@ -1,28 +1,25 @@
-# VenusP Planning Report — Uso Offline
+# VenusP — duas formas de distribuir
 
-O app é **um único arquivo**: `venusp-planning-report.html`. Todas as bibliotecas,
-fontes e imagens já estão embutidas nele — **não precisa de internet** para nada
-(nem para o Export PDF).
+## 1. App Desktop (recomendado — protege seu código)
 
-## Como usar
+| ZIP | Plataforma |
+|-----|------------|
+| `VenusP-Desktop-Windows.zip` | Windows 64-bit |
+| `VenusP-Desktop-Mac-AppleSilicon.zip` | Mac M1 / M2 / M3 |
+| `VenusP-Desktop-Mac-Intel.zip` | Mac Intel |
 
-### Windows
-1. Copie `venusp-planning-report.html` e `Abrir-VenusP-Windows.vbs` para a mesma pasta (ex.: Área de Trabalho).
-2. Dê **dois cliques** em `Abrir-VenusP-Windows.vbs` — o app abre no navegador padrão.
-   - Alternativa: dê dois cliques direto no `venusp-planning-report.html`.
+- **Não há arquivo `.html` solto** — só executável + `resources.neu` empacotado
+- Lógica JavaScript **ofuscada**; DevTools desativado
+- Detalhes: `LEIA-ME-DESKTOP.md`
 
-### macOS (M1/M2/M3 ou Intel)
-1. Copie `venusp-planning-report.html` e `Abrir-VenusP-Mac.command` para a mesma pasta.
-2. Dê **dois cliques** em `Abrir-VenusP-Mac.command`.
-   - **Na primeira vez**, se o macOS bloquear (Gatekeeper): clique com o **botão direito** no arquivo → **Abrir** → **Abrir**.
-   - Alternativa: arraste o `venusp-planning-report.html` para dentro do Safari/Chrome, ou dê dois cliques nele.
+## 2. Versão HTML (simples, mas código visível)
 
-## Senha de acesso
+| ZIP | Observação |
+|-----|------------|
+| `VenusP-Offline.zip` | Qualquer um pode abrir o `.html` e ver/copiar o código |
 
-A mesma do app: `venus2026`.
+Use apenas para testes internos ou quando a proteção do código não for necessária.
 
-## Export PDF offline
+---
 
-Funciona normalmente sem internet — o relatório de 6 páginas
-("VenusP-Valve Pre-Implantation Planning Proforma") é gerado e baixado
-na pasta de Downloads do navegador.
+Senha do app (ambas versões): `venus2026`
