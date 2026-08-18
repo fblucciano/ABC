@@ -4,9 +4,11 @@
   "private": true,
   "description": "Build tools for protected VenusP desktop app (Neutralino)",
   "scripts": {
-    "build:protected": "node scripts/build-protected.js",
+    "build:protected": "node scripts/build-desktop.js",
     "build:desktop": "npm run build:protected && cd ../VenusP-Desktop && ../venusp-desktop/node_modules/.bin/neu build --release",
-    "run:desktop": "cd ../VenusP-Desktop && ../venusp-desktop/node_modules/.bin/neu run"
+    "package:zips": "node scripts/package-zips.js",
+    "build:all": "npm run build:desktop && npm run package:zips",
+    "run:desktop": "npm run build:protected && cd ../VenusP-Desktop && ../venusp-desktop/node_modules/.bin/neu run"
   },
   "devDependencies": {
     "@neutralinojs/neu": "^11.7.2",
