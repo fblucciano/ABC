@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr. Phuoc — VenusP Mac Setup</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+            background: linear-gradient(160deg, #171434 0%, #302B6A 55%, #171434 100%);
+            color: #1a1a2e;
+            min-height: 100vh;
+            padding: 24px 16px 48px;
+            line-height: 1.5;
+        }
+        .wrap { max-width: 720px; margin: 0 auto; }
+        .hero {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 28px;
+        }
+        .hero .badge {
+            display: inline-block;
+            background: #FAA74A;
+            color: #171434;
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            border-radius: 999px;
+            margin-bottom: 14px;
+        }
+        .hero h1 {
+            font-size: clamp(28px, 6vw, 42px);
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .hero p {
+            font-size: 17px;
+            opacity: 0.9;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        }
+        .card h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #302B6A;
+            margin-bottom: 16px;
+            font-weight: 800;
+        }
+        .big-file {
+            background: #FFF8EC;
+            border: 3px solid #FAA74A;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px 0;
+        }
+        .big-file .icon { font-size: 48px; margin-bottom: 8px; }
+        .big-file .name {
+            font-size: 22px;
+            font-weight: 800;
+            color: #171434;
+            font-family: ui-monospace, "SF Mono", monospace;
+        }
+        .big-file .hint {
+            font-size: 15px;
+            color: #555;
+            margin-top: 8px;
+        }
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        .step:last-child { margin-bottom: 0; }
+        .num {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            background: #302B6A;
+            color: #FAA74A;
+            font-weight: 800;
+            font-size: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .step-body { flex: 1; padding-top: 4px; }
+        .step-body strong {
+            display: block;
+            font-size: 18px;
+            color: #171434;
+            margin-bottom: 6px;
+        }
+        .step-body p, .step-body li {
+            font-size: 16px;
+            color: #444;
+        }
+        .step-body ul {
+            margin: 8px 0 0 20px;
+        }
+        .step-body li { margin-bottom: 6px; }
+        .warn {
+            background: #FFF3E0;
+            border-left: 5px solid #FAA74A;
+            padding: 14px 16px;
+            border-radius: 0 10px 10px 0;
+            margin-top: 16px;
+            font-size: 15px;
+            color: #333;
+        }
+        .warn b { color: #171434; }
+        .password-box {
+            text-align: center;
+            padding: 20px;
+            background: #171434;
+            border-radius: 12px;
+            color: #fff;
+            margin-top: 8px;
+        }
+        .password-box .label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.75;
+            margin-bottom: 6px;
+        }
+        .password-box .pw {
+            font-size: 32px;
+            font-weight: 800;
+            font-family: ui-monospace, monospace;
+            color: #FAA74A;
+            letter-spacing: 3px;
+        }
+        .dont {
+            background: #FDECEA;
+            border: 2px dashed #e57373;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 15px;
+            color: #c62828;
+            margin-top: 12px;
+        }
+        .dont b { display: block; margin-bottom: 4px; font-size: 16px; }
+        .settings-path {
+            background: #EEF2FF;
+            border-radius: 10px;
+            padding: 16px;
+            margin: 12px 0;
+            font-size: 15px;
+        }
+        .settings-path span {
+            display: inline-block;
+            background: #302B6A;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 3px 2px;
+        }
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.65);
+            font-size: 12px;
+            margin-top: 24px;
+        }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="hero">
+            <div class="badge">VenusP Planning Report</div>
+            <h1>Dr. Phuoc — Mac Setup</h1>
+            <p>Simple step-by-step guide. No computer skills needed. Read each step in order.</p>
+        </div>
+
+        <div class="card">
+            <h2>Step 1 — Unzip the download</h2>
+            <div class="step">
+                <div class="num">1</div>
+                <div class="step-body">
+                    <strong>Find the ZIP file you downloaded</strong>
+                    <p>It is called <b>VenusP-Desktop-Mac-AppleSilicon.zip</b></p>
+                    <p>Double-click it. A folder named <b>VenusP-Desktop-Mac-AppleSilicon</b> will appear.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Step 2 — Open THIS file (important)</h2>
+            <div class="big-file">
+                <div class="icon">📂</div>
+                <div class="name">Open-VenusP.command</div>
+                <div class="hint">This is the only file you need to launch the app</div>
+            </div>
+            <div class="dont">
+                <b>✗ Do NOT double-click this file:</b>
+                VenusP-Planning-mac_arm64 — macOS will block it on first use.
+            </div>
+            <div class="step" style="margin-top: 20px;">
+                <div class="num">2</div>
+                <div class="step-body">
+                    <strong>Right-click → Open</strong>
+                    <ul>
+                        <li>Open the folder <b>VenusP-Desktop-Mac-AppleSilicon</b></li>
+                        <li>Find <b>Open-VenusP.command</b></li>
+                        <li><b>Right-click</b> on it (or hold Control and click)</li>
+                        <li>Choose <b>Open</b> from the menu</li>
+                        <li>Click <b>Open</b> again in the popup</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Step 3 — If Mac blocks the app</h2>
+            <p style="font-size:16px; color:#444; margin-bottom:12px;">This is normal the first time. Follow these steps:</p>
+            <div class="step">
+                <div class="num">3</div>
+                <div class="step-body">
+                    <strong>Go to System Settings</strong>
+                    <div class="settings-path">
+                        Click the <span> Apple menu </span> (top-left corner) → <span> System Settings </span>
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="num">4</div>
+                <div class="step-body">
+                    <strong>Privacy &amp; Security</strong>
+                    <p>Click <b>Privacy &amp; Security</b> in the left sidebar.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="num">5</div>
+                <div class="step-body">
+                    <strong>Scroll all the way down</strong>
+                    <p>At the <b>bottom</b> of the page, look for a message like:</p>
+                    <p style="margin-top:8px; font-style:italic; color:#666;">"Open-VenusP.command was blocked because it is from an unidentified developer"</p>
+                    <p style="margin-top:10px;">Click the button <b>Open Anyway</b> next to that message.</p>
+                    <p>Confirm by clicking <b>Open Anyway</b> one more time.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="num">6</div>
+                <div class="step-body">
+                    <strong>Try again</strong>
+                    <p>Go back to the folder and double-click <b>Open-VenusP.command</b> (or right-click → Open).</p>
+                </div>
+            </div>
+            <div class="warn">
+                <b>Still stuck?</b> Ask someone to open <b>Terminal</b> in that folder and run:<br>
+                <code style="display:block; margin-top:8px; font-size:13px; word-break:break-all;">xattr -cr . &amp;&amp; chmod +x Open-VenusP.command &amp;&amp; ./Open-VenusP.command</code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Step 4 — Log in</h2>
+            <p style="font-size:16px; color:#444; margin-bottom:12px;">When the app opens, enter this password:</p>
+            <div class="password-box">
+                <div class="label">App password</div>
+                <div class="pw">venus2026</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Daily use (after first setup)</h2>
+            <div class="step">
+                <div class="num">✓</div>
+                <div class="step-body">
+                    <strong>Every time you use the app</strong>
+                    <ul>
+                        <li>Open the folder <b>VenusP-Desktop-Mac-AppleSilicon</b></li>
+                        <li>Double-click <b>Open-VenusP.command</b></li>
+                        <li>Enter password <b>venus2026</b></li>
+                        <li>Fill in the case → click <b>Export PDF</b></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="warn">
+                <b>Keep these files together:</b> do not delete or move <b>resources.neu</b> — it must stay in the same folder as the app.
+            </div>
+        </div>
+
+        <div class="footer">
+            VenusP Planning Report · Dr. Phuoc proforma · Works offline · Apple Silicon (M1/M2/M3)
+        </div>
+    </div>
+</body>
+</html>
