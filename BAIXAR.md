@@ -4,12 +4,12 @@ Use these **direct links**. If the browser opens a page instead of downloading: 
 
 ---
 
-## Dr. Phuoc — HTML app (Mac, no install) — **LATEST v4**
+## Dr. Phuoc — HTML app (Mac, no install) — **LATEST v5.1**
 
 | File | Direct download |
 |------|-----------------|
-| **ZIP (recommended)** | [Dr-Phuoc-Mac.zip](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v4/Dr-Phuoc-Mac.zip) |
-| **HTML only** | [Dr-Phuoc.html](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v4/Dr-Phuoc.html) |
+| **ZIP (recommended)** | [Dr-Phuoc-Mac.zip](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v5-1/Dr-Phuoc-Mac.zip) |
+| **HTML only** | [Dr-Phuoc.html](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v5-1/Dr-Phuoc.html) |
 
 **Password:** `venus2026`
 
@@ -19,14 +19,11 @@ Use these **direct links**. If the browser opens a page instead of downloading: 
 3. Double-click **`Dr-Phuoc.html`** or **`Open-Dr-Phuoc.command`**
 4. Works offline in Safari or Chrome — nothing to install
 
-**What's new in v4:**
-- Landmark options corrected (Annulus / Supra-annular)
-- Independent LENGTH inputs for Systole and Diastole
-- Patient 3D tab restored (drag to rotate)
-- FINAL VENUSP SYSTEM RECOMMENDATION card centered
-- No "LANDMARK" text on Valve Tech view
+**What's new in v5.1:**
+- Deployment tab: "Landmark: Annulus" text centered on valve (not on the side)
+- FINAL VENUSP SYSTEM RECOMMENDATION card properly centered on page
 
-**Release page (all files):** https://github.com/fblucciano/ABC/releases/tag/dr-phuoc-v4
+**Release page (all files):** https://github.com/fblucciano/ABC/releases/tag/dr-phuoc-v5-1
 
 ---
 

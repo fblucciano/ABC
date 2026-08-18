@@ -617,7 +617,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         .preview-container { background: #FFFFFF; border: 1px solid var(--input-border); border-radius: 0 0 10px 10px; padding: 0; text-align: center; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative; border-top: none;}
         #deploymentCanvas { background: #FFFFFF; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: block; touch-action: none; }
         #patient3dCanvas { background: #08080c; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: none; touch-action: none; cursor: grab; }
-        #panel-rec { max-width: 760px; margin-left: auto; margin-right: auto; width: 100%; }
+        #panel-rec { max-width: 760px; margin-left: auto; margin-right: auto; width: 100%; align-self: center; }
+        #panel-rec .panel-title { text-align: center; }
         .length-row .length-phase { font-size: 10px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 0.4px; }
         .length-row .length-phase.systole { color: #D50000; }
         .length-row .length-phase.diastole { color: #2979FF; }
@@ -977,7 +978,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     <label>Valve vertical offset</label>
                     <input type="range" id="in-valve-offset" min="-20" max="20" value="0" step="0.5" oninput="onValveViewerUIChange()">
                     <div class="offset-readout" id="valve-offset-label">0 mm</div>
-                    <div style="font-size:9px;color:var(--text-grey);margin-top:4px;">Or click &amp; drag the valve on canvas (tabs 2–3)</div>
+                    <div style="font-size:9px;color:var(--text-grey);margin-top:4px;">Or drag on canvas (tabs 2–3 ↕, tab 4 ↔↕ valve)</div>
                 </div>
                 <div class="input-group text-area-group">
                     <label>MPA segments (S/D model)</label>
@@ -1120,6 +1121,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             <textarea id="in-rationale" placeholder="Outstanding conditions or final decision rationale for the PDF sign-off page..."></textarea>
         </div>
     </div>
+    </div>
 
     <!-- FINAL RECOMMENDATION PANEL -->
     <div class="panel" id="panel-rec">
@@ -1137,7 +1139,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             <div class="result-card"><div class="result-title" id="res-oversize-title">FINAL OVERSIZING</div><div class="result-value" id="res-oversize">+2.5 mm</div></div>
             <div class="result-card"><div class="result-title">FINAL LENGTH MATCH</div><div class="result-value" id="res-match" style="color: #2E7D32;">Match OK (35mm MPA)</div></div>
         </div>
-    </div>
     </div>
 
     <!-- CREATOR SECTION ORIGINAL CENTRALIZADA -->
@@ -3343,8 +3344,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 ctx.strokeStyle = '#6448FC'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
                 ctx.beginPath(); ctx.moveTo(centerX - radFlare - 28, yLandmark); ctx.lineTo(centerX + radFlare + 28, yLandmark); ctx.stroke();
                 ctx.setLineDash([]);
-                ctx.font = 'bold 12px "Space Mono", monospace'; ctx.textAlign = 'left';
-                drawStrokeText(ctx, 'Landmark: ' + landmarkKey.replace(/_/g, ' ') + (offsetMm ? (' ' + (offsetMm > 0 ? '+' : '') + offsetMm + 'mm') : ''), centerX + radFlare + 32, yLandmark + 4, '#6448FC');
+                var landmarkLabels = { annulus: 'Annulus', supra_annular: 'Supra-annular', trans_annular: 'Supra-annular', st_junction: 'ST junction', bifurcation: 'Bifurcation' };
+                var landmarkLabel = landmarkLabels[landmarkKey] || landmarkKey.replace(/_/g, ' ');
+                var offsetTxt = offsetMm ? (' ' + (offsetMm > 0 ? '+' : '') + offsetMm + 'mm') : '';
+                ctx.font = 'bold 11px "Space Mono", monospace'; ctx.textAlign = 'center';
+                drawStrokeText(ctx, 'Landmark: ' + landmarkLabel + offsetTxt, centerX, yLandmark + 4, '#6448FC');
             }
         }
 
