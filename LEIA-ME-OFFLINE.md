@@ -1,5 +1,10 @@
 # VenusP — duas formas de distribuir
 
+## Baixar (links diretos)
+
+**Página de downloads:** [BAIXAR.md](BAIXAR.md)  
+**Ou GitHub Releases:** https://github.com/fblucciano/ABC/releases/tag/venusp-desktop-v1
+
 ## 1. App Desktop (recomendado — protege seu código)
 
 | ZIP | Plataforma |
