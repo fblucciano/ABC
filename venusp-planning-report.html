@@ -548,6 +548,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         .input-group textarea { background-color: #ffffff; border: 1px solid var(--panel-border); border-radius: 8px; padding: 12px; color: var(--venus-deep-blue); font-family: 'Inter', sans-serif; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; resize: vertical; min-height: 70px; line-height: 1.4; text-align: left; transition: 0.2s; }
         .input-group.text-area-group label { justify-content: flex-start; text-align: left; align-items: center; min-height: 24px; padding-left: 4px; }
         .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--venus-yellow); background-color: #fffdf5; }
+        .check-row { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 8px 4px; }
+        .check-row label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--venus-deep-blue); text-transform: none; letter-spacing: 0; min-height: auto; justify-content: flex-start; cursor: pointer; }
+        .check-row input[type="radio"], .check-row input[type="checkbox"] { width: auto; accent-color: var(--venus-blue); }
+        .clinical-sub { font-size: 10px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 0.6px; margin: 14px 0 8px 0; padding-bottom: 4px; border-bottom: 1px solid var(--panel-border); }
 
         .upload-zone { border: 2px dashed var(--input-border); border-radius: 8px; background-color: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.2s; box-sizing: border-box; }
         .upload-zone:hover { border-color: var(--venus-blue); }
@@ -651,16 +655,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
            Proforma V1" preenchido com os dados do app.
            ============================================================ */
         #pdf-report { width: 740px; background: #FFFFFF; color: var(--text-main); font-family: 'Circular', 'Yu Gothic UI', -apple-system, sans-serif; box-sizing: border-box; }
-        .pdf-page { width: 740px; min-height: 1072px; box-sizing: border-box; padding: 16px 26px 48px 26px; background: #FFFFFF; page-break-after: always; position: relative; }
+        .pdf-page { width: 740px; min-height: 1072px; box-sizing: border-box; padding: 20px 28px 42px 28px; background: #FFFFFF; page-break-after: always; position: relative; overflow: hidden; }
         .pdf-page.pdf-page-last { page-break-after: auto; }
-        .pdf-head-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .pdf-head-top img { height: 24px; }
-        .pdf-head-page { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-grey); letter-spacing: 1px; font-weight: bold; }
-        .pdf-head-bar { background: var(--venus-deep-blue); color: #FFFFFF; font-weight: bold; font-size: 12px; letter-spacing: 1.5px; padding: 8px 12px; border-radius: 4px; text-transform: uppercase; }
-        .pdf-head-sub { font-size: 8.5px; color: var(--text-grey); border-bottom: 2px solid var(--pdf-accent); padding: 5px 2px 6px 2px; margin-bottom: 14px; }
-        .pdf-foot { position: absolute; bottom: 14px; left: 0; width: 100%; text-align: center; font-size: 9px; color: var(--text-grey); font-family: 'Space Mono', monospace; }
-        .pdf-sec { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; color: var(--venus-deep-blue); letter-spacing: 1px; margin: 2px 0 12px 0; text-transform: uppercase; }
-        .pdf-sec-num { background: var(--pdf-accent); color: var(--venus-deep-blue); min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; font-family: 'Space Mono', monospace; font-size: 14px; }
+        .pdf-page::before { content: ''; position: absolute; top: 52%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; background-image: var(--pdf-wm); background-position: center; background-size: contain; background-repeat: no-repeat; opacity: 0.055; pointer-events: none; z-index: 0; }
+        .pdf-page > * { position: relative; z-index: 1; }
+        .pdf-head-min { margin-bottom: 12px; }
+        .pdf-head-right { text-align: right; font-size: 8.5px; font-weight: 700; letter-spacing: 1.2px; color: var(--venus-blue); text-transform: uppercase; }
+        .pdf-head-rule { height: 2px; background: var(--pdf-accent); margin-top: 6px; }
+        .pdf-head-top { display: none; }
+        .pdf-head-bar { display: none; }
+        .pdf-head-sub { display: none; }
+        .pdf-foot { position: absolute; bottom: 12px; left: 0; width: 100%; text-align: center; font-size: 8px; color: var(--text-grey); letter-spacing: 0.2px; }
+        .pdf-sec { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: var(--venus-deep-blue); letter-spacing: 0.8px; margin: 0 0 10px 0; text-transform: uppercase; border-bottom: 1px solid #E8ECF2; padding-bottom: 6px; }
+        .pdf-sec-num { background: none; color: var(--pdf-accent); min-width: auto; height: auto; font-family: 'Circular', sans-serif; font-size: 16px; font-weight: 900; border-radius: 0; padding: 0; }
         .pdf-sub { font-size: 11px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--panel-border); padding-bottom: 4px; margin: 16px 0 8px 0; }
         .pdf-intro { font-size: 10px; color: var(--text-grey); line-height: 1.5; margin: 0 0 10px 0; }
         .pdf-fields { border: 1px solid var(--panel-border); border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
@@ -752,9 +759,103 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <input type="text" id="in-ref-centre" placeholder="e.g. Heart Institute...">
             </div>
         </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Age</label>
+                <input type="text" id="in-age" placeholder="e.g. 14 years">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Sex</label>
+                <select id="in-sex">
+                    <option value="">— Select —</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other / not specified</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Planning Clinician(s)</label>
+                <input type="text" id="in-clinician" placeholder="e.g. Dr. Smith, Interventional Cardiology">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Multidisciplinary Team / Meeting</label>
+                <input type="text" id="in-md-team" placeholder="e.g. Heart Team 12 Aug 2026">
+            </div>
+        </div>
         <div class="input-group text-area-group">
             <label>Diagnosis & Clinical History</label>
             <textarea id="in-diagnosis" placeholder="Patient history, symptoms, previous interventions..."></textarea>
+        </div>
+        <div class="input-group text-area-group">
+            <label>Prior Intervention(s) / Repair</label>
+            <textarea id="in-prior-intervention" placeholder="e.g. RV-PA conduit, prior surgical valve..."></textarea>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Indication for Current Review</label>
+                <textarea id="in-indication" placeholder="e.g. RV dysfunction, conduit stenosis..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Additional Risk Factors / Comorbidities</label>
+                <textarea id="in-comorbidities" placeholder="e.g. arrhythmia, anticoagulation..."></textarea>
+            </div>
+        </div>
+
+        <div class="clinical-sub">Imaging dataset(s) reviewed</div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Cardiac CT / CMR — Study date</label>
+                <input type="text" id="in-ct-date" placeholder="e.g. 10 Aug 2026">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Cardiac CT / CMR — Series / phase</label>
+                <input type="text" id="in-ct-series" placeholder="e.g. Systole, 0.5 mm">
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Echocardiography — Study date</label>
+                <input type="text" id="in-echo-date" placeholder="e.g. 08 Aug 2026">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Echocardiography — Modality</label>
+                <input type="text" id="in-echo-modality" placeholder="e.g. TTE / TEE">
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>MRI / Angiography / Cath — Study date</label>
+                <input type="text" id="in-mri-date" placeholder="Optional">
+            </div>
+            <div class="input-group text-area-group">
+                <label>MRI / Angiography / Cath — Details</label>
+                <input type="text" id="in-mri-details" placeholder="Optional">
+            </div>
+        </div>
+        <div class="input-group text-area-group">
+            <label>Image Quality / Limitations</label>
+            <textarea id="in-image-quality" placeholder="e.g. motion artefact, limited distal MPA..."></textarea>
+        </div>
+
+        <div class="clinical-sub">PA anatomy classification</div>
+        <div class="check-row" id="pa-anatomy-group">
+            <label><input type="radio" name="pa_anatomy" value="no_issue" checked> No issue</label>
+            <label><input type="radio" name="pa_anatomy" value="lpa_folding"> Folding of LPA on top of RPA</label>
+            <label><input type="radio" name="pa_anatomy" value="bifurcation_folding"> Bifurcation folding</label>
+            <label><input type="radio" name="pa_anatomy" value="pa_stenosis"> PA stenosis</label>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px;">
+            <div class="input-group text-area-group">
+                <label>Coronary Course and Proximity</label>
+                <textarea id="in-coronary" placeholder="e.g. LCA 4 mm from landing zone..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Other Relevant Findings</label>
+                <textarea id="in-other-findings" placeholder="Additional imaging observations..."></textarea>
+            </div>
         </div>
     </div>
 
@@ -924,6 +1025,41 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     <option value="P36-25">P36-25</option><option value="P36-30">P36-30</option>
                 </select>
             </div>
+        </div>
+    </div>
+
+    <!-- PROCEDURAL STRATEGY (feeds PDF pages 5–6) -->
+    <div class="panel" id="panel-procedural">
+        <h2 class="panel-title">RISK & PROCEDURAL STRATEGY</h2>
+        <div class="clinical-sub" style="margin-top:0;">Coronary proximity / compression risk</div>
+        <div class="check-row">
+            <label><input type="radio" name="coronary_risk" value="" checked> Not assessed</label>
+            <label><input type="radio" name="coronary_risk" value="very_high"> Very high risk</label>
+            <label><input type="radio" name="coronary_risk" value="low"> Low risk</label>
+        </div>
+        <div class="grid-2" style="margin-top: 12px;">
+            <div class="input-group text-area-group">
+                <label>Preferred PA Approach / Access</label>
+                <textarea id="in-pa-approach" placeholder="e.g. Femoral vein, 14 Fr sheath..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Imaging & Angiographic Strategy</label>
+                <textarea id="in-imaging-strategy" placeholder="e.g. TEE + biplane angiography..."></textarea>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="input-group text-area-group">
+                <label>Equipment / Contingency Plan</label>
+                <textarea id="in-contingency" placeholder="e.g. alternate sheath sizes, snare availability..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Further Imaging / Testing Required</label>
+                <textarea id="in-further-imaging" placeholder="e.g. coronary angiography before implant..."></textarea>
+            </div>
+        </div>
+        <div class="input-group text-area-group" style="margin-top: 12px;">
+            <label>Rationale / Outstanding Conditions (final sign-off)</label>
+            <textarea id="in-rationale" placeholder="Outstanding conditions or final decision rationale for the PDF sign-off page..."></textarea>
         </div>
     </div>
 
@@ -1125,6 +1261,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         function v(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
         function t(id) { var el = document.getElementById(id); return el ? String(el.innerText || '').trim() : ''; }
         function selText(id) { var el = document.getElementById(id); return (el && el.selectedIndex >= 0) ? el.options[el.selectedIndex].text : ''; }
+        function radioVal(name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? String(el.value || '').trim() : ''; }
+
+        var paLabels = { no_issue: 'No issue', lpa_folding: 'Folding of LPA on top of RPA', bifurcation_folding: 'Bifurcation folding', pa_stenosis: 'PA stenosis' };
+        var paKey = radioVal('pa_anatomy') || 'no_issue';
 
         var lenStart = parseFloat(v('len-start')) || 0;
         var lenEnd = parseFloat(v('len-end')) || 0;
@@ -1149,7 +1289,32 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             caseId: v('in-patient'),
             refCentre: v('in-ref-centre'),
             reviewDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            age: v('in-age'),
+            sex: v('in-sex'),
+            clinician: v('in-clinician'),
+            mdTeam: v('in-md-team'),
             diagnosis: v('in-diagnosis'),
+            priorIntervention: v('in-prior-intervention'),
+            indication: v('in-indication'),
+            comorbidities: v('in-comorbidities'),
+            ctDate: v('in-ct-date'),
+            ctSeries: v('in-ct-series'),
+            echoDate: v('in-echo-date'),
+            echoModality: v('in-echo-modality'),
+            mriDate: v('in-mri-date'),
+            mriDetails: v('in-mri-details'),
+            imageQuality: v('in-image-quality'),
+            paAnatomyKey: paKey,
+            paAnatomyLabel: paLabels[paKey] || paKey,
+            paLabels: paLabels,
+            coronaryNotes: v('in-coronary'),
+            otherFindings: v('in-other-findings'),
+            coronaryRisk: radioVal('coronary_risk'),
+            paApproach: v('in-pa-approach'),
+            imagingStrategy: v('in-imaging-strategy'),
+            contingency: v('in-contingency'),
+            furtherImaging: v('in-further-imaging'),
+            rationale: v('in-rationale'),
             comments: v('in-comments'),
             morphKey: morphKey,
             morphName: morphNames[morphKey] || morphKey,
@@ -1198,16 +1363,34 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
 
     function pdfHeader(pageNum, totalPages) {
-        return '<div class="pdf-head-top">' +
-                   '<img src="' + VENUS_LOGO_URL + '" alt="VenusMedtech">' +
-                   '<div class="pdf-head-page">PAGE ' + pageNum + ' OF ' + totalPages + '</div>' +
-               '</div>' +
-               '<div class="pdf-head-bar">VENUSP-VALVE | PRE-IMPLANTATION PLANNING</div>' +
-               '<div class="pdf-head-sub">Clinical planning document &nbsp;|&nbsp; Verify against current IFU and local requirements &nbsp;|&nbsp; Page ' + pageNum + ' of ' + totalPages + '</div>';
+        return '<div class="pdf-head-min">' +
+                   '<div class="pdf-head-right">VENUSP-VALVE &nbsp;|&nbsp; PRE-IMPLANTATION PLANNING</div>' +
+                   '<div class="pdf-head-rule"></div>' +
+               '</div>';
     }
 
     function pdfFooter(pageNum, totalPages) {
-        return '<div class="pdf-foot">— ' + pageNum + ' of ' + totalPages + ' —</div>';
+        return '<div class="pdf-foot">Clinical planning document &nbsp;|&nbsp; Verify against current IFU and local requirements &nbsp;|&nbsp; Page ' + pageNum + ' of ' + totalPages + '</div>';
+    }
+
+    function pdfPageStart(n, total, isLast) {
+        return '<div class="pdf-page' + (isLast ? ' pdf-page-last' : '') + '" style="--pdf-wm:url(\'' + VENUSP_VALVE_IMG_URL + '\')">';
+    }
+
+    function pdfPaChecks(d) {
+        var keys = ['no_issue', 'lpa_folding', 'bifurcation_folding', 'pa_stenosis'];
+        var html = '';
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var on = (k === d.paAnatomyKey);
+            html += '<span class="pdf-check' + (on ? ' on' : '') + '">' + (on ? '&#9745;' : '&#9744;') + ' ' + pdfEsc(d.paLabels[k]) + '</span>';
+        }
+        return html;
+    }
+
+    function pdfCoronaryRiskChecks(d) {
+        return '<span class="pdf-check' + (d.coronaryRisk === 'very_high' ? ' on' : '') + '">' + (d.coronaryRisk === 'very_high' ? '&#9745;' : '&#9744;') + ' Very high risk</span><br>' +
+               '<span class="pdf-check' + (d.coronaryRisk === 'low' ? ' on' : '') + '">' + (d.coronaryRisk === 'low' ? '&#9745;' : '&#9744;') + ' Low risk</span>';
     }
 
     function pdfSection(num, title) {
@@ -1232,9 +1415,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // ---------------- PAGE 1 — COVER / CASE IDENTIFICATION ----------------
     function reportPageCover(d, n, total) {
-        var html = '<div class="pdf-page">' + pdfHeader(n, total);
+        var html = pdfPageStart(n, total, false) + pdfHeader(n, total);
 
-        html += '<div style="text-align:center; margin: 46px 0 34px 0;">' +
+        html += '<div style="text-align:center; margin: 10px 0 28px 0;"><img src="' + VENUS_LOGO_URL + '" alt="VenusMedtech" style="height:34px; object-fit:contain;"></div>' +
+                '<div style="text-align:center; margin: 0 0 34px 0;">' +
                     '<div style="font-size:11px; font-weight:800; letter-spacing:3px; color:var(--pdf-accent); text-transform:uppercase; margin-bottom:10px;">VENUSP-VALVE &bull; CASE PLANNING PROFORMA</div>' +
                     '<div style="font-size:30px; font-weight:800; color:var(--venus-deep-blue); letter-spacing:2px; text-transform:uppercase;">PRE-IMPLANTATION PLANNING</div>' +
                     '<div style="font-size:11px; color:var(--text-grey); margin-top:10px;">Structured physician review for patient-specific pulmonary valve case planning</div>' +
@@ -1246,8 +1430,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     pdfField('REFERRING CENTRE', pdfLines(d.refCentre), 20) +
                     pdfField('CASE ID', '<span class="mono" style="font-family:\'Space Mono\', monospace;">' + pdfLines(d.caseId, 'Venus-P_') + '</span>', 20) +
                     pdfField('REVIEW DATE', pdfEsc(d.reviewDate), 20) +
-                    pdfField('PLANNING CLINICIAN(S)', '<span class="pdf-empty">&nbsp;</span>', 24) +
-                    pdfField('MULTIDISCIPLINARY TEAM / MEETING', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                    pdfField('PLANNING CLINICIAN(S)', pdfLines(d.clinician), 24) +
+                    pdfField('MULTIDISCIPLINARY TEAM / MEETING', pdfLines(d.mdTeam), 24) +
                 '</div>';
 
         html += '<div class="pdf-sub">Document purpose</div>' +
@@ -1261,23 +1445,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // ---------------- PAGE 2 — 1. CLINICAL & IMAGING REVIEW ----------------
     function reportPageClinical(d, n, total) {
-        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(1, 'CLINICAL & IMAGING REVIEW');
+        var html = pdfPageStart(n, total, false) + pdfHeader(n, total) + pdfSection(1, 'CLINICAL & IMAGING REVIEW');
+
+        var ageSex = [d.age, d.sex].filter(function(x) { return x; }).join(' / ');
 
         html += '<div class="pdf-sub">Clinical context</div>' +
                 '<div class="pdf-fields">' +
-                    pdfField('AGE / SEX', '<span class="pdf-empty">&nbsp;</span>', 20) +
+                    pdfField('AGE / SEX', pdfLines(ageSex), 20) +
                     pdfField('DIAGNOSIS &amp; CLINICAL HISTORY', pdfLines(d.diagnosis), 44) +
-                    pdfField('PRIOR INTERVENTION(S) / REPAIR', '<span class="pdf-empty">&nbsp;</span>', 24) +
-                    pdfField('INDICATION FOR CURRENT REVIEW', '<span class="pdf-empty">&nbsp;</span>', 24) +
-                    pdfField('ADDITIONAL RISK FACTORS / COMORBIDITIES', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                    pdfField('PRIOR INTERVENTION(S) / REPAIR', pdfLines(d.priorIntervention), 24) +
+                    pdfField('INDICATION FOR CURRENT REVIEW', pdfLines(d.indication), 24) +
+                    pdfField('ADDITIONAL RISK FACTORS / COMORBIDITIES', pdfLines(d.comorbidities), 24) +
                 '</div>';
 
         html += '<div class="pdf-sub">Imaging dataset(s) reviewed</div>' +
                 '<div class="pdf-fields">' +
-                    pdfField('CARDIAC CT / CMR', 'Study date: ______________ &nbsp;&nbsp; Series / phase: ______________', 20) +
-                    pdfField('ECHOCARDIOGRAPHY', 'Study date: ______________ &nbsp;&nbsp; Modality: ______________', 20) +
-                    pdfField('MRI / ANGIOGRAPHY / CATHETER DATA', 'Study date: ______________ &nbsp;&nbsp; Details: ______________', 20) +
-                    pdfField('IMAGE QUALITY / LIMITATIONS', '<span class="pdf-empty">&nbsp;</span>', 22) +
+                    pdfField('CARDIAC CT / CMR', 'Study date: ' + pdfEsc(d.ctDate || '____________') + ' &nbsp;&nbsp; Series / phase: ' + pdfEsc(d.ctSeries || '____________'), 20) +
+                    pdfField('ECHOCARDIOGRAPHY', 'Study date: ' + pdfEsc(d.echoDate || '____________') + ' &nbsp;&nbsp; Modality: ' + pdfEsc(d.echoModality || '____________'), 20) +
+                    pdfField('MRI / ANGIOGRAPHY / CATHETER DATA', 'Study date: ' + pdfEsc(d.mriDate || '____________') + ' &nbsp;&nbsp; Details: ' + pdfEsc(d.mriDetails || '____________'), 20) +
+                    pdfField('IMAGE QUALITY / LIMITATIONS', pdfLines(d.imageQuality), 22) +
                 '</div>';
 
         var morphChecks = '';
@@ -1291,20 +1477,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         html += '<div class="pdf-sub">Anatomical classification</div>' +
                 '<div class="pdf-fields">' +
                     pdfField('MORPHOLOGY<br>(APP PREDICTION — SCHIEVANO)', '<div style="line-height:1.8;">' + morphChecks + '</div>') +
-                    pdfField('PA ANATOMY',
-                        '<div style="line-height:1.8;">' +
-                        '<span class="pdf-check">&#9744; No issue</span>' +
-                        '<span class="pdf-check">&#9744; Folding of LPA on top of RPA</span>' +
-                        '<span class="pdf-check">&#9744; Bifurcation folding</span>' +
-                        '<span class="pdf-check">&#9744; PA stenosis</span>' +
-                        '</div>') +
+                    pdfField('PA ANATOMY', '<div style="line-height:1.8;">' + pdfPaChecks(d) + '</div>') +
                 '</div>';
 
         html += '<div class="pdf-sub">Image-review observations</div>' +
                 '<div class="pdf-fields">' +
                     pdfField('MORPHOLOGY / PA ANATOMY NOTES', pdfLines(d.comments), 40) +
-                    pdfField('CORONARY COURSE AND PROXIMITY', '<span class="pdf-empty">&nbsp;</span>', 24) +
-                    pdfField('OTHER RELEVANT FINDINGS', '<span class="pdf-empty">&nbsp;</span>', 24) +
+                    pdfField('CORONARY COURSE AND PROXIMITY', pdfLines(d.coronaryNotes), 24) +
+                    pdfField('OTHER RELEVANT FINDINGS', pdfLines(d.otherFindings), 24) +
                 '</div>';
 
         html += '<div class="pdf-note"><b>NOTE</b> &nbsp;Record the source series, cardiac phase and reconstruction method for measurements that inform the final plan.</div>';
@@ -1315,7 +1495,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // ---------------- PAGE 3 — 2. IMAGE DOCUMENTATION & PERIMETER PLOT ----------------
     function reportPageImages(d, assets, n, total) {
-        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(2, 'IMAGE DOCUMENTATION & PERIMETER PLOT');
+        var html = pdfPageStart(n, total, false) + pdfHeader(n, total) + pdfSection(2, 'IMAGE DOCUMENTATION & PERIMETER PLOT');
 
         html += '<p class="pdf-intro">Representative planning images captured in the application. Record the source series and cardiac phase for each capture.</p>';
 
@@ -1350,7 +1530,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // ---------------- PAGE 4 — 3. CT MEASUREMENTS & SIZING SYNTHESIS ----------------
     function reportPageMeasurements(d, assets, n, total) {
-        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(3, 'CT/CMR MEASUREMENTS & SIZING SYNTHESIS');
+        var html = pdfPageStart(n, total, false) + pdfHeader(n, total) + pdfSection(3, 'CT/CMR MEASUREMENTS & SIZING SYNTHESIS');
 
         html += '<div class="pdf-note" style="margin-top:0; margin-bottom:12px;"><b>MEASUREMENT CONVENTION</b> &nbsp;Dimensions recorded in millimetres. RVOT1 = Dp and RVOT2 = Dsa, in Systole (S) and Diastole (D), consistent with the application&rsquo;s dynamic dimensional analysis.</div>';
 
@@ -1405,7 +1585,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 '<div class="pdf-fields">' +
                     pdfField('CANDIDATE VALVE SIZE(S)', '<span style="font-family:\'Space Mono\', monospace;">' + pdfEsc(d.predictedSku) + ' (CT/CMR) &nbsp;&bull;&nbsp; ' + pdfEsc(d.sku) + ' (final)</span>', 18) +
                     pdfField('SIZING RATIONALE AND ASSUMPTIONS', rationale, 34) +
-                    pdfField('FURTHER IMAGING / TESTING REQUIRED', '<span class="pdf-empty">&nbsp;</span>', 22) +
+                    pdfField('FURTHER IMAGING / TESTING REQUIRED', pdfLines(d.furtherImaging), 22) +
                 '</div>';
 
         html += pdfFooter(n, total) + '</div>';
@@ -1414,25 +1594,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // ---------------- PAGE 5 — 4. RISK ASSESSMENT & PROCEDURAL STRATEGY ----------------
     function reportPageRisk(d, assets, n, total) {
-        var html = '<div class="pdf-page">' + pdfHeader(n, total) + pdfSection(4, 'RISK ASSESSMENT & PROCEDURAL STRATEGY');
+        var html = pdfPageStart(n, total, false) + pdfHeader(n, total) + pdfSection(4, 'RISK ASSESSMENT & PROCEDURAL STRATEGY');
 
         html += '<div class="pdf-sub">Anatomical and procedural risk review</div>' +
                 '<table class="pdf-table"><thead><tr>' +
                     '<th style="text-align:left; padding-left:8px; width:150px;">Domain</th><th>Assessment / evidence</th><th>Mitigation / test</th><th style="width:110px;">Status</th>' +
                 '</tr></thead><tbody>' +
-                    '<tr><td class="lvl">Landing-zone shape and stability</td><td class="txt blank">' + pdfEsc(d.morphName) + ' — virtual waist ' + (isNaN(d.virtualWaist) ? '—' : d.virtualWaist.toFixed(1) + ' mm') + '</td><td class="blank"></td><td class="blank"></td></tr>' +
-                    '<tr><td class="lvl">Coronary proximity / compression risk</td><td class="blank"></td><td class="blank"></td><td class="txt" style="text-align:center; text-transform:none;">&#9744; Very high risk<br>&#9744; Low risk</td></tr>' +
-                    '<tr><td class="lvl">Branch PA anatomy and access route</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
-                    '<tr><td class="lvl">Other patient-specific factors</td><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="lvl">Landing-zone shape and stability</td><td class="txt">' + pdfEsc(d.morphName) + ' — virtual waist ' + (isNaN(d.virtualWaist) ? '—' : d.virtualWaist.toFixed(1) + ' mm') + '</td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="lvl">Coronary proximity / compression risk</td><td class="txt">' + pdfLines(d.coronaryNotes) + '</td><td class="blank"></td><td class="txt" style="text-align:center; text-transform:none;">' + pdfCoronaryRiskChecks(d) + '</td></tr>' +
+                    '<tr><td class="lvl">Branch PA anatomy and access route</td><td class="txt">' + pdfEsc(d.paAnatomyLabel) + '</td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="lvl">Other patient-specific factors</td><td class="txt">' + pdfLines(d.comorbidities) + '</td><td class="blank"></td><td class="blank"></td></tr>' +
                 '</tbody></table>';
 
         html += '<div class="pdf-sub">Procedural strategy</div>' +
                 '<div class="pdf-fields">' +
-                    pdfField('PREFERRED PA APPROACH / ACCESS', '<span class="pdf-empty">&nbsp;</span>', 20) +
+                    pdfField('PREFERRED PA APPROACH / ACCESS', pdfLines(d.paApproach), 20) +
                     pdfField('INTENDED LANDING POSITION', 'See deployment simulation below (virtual waist at ' + (isNaN(d.virtualWaist) ? '—' : d.virtualWaist.toFixed(1) + ' mm') + ')', 20) +
-                    pdfField('BALLOON TESTING / CORONARY ASSESSMENT', (!isNaN(d.balloonWaist) && d.balloonWaist > 0) ? ('Balloon waist confirmed: ' + d.balloonWaist + ' mm') : '<span class="pdf-empty">&nbsp;</span>', 20) +
-                    pdfField('IMAGING AND ANGIOGRAPHIC STRATEGY', '<span class="pdf-empty">&nbsp;</span>', 20) +
-                    pdfField('EQUIPMENT / CONTINGENCY PLAN', '<span class="pdf-empty">&nbsp;</span>', 20) +
+                    pdfField('BALLOON TESTING / CORONARY ASSESSMENT', (!isNaN(d.balloonWaist) && d.balloonWaist > 0) ? ('Balloon waist confirmed: ' + d.balloonWaist + ' mm') : pdfLines(d.coronaryNotes, '—'), 20) +
+                    pdfField('IMAGING AND ANGIOGRAPHIC STRATEGY', pdfLines(d.imagingStrategy), 20) +
+                    pdfField('EQUIPMENT / CONTINGENCY PLAN', pdfLines(d.contingency), 20) +
                 '</div>';
 
         html += '<div class="pdf-sub">Anatomy &amp; deployment simulation (' + (d.phase === 'systole' ? 'Systole' : 'Diastole') + ')</div>' +
@@ -1453,7 +1633,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // ---------------- PAGE 6 — 5. FINAL DECISION & SIGN-OFF ----------------
     function reportPageSignOff(d, assets, n, total) {
-        var html = '<div class="pdf-page pdf-page-last">' + pdfHeader(n, total) + pdfSection(5, 'FINAL DECISION & SIGN-OFF');
+        var html = pdfPageStart(n, total, true) + pdfHeader(n, total) + pdfSection(5, 'FINAL DECISION & SIGN-OFF');
 
         html += '<p class="pdf-intro">Complete this section after the imaging, sizing, risk and procedural reviews have been reconciled.</p>';
 
@@ -1462,7 +1642,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     pdfField('RECOMMENDATION / DECISION', '<span style="font-family:\'Space Mono\', monospace; font-size:13px;">VenusP <b>' + pdfEsc(d.sku) + '</b> &nbsp;&bull;&nbsp; Delivery System: <b>' + pdfEsc(d.ds) + '</b></span>', 20) +
                     pdfField('SELECTED VALVE SIZE (AFTER VERIFICATION)', 'Straight Section OD (B): <b>' + d.straightOD + ' mm</b> &nbsp;&bull;&nbsp; Straight Length (D): <b>' + d.stentLen + ' mm</b> &nbsp;&bull;&nbsp; Flared Inflow/Outflow (A/C): <b>' + (d.straightOD + 10) + ' mm</b> &nbsp;&bull;&nbsp; Total Expanded Length (E): <b>' + pdfEsc(d.totalLenText) + '</b>', 24) +
                     pdfField(pdfEsc(d.oversizeTitle) + ' / LENGTH MATCH', '<span style="font-family:\'Space Mono\', monospace;">' + pdfEsc(d.oversizeValue) + ' &nbsp;&bull;&nbsp; ' + pdfEsc(d.lengthMatch) + '</span>', 18) +
-                    pdfField('RATIONALE / OUTSTANDING CONDITIONS', '<span class="pdf-empty">&nbsp;</span>', 26) +
+                    pdfField('RATIONALE / OUTSTANDING CONDITIONS', pdfLines(d.rationale), 26) +
                 '</div>';
 
         if (assets.valve) {
@@ -1476,6 +1656,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     '<tr><td class="txt">Measurements, definitions and source series reviewed</td><td class="blank"></td><td class="blank"></td></tr>' +
                     '<tr><td class="txt">Risk mitigation and any required testing agreed</td><td class="blank"></td><td class="blank"></td></tr>' +
                     '<tr><td class="txt">Final device, access and contingency plan recorded</td><td class="blank"></td><td class="blank"></td></tr>' +
+                '</tbody></table>';
+
+        html += '<div class="pdf-sub">Open actions</div>' +
+                '<table class="pdf-table"><thead><tr><th style="text-align:left; padding-left:8px;">Action / question</th><th style="width:120px;">Owner</th><th style="width:110px;">Due / status</th></tr></thead><tbody>' +
+                    '<tr><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
+                    '<tr><td class="blank"></td><td class="blank"></td><td class="blank"></td></tr>' +
                 '</tbody></table>';
 
         html += '<div class="pdf-sub">Multidisciplinary review &amp; sign-off</div>' +
@@ -1498,11 +1684,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // -------------------------------------------------
 
     function resetFields() {
-        var textIds = ['in-patient', 'in-ref-centre', 'in-diagnosis', 'in-comments'];
+        var textIds = ['in-patient', 'in-ref-centre', 'in-age', 'in-clinician', 'in-md-team', 'in-diagnosis',
+            'in-prior-intervention', 'in-indication', 'in-comorbidities', 'in-ct-date', 'in-ct-series',
+            'in-echo-date', 'in-echo-modality', 'in-mri-date', 'in-mri-details', 'in-image-quality',
+            'in-coronary', 'in-other-findings', 'in-pa-approach', 'in-imaging-strategy', 'in-contingency',
+            'in-further-imaging', 'in-rationale', 'in-comments'];
         for(var i=0; i<textIds.length; i++) {
             var el = document.getElementById(textIds[i]);
             if(el) el.value = '';
         }
+        var sexEl = document.getElementById('in-sex');
+        if (sexEl) sexEl.value = '';
+        var paDefault = document.querySelector('input[name="pa_anatomy"][value="no_issue"]');
+        if (paDefault) paDefault.checked = true;
+        var crDefault = document.querySelector('input[name="coronary_risk"][value=""]');
+        if (crDefault) crDefault.checked = true;
         
         var waistEl = document.getElementById('in-waist');
         if (waistEl) waistEl.value = '';

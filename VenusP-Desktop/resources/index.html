@@ -104,6 +104,10 @@
         .input-group textarea { background-color: #ffffff; border: 1px solid var(--panel-border); border-radius: 8px; padding: 12px; color: var(--venus-deep-blue); font-family: 'Inter', sans-serif; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; resize: vertical; min-height: 70px; line-height: 1.4; text-align: left; transition: 0.2s; }
         .input-group.text-area-group label { justify-content: flex-start; text-align: left; align-items: center; min-height: 24px; padding-left: 4px; }
         .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--venus-yellow); background-color: #fffdf5; }
+        .check-row { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 8px 4px; }
+        .check-row label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--venus-deep-blue); text-transform: none; letter-spacing: 0; min-height: auto; justify-content: flex-start; cursor: pointer; }
+        .check-row input[type="radio"], .check-row input[type="checkbox"] { width: auto; accent-color: var(--venus-blue); }
+        .clinical-sub { font-size: 10px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 0.6px; margin: 14px 0 8px 0; padding-bottom: 4px; border-bottom: 1px solid var(--panel-border); }
 
         .upload-zone { border: 2px dashed var(--input-border); border-radius: 8px; background-color: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; transition: border-color 0.2s; box-sizing: border-box; }
         .upload-zone:hover { border-color: var(--venus-blue); }
@@ -207,16 +211,19 @@
            Proforma V1" preenchido com os dados do app.
            ============================================================ */
         #pdf-report { width: 740px; background: #FFFFFF; color: var(--text-main); font-family: 'Circular', 'Yu Gothic UI', -apple-system, sans-serif; box-sizing: border-box; }
-        .pdf-page { width: 740px; min-height: 1072px; box-sizing: border-box; padding: 16px 26px 48px 26px; background: #FFFFFF; page-break-after: always; position: relative; }
+        .pdf-page { width: 740px; min-height: 1072px; box-sizing: border-box; padding: 20px 28px 42px 28px; background: #FFFFFF; page-break-after: always; position: relative; overflow: hidden; }
         .pdf-page.pdf-page-last { page-break-after: auto; }
-        .pdf-head-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .pdf-head-top img { height: 24px; }
-        .pdf-head-page { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-grey); letter-spacing: 1px; font-weight: bold; }
-        .pdf-head-bar { background: var(--venus-deep-blue); color: #FFFFFF; font-weight: bold; font-size: 12px; letter-spacing: 1.5px; padding: 8px 12px; border-radius: 4px; text-transform: uppercase; }
-        .pdf-head-sub { font-size: 8.5px; color: var(--text-grey); border-bottom: 2px solid var(--pdf-accent); padding: 5px 2px 6px 2px; margin-bottom: 14px; }
-        .pdf-foot { position: absolute; bottom: 14px; left: 0; width: 100%; text-align: center; font-size: 9px; color: var(--text-grey); font-family: 'Space Mono', monospace; }
-        .pdf-sec { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; color: var(--venus-deep-blue); letter-spacing: 1px; margin: 2px 0 12px 0; text-transform: uppercase; }
-        .pdf-sec-num { background: var(--pdf-accent); color: var(--venus-deep-blue); min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; font-family: 'Space Mono', monospace; font-size: 14px; }
+        .pdf-page::before { content: ''; position: absolute; top: 52%; left: 50%; transform: translate(-50%, -50%); width: 420px; height: 420px; background-image: var(--pdf-wm); background-position: center; background-size: contain; background-repeat: no-repeat; opacity: 0.055; pointer-events: none; z-index: 0; }
+        .pdf-page > * { position: relative; z-index: 1; }
+        .pdf-head-min { margin-bottom: 12px; }
+        .pdf-head-right { text-align: right; font-size: 8.5px; font-weight: 700; letter-spacing: 1.2px; color: var(--venus-blue); text-transform: uppercase; }
+        .pdf-head-rule { height: 2px; background: var(--pdf-accent); margin-top: 6px; }
+        .pdf-head-top { display: none; }
+        .pdf-head-bar { display: none; }
+        .pdf-head-sub { display: none; }
+        .pdf-foot { position: absolute; bottom: 12px; left: 0; width: 100%; text-align: center; font-size: 8px; color: var(--text-grey); letter-spacing: 0.2px; }
+        .pdf-sec { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: var(--venus-deep-blue); letter-spacing: 0.8px; margin: 0 0 10px 0; text-transform: uppercase; border-bottom: 1px solid #E8ECF2; padding-bottom: 6px; }
+        .pdf-sec-num { background: none; color: var(--pdf-accent); min-width: auto; height: auto; font-family: 'Circular', sans-serif; font-size: 16px; font-weight: 900; border-radius: 0; padding: 0; }
         .pdf-sub { font-size: 11px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--panel-border); padding-bottom: 4px; margin: 16px 0 8px 0; }
         .pdf-intro { font-size: 10px; color: var(--text-grey); line-height: 1.5; margin: 0 0 10px 0; }
         .pdf-fields { border: 1px solid var(--panel-border); border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
@@ -308,9 +315,103 @@
                 <input type="text" id="in-ref-centre" placeholder="e.g. Heart Institute...">
             </div>
         </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Age</label>
+                <input type="text" id="in-age" placeholder="e.g. 14 years">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Sex</label>
+                <select id="in-sex">
+                    <option value="">— Select —</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other / not specified</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Planning Clinician(s)</label>
+                <input type="text" id="in-clinician" placeholder="e.g. Dr. Smith, Interventional Cardiology">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Multidisciplinary Team / Meeting</label>
+                <input type="text" id="in-md-team" placeholder="e.g. Heart Team 12 Aug 2026">
+            </div>
+        </div>
         <div class="input-group text-area-group">
             <label>Diagnosis & Clinical History</label>
             <textarea id="in-diagnosis" placeholder="Patient history, symptoms, previous interventions..."></textarea>
+        </div>
+        <div class="input-group text-area-group">
+            <label>Prior Intervention(s) / Repair</label>
+            <textarea id="in-prior-intervention" placeholder="e.g. RV-PA conduit, prior surgical valve..."></textarea>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Indication for Current Review</label>
+                <textarea id="in-indication" placeholder="e.g. RV dysfunction, conduit stenosis..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Additional Risk Factors / Comorbidities</label>
+                <textarea id="in-comorbidities" placeholder="e.g. arrhythmia, anticoagulation..."></textarea>
+            </div>
+        </div>
+
+        <div class="clinical-sub">Imaging dataset(s) reviewed</div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Cardiac CT / CMR — Study date</label>
+                <input type="text" id="in-ct-date" placeholder="e.g. 10 Aug 2026">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Cardiac CT / CMR — Series / phase</label>
+                <input type="text" id="in-ct-series" placeholder="e.g. Systole, 0.5 mm">
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>Echocardiography — Study date</label>
+                <input type="text" id="in-echo-date" placeholder="e.g. 08 Aug 2026">
+            </div>
+            <div class="input-group text-area-group">
+                <label>Echocardiography — Modality</label>
+                <input type="text" id="in-echo-modality" placeholder="e.g. TTE / TEE">
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div class="input-group text-area-group">
+                <label>MRI / Angiography / Cath — Study date</label>
+                <input type="text" id="in-mri-date" placeholder="Optional">
+            </div>
+            <div class="input-group text-area-group">
+                <label>MRI / Angiography / Cath — Details</label>
+                <input type="text" id="in-mri-details" placeholder="Optional">
+            </div>
+        </div>
+        <div class="input-group text-area-group">
+            <label>Image Quality / Limitations</label>
+            <textarea id="in-image-quality" placeholder="e.g. motion artefact, limited distal MPA..."></textarea>
+        </div>
+
+        <div class="clinical-sub">PA anatomy classification</div>
+        <div class="check-row" id="pa-anatomy-group">
+            <label><input type="radio" name="pa_anatomy" value="no_issue" checked> No issue</label>
+            <label><input type="radio" name="pa_anatomy" value="lpa_folding"> Folding of LPA on top of RPA</label>
+            <label><input type="radio" name="pa_anatomy" value="bifurcation_folding"> Bifurcation folding</label>
+            <label><input type="radio" name="pa_anatomy" value="pa_stenosis"> PA stenosis</label>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px;">
+            <div class="input-group text-area-group">
+                <label>Coronary Course and Proximity</label>
+                <textarea id="in-coronary" placeholder="e.g. LCA 4 mm from landing zone..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Other Relevant Findings</label>
+                <textarea id="in-other-findings" placeholder="Additional imaging observations..."></textarea>
+            </div>
         </div>
     </div>
 
@@ -480,6 +581,41 @@
                     <option value="P36-25">P36-25</option><option value="P36-30">P36-30</option>
                 </select>
             </div>
+        </div>
+    </div>
+
+    <!-- PROCEDURAL STRATEGY (feeds PDF pages 5–6) -->
+    <div class="panel" id="panel-procedural">
+        <h2 class="panel-title">RISK & PROCEDURAL STRATEGY</h2>
+        <div class="clinical-sub" style="margin-top:0;">Coronary proximity / compression risk</div>
+        <div class="check-row">
+            <label><input type="radio" name="coronary_risk" value="" checked> Not assessed</label>
+            <label><input type="radio" name="coronary_risk" value="very_high"> Very high risk</label>
+            <label><input type="radio" name="coronary_risk" value="low"> Low risk</label>
+        </div>
+        <div class="grid-2" style="margin-top: 12px;">
+            <div class="input-group text-area-group">
+                <label>Preferred PA Approach / Access</label>
+                <textarea id="in-pa-approach" placeholder="e.g. Femoral vein, 14 Fr sheath..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Imaging & Angiographic Strategy</label>
+                <textarea id="in-imaging-strategy" placeholder="e.g. TEE + biplane angiography..."></textarea>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="input-group text-area-group">
+                <label>Equipment / Contingency Plan</label>
+                <textarea id="in-contingency" placeholder="e.g. alternate sheath sizes, snare availability..."></textarea>
+            </div>
+            <div class="input-group text-area-group">
+                <label>Further Imaging / Testing Required</label>
+                <textarea id="in-further-imaging" placeholder="e.g. coronary angiography before implant..."></textarea>
+            </div>
+        </div>
+        <div class="input-group text-area-group" style="margin-top: 12px;">
+            <label>Rationale / Outstanding Conditions (final sign-off)</label>
+            <textarea id="in-rationale" placeholder="Outstanding conditions or final decision rationale for the PDF sign-off page..."></textarea>
         </div>
     </div>
 
