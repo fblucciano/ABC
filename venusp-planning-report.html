@@ -616,7 +616,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
         .preview-container { background: #FFFFFF; border: 1px solid var(--input-border); border-radius: 0 0 10px 10px; padding: 0; text-align: center; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative; border-top: none;}
         #deploymentCanvas { background: #FFFFFF; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: block; touch-action: none; }
-        #patient3dCanvas { background: #F4F6F8; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: none; touch-action: none; cursor: grab; }
+        #patient3dCanvas { background: #08080c; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: none; touch-action: none; cursor: grab; }
         #panel-rec { max-width: 760px; margin-left: auto; margin-right: auto; width: 100%; }
         .length-row .length-phase { font-size: 10px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 0.4px; }
         .length-row .length-phase.systole { color: #D50000; }
@@ -977,7 +977,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     <label>Valve vertical offset</label>
                     <input type="range" id="in-valve-offset" min="-20" max="20" value="0" step="0.5" oninput="onValveViewerUIChange()">
                     <div class="offset-readout" id="valve-offset-label">0 mm</div>
-                    <div style="font-size:9px;color:var(--text-grey);margin-top:4px;">Or click &amp; drag the valve on canvas (tabs 2–3)</div>
+                    <div style="font-size:9px;color:var(--text-grey);margin-top:4px;">Or drag on canvas (tabs 2–3 ↕, tab 4 ↔↕ valve)</div>
                 </div>
                 <div class="input-group text-area-group">
                     <label>MPA segments (S/D model)</label>
@@ -1007,7 +1007,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <canvas id="patient3dCanvas" width="740" height="600"></canvas>
             </div>
             <div id="preview-caption" style="font-size: 14px; color: var(--text-grey); font-family: 'Space Mono', monospace; padding: 12px; font-weight: bold; background: #FFFFFF; border-top: 1px solid var(--panel-border); text-align: center;">
-                Landmark at <b>stent centre</b> · Drag valve (tabs 2–3) or rotate anatomy (tab 4)
+                Landmark at <b>stent centre</b> · Drag valve (tabs 2–3) · Tab 4: wireframe 3D — drag ↔ orbit, ↕ move valve, Shift+↔ rotate valve
             </div>
         </div>
 
@@ -2369,7 +2369,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 anatomy: 'Pulmonary anatomy · Segment A (annulus→ST) shorter in systole; Segment B longer in systole',
                 valve: 'Technical stent mesh · D1/D2/D3 and L1/L2/L3 · Purple line = landmark at cylinder centre',
                 deploy: 'Drag valve up/down or use slider · Landmark at waist centre · Oversize check',
-                patient3d: 'Patient 3D · Drag left/right to rotate anatomy · Valve at stent centre landmark'
+                patient3d: 'Patient 3D wireframe · Drag ↔ orbit · Drag ↕ move valve · Shift+↔ rotate valve · Scroll zoom'
             };
             if (caps[view]) cap.innerHTML = caps[view];
         }
