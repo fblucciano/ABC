@@ -13,7 +13,7 @@
     var FLARE_OUT_MM = 17;
 
     global.valveViewerState = {
-        landmark: 'annulus',
+        landmark: 'valvar',
         offsetMm: 0,
         canvasScale: 1
     };
@@ -23,7 +23,7 @@
     function vEl(id) { var e = document.getElementById(id); return e ? e.value : ''; }
 
     function readViewerStateFromUI() {
-        global.valveViewerState.landmark = vEl('in-landmark') || 'annulus';
+        global.valveViewerState.landmark = vEl('in-landmark') || 'valvar';
         global.valveViewerState.offsetMm = parseFloat(vEl('in-valve-offset')) || 0;
         var lbl = document.getElementById('valve-offset-label');
         if (lbl) {
@@ -41,17 +41,76 @@
         if (typeof global.drawRVOTCanvas === 'function') global.drawRVOTCanvas();
     }
 
-    function suggestLandmarkFromMorph(morphKey) {
-        if (morphKey === 'type1') return 'bifurcation';
-        return 'annulus';
+    function formatPlaneDisplayName(p) {
+        if (!p) return '—';
+        return String(p.name || 'Plane').replace(/\s*\*$/, '').trim() || 'Plane';
     }
 
-    global.syncLandmarkSuggestion = function (morphKey) {
+    global.getPlaneNameAtDist = function (tablePlanes, distMm) {
+        if (!tablePlanes || !tablePlanes.length) return '—';
+        var best = tablePlanes[0];
+        var bestDiff = Math.abs(tablePlanes[0].dist - distMm);
+        for (var i = 1; i < tablePlanes.length; i++) {
+            var diff = Math.abs(tablePlanes[i].dist - distMm);
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                best = tablePlanes[i];
+            }
+        }
+        return formatPlaneDisplayName(best);
+    };
+
+    global.syncLandmarkSelectFromPlanes = function (tablePlanes) {
+        var sel = document.getElementById('in-landmark');
+        if (!sel || !tablePlanes || !tablePlanes.length) return;
+        var prev = sel.value;
+        var userSet = sel.dataset.userSet === '1';
+        var sorted = tablePlanes.slice().sort(function (a, b) { return a.dist - b.dist; });
+        sel.innerHTML = '';
+        for (var i = 0; i < sorted.length; i++) {
+            var p = sorted[i];
+            var opt = document.createElement('option');
+            opt.value = p.id;
+            var label = formatPlaneDisplayName(p);
+            if (p.dist !== 0) label += ' (' + (p.dist > 0 ? '+' : '') + p.dist + ' mm)';
+            opt.textContent = label;
+            sel.appendChild(opt);
+        }
+        if (prev && sorted.some(function (p) { return p.id === prev; })) {
+            sel.value = prev;
+        } else {
+            var valvar = sorted.find(function (p) { return p.id === 'valvar'; });
+            sel.value = valvar ? valvar.id : sorted[0].id;
+        }
+        global.valveViewerState.landmark = sel.value;
+        if (!userSet && global._pendingMorphLandmark) {
+            global.syncLandmarkSuggestion(global._pendingMorphLandmark, tablePlanes);
+        }
+    };
+
+    function suggestLandmarkFromMorph(morphKey, tablePlanes) {
+        if (!tablePlanes || !tablePlanes.length) return null;
+        if (morphKey === 'type1') {
+            for (var i = 0; i < tablePlanes.length; i++) {
+                if ((tablePlanes[i].name || '').toLowerCase().indexOf('bifur') !== -1) return tablePlanes[i].id;
+            }
+            var top = tablePlanes.slice().sort(function (a, b) { return b.dist - a.dist; })[0];
+            return top ? top.id : null;
+        }
+        var valvar = tablePlanes.find(function (p) { return p.id === 'valvar'; });
+        return valvar ? valvar.id : tablePlanes[0].id;
+    }
+
+    global.syncLandmarkSuggestion = function (morphKey, tablePlanes) {
+        global._pendingMorphLandmark = morphKey;
         var sel = document.getElementById('in-landmark');
         if (!sel || sel.dataset.userSet === '1') return;
-        var suggested = suggestLandmarkFromMorph(morphKey);
-        sel.value = suggested;
-        global.valveViewerState.landmark = suggested;
+        if (!tablePlanes || !tablePlanes.length) return;
+        var suggested = suggestLandmarkFromMorph(morphKey, tablePlanes);
+        if (suggested) {
+            sel.value = suggested;
+            global.valveViewerState.landmark = suggested;
+        }
     };
 
     function getStJunctionDist(planes) {
@@ -100,6 +159,10 @@
     };
 
     global.getLandmarkAnchorDist = function (tablePlanes, landmark) {
+        if (!tablePlanes || !tablePlanes.length) return 0;
+        for (var i = 0; i < tablePlanes.length; i++) {
+            if (tablePlanes[i].id === landmark) return tablePlanes[i].dist;
+        }
         var idxValvar = tablePlanes.findIndex(function (p) { return p.id === 'valvar'; });
         var valvarDist = idxValvar >= 0 ? tablePlanes[idxValvar].dist : 0;
         var stJ = getStJunctionDist(tablePlanes);
@@ -668,7 +731,9 @@
         ctx.font = '11px "Space Mono", monospace';
         ctx.textAlign = 'left';
         ctx.fillText('VenusP-Valve · P' + straightOD + '-' + stentLen + ' wireframe', 14, 22);
-        ctx.fillText(phase.toUpperCase() + ' · landmark centre · offset ' + (offsetMm > 0 ? '+' : '') + (offsetMm || 0).toFixed(1) + ' mm', 14, 38);
+        var landPlane = (typeof global.getPlaneNameAtDist === 'function')
+            ? global.getPlaneNameAtDist(tablePlanes, landDist) : '—';
+        ctx.fillText(phase.toUpperCase() + ' · Landmark: ' + landPlane + ' · offset ' + (offsetMm > 0 ? '+' : '') + (offsetMm || 0).toFixed(1) + ' mm', 14, 38);
         ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(160, 170, 185, 0.95)';
         ctx.fillText('Drag ↔ orbit · Drag ↕ move valve · Shift+drag ↔ rotate valve', w / 2, h - 14);

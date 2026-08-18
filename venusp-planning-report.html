@@ -967,12 +967,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             <div class="deployment-controls">
                 <div class="input-group text-area-group">
                     <label>Landing position</label>
-                    <select id="in-landmark" onchange="onValveViewerUIChange()">
-                        <option value="annulus">Annulus</option>
-                        <option value="supra_annular">Supra-annular (above annulus)</option>
-                        <option value="st_junction">ST junction (reference)</option>
-                        <option value="bifurcation">Bifurcation (Type I pyramidal)</option>
-                    </select>
+                    <select id="in-landmark" onchange="onValveViewerUIChange()"></select>
                 </div>
                 <div class="input-group text-area-group">
                     <label>Valve vertical offset</label>
@@ -2086,6 +2081,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <td><input type="number" class="cmr-input" value="${p.d2}" oninput="updatePlaneData('${p.id}', 'd2', this.value)"></td>`;
             tbody.appendChild(tr);
         }
+        if (typeof syncLandmarkSelectFromPlanes === 'function') syncLandmarkSelectFromPlanes(tablePlanes);
     }
 
     function updatePlaneData(id, field, value) {
@@ -2096,7 +2092,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 break;
             }
         }
-        if(field === 'dist') { renderTable(); }
+        if(field === 'name' && typeof syncLandmarkSelectFromPlanes === 'function') syncLandmarkSelectFromPlanes(tablePlanes);
+        if(field === 'dist') { renderTable(); return; }
         updateUI();
     }
 
@@ -2177,7 +2174,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         selectEl.style.color = data.color; 
         document.getElementById('cmr-morph-img').src = data.img; document.getElementById('cmr-morph-img').style.display = "block";
         document.getElementById('cmr-morph-incidence').innerText = data.inc;
-        if (typeof syncLandmarkSuggestion === 'function') syncLandmarkSuggestion(selectEl.value);
+        if (typeof syncLandmarkSuggestion === 'function') syncLandmarkSuggestion(selectEl.value, tablePlanes);
     }
 
     // --- NOVA LÓGICA DE PREVISÃO MORFOLÓGICA (SCHIEVANO) ---
@@ -2612,11 +2609,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 ctx.strokeStyle = '#6448FC'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
                 ctx.beginPath(); ctx.moveTo(centerX - radFlare - 28, yLandmark); ctx.lineTo(centerX + radFlare + 28, yLandmark); ctx.stroke();
                 ctx.setLineDash([]);
-                var landmarkLabels = { annulus: 'Annulus', supra_annular: 'Supra-annular', trans_annular: 'Supra-annular', st_junction: 'ST junction', bifurcation: 'Bifurcation' };
-                var landmarkLabel = landmarkLabels[landmarkKey] || landmarkKey.replace(/_/g, ' ');
-                var offsetTxt = offsetMm ? (' ' + (offsetMm > 0 ? '+' : '') + offsetMm + 'mm') : '';
+                var currentDistMm = landmarkDist + offsetMm;
+                var landmarkLabel = (typeof getPlaneNameAtDist === 'function')
+                    ? getPlaneNameAtDist(tablePlanes, currentDistMm) : '—';
                 ctx.font = 'bold 11px "Space Mono", monospace'; ctx.textAlign = 'center';
-                drawStrokeText(ctx, 'Landmark: ' + landmarkLabel + offsetTxt, centerX, yLandmark + 4, '#6448FC');
+                drawStrokeText(ctx, 'Landmark: ' + landmarkLabel, centerX, yLandmark + 4, '#6448FC');
             }
         }
 
