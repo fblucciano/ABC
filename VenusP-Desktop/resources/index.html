@@ -200,7 +200,13 @@
         .footer { background-color: var(--panel-bg); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 12px; margin-top: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .footer-text { color: var(--text-grey); font-size: 10px; text-align: center; line-height: 1.4; }
 
-        .dynamic-images-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; }
+        .dynamic-images-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; width: 100%; }
+        .image-block-card { border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px; background: #fff; box-sizing: border-box; }
+        .img-layout-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .img-layout-controls label { display: flex; flex-direction: column; gap: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-grey); letter-spacing: 0.3px; min-height: auto; text-align: left; }
+        .img-layout-controls input[type="range"] { width: 100%; accent-color: var(--venus-blue); }
+        .img-layout-controls select, .img-layout-controls input[type="text"] { width: 100%; padding: 8px; border: 1px solid var(--panel-border); border-radius: 6px; font-size: 11px; color: var(--venus-deep-blue); box-sizing: border-box; background: #fff; }
+        .img-layout-hint { grid-column: 1 / -1; font-size: 9px; color: var(--text-grey); line-height: 1.35; margin-top: 2px; }
         
         /* Modal de Specs Personalizado */
         .modal-branded { background-color: var(--white); padding: 30px; border-radius: 12px; max-width: 450px; width: 100%; text-align: left; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3); border-top: 6px solid var(--venus-yellow); box-sizing: border-box; }
@@ -243,8 +249,9 @@
         .pdf-table td.lvl { text-align: left; font-family: 'Circular', sans-serif; color: var(--venus-blue); padding-left: 8px; font-size: 9.5px; text-transform: uppercase; }
         .pdf-table td.blank { height: 22px; }
         .pdf-table td.txt { font-family: 'Circular', sans-serif; font-weight: 600; font-size: 9px; text-align: left; padding-left: 8px; color: var(--text-main); text-transform: none; }
-        .pdf-grabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pdf-grabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
         .pdf-grab { border: 1px solid var(--panel-border); border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
+        .pdf-grab.span-2 { grid-column: span 2; }
         .pdf-grab-title { background: var(--input-bg); font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--venus-blue); padding: 6px 8px; letter-spacing: 0.5px; }
         .pdf-grab-img { height: 168px; display: flex; align-items: center; justify-content: center; background: #000; }
         .pdf-grab-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -422,6 +429,7 @@
         <div id="dynamic-images-container" class="dynamic-images-grid" style="margin-bottom: 12px;">
             <!-- Javascript vai injetar os quadros aqui -->
         </div>
+        <p style="font-size: 10px; color: var(--text-grey); margin: 0 0 10px 0; line-height: 1.45;">Each image has <b>PDF layout controls</b> (height and width). Extra images automatically add pages to the exported proforma (minimum 6 pages).</p>
         <button class="btn-action add-btn" style="margin-top: 0; margin-bottom: 15px;" onclick="addImageBlock()">+ Add Image</button>
 
         <div class="input-group text-area-group">

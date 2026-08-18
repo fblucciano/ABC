@@ -644,7 +644,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         .footer { background-color: var(--panel-bg); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 12px; margin-top: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .footer-text { color: var(--text-grey); font-size: 10px; text-align: center; line-height: 1.4; }
 
-        .dynamic-images-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; }
+        .dynamic-images-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; width: 100%; }
+        .image-block-card { border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px; background: #fff; box-sizing: border-box; }
+        .img-layout-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .img-layout-controls label { display: flex; flex-direction: column; gap: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-grey); letter-spacing: 0.3px; min-height: auto; text-align: left; }
+        .img-layout-controls input[type="range"] { width: 100%; accent-color: var(--venus-blue); }
+        .img-layout-controls select, .img-layout-controls input[type="text"] { width: 100%; padding: 8px; border: 1px solid var(--panel-border); border-radius: 6px; font-size: 11px; color: var(--venus-deep-blue); box-sizing: border-box; background: #fff; }
+        .img-layout-hint { grid-column: 1 / -1; font-size: 9px; color: var(--text-grey); line-height: 1.35; margin-top: 2px; }
         
         /* Modal de Specs Personalizado */
         .modal-branded { background-color: var(--white); padding: 30px; border-radius: 12px; max-width: 450px; width: 100%; text-align: left; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3); border-top: 6px solid var(--venus-yellow); box-sizing: border-box; }
@@ -687,8 +693,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         .pdf-table td.lvl { text-align: left; font-family: 'Circular', sans-serif; color: var(--venus-blue); padding-left: 8px; font-size: 9.5px; text-transform: uppercase; }
         .pdf-table td.blank { height: 22px; }
         .pdf-table td.txt { font-family: 'Circular', sans-serif; font-weight: 600; font-size: 9px; text-align: left; padding-left: 8px; color: var(--text-main); text-transform: none; }
-        .pdf-grabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pdf-grabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
         .pdf-grab { border: 1px solid var(--panel-border); border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
+        .pdf-grab.span-2 { grid-column: span 2; }
         .pdf-grab-title { background: var(--input-bg); font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--venus-blue); padding: 6px 8px; letter-spacing: 0.5px; }
         .pdf-grab-img { height: 168px; display: flex; align-items: center; justify-content: center; background: #000; }
         .pdf-grab-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -866,6 +873,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <div id="dynamic-images-container" class="dynamic-images-grid" style="margin-bottom: 12px;">
             <!-- Javascript vai injetar os quadros aqui -->
         </div>
+        <p style="font-size: 10px; color: var(--text-grey); margin: 0 0 10px 0; line-height: 1.45;">Each image has <b>PDF layout controls</b> (height and width). Extra images automatically add pages to the exported proforma (minimum 6 pages).</p>
         <button class="btn-action add-btn" style="margin-top: 0; margin-bottom: 15px;" onclick="addImageBlock()">+ Add Image</button>
 
         <div class="input-group text-area-group">
@@ -1186,8 +1194,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             if (exportBtn) { exportBtn.disabled = false; exportBtn.innerText = 'Export PDF'; }
         }
 
-        // Renderiza cada página do proforma individualmente e ajusta a escala
-        // para caber exatamente em uma folha A4 — garante 6 páginas sem cortes.
+        // Renderiza cada página do proforma individualmente (6+ pages when extra images are added).
         var JsPDFCtor = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
         var h2c = window.html2canvas;
 
@@ -1397,16 +1404,86 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         return '<div class="pdf-sec"><span class="pdf-sec-num">' + num + '</span>' + title + '</div>';
     }
 
+    function normalizeImageBlock(block) {
+        if (!block) return { pdfHeight: 168, pdfWidth: 1, pdfSource: '' };
+        if (!block.pdfHeight || block.pdfHeight < 80) block.pdfHeight = 168;
+        if (!block.pdfWidth || block.pdfWidth < 1) block.pdfWidth = 1;
+        if (block.pdfWidth > 2) block.pdfWidth = 2;
+        if (block.pdfSource == null) block.pdfSource = '';
+        return block;
+    }
+
+    function chunkImagesForPdf(images) {
+        var list = (images && images.length) ? images.map(normalizeImageBlock) : [];
+        if (list.length === 0) return [[]];
+        var chunks = [];
+        var current = [];
+        var slots = 0;
+        for (var i = 0; i < list.length; i++) {
+            var need = list[i].pdfWidth >= 2 ? 2 : 1;
+            if (current.length && slots + need > 4) {
+                chunks.push(current);
+                current = [];
+                slots = 0;
+            }
+            current.push(list[i]);
+            slots += need;
+        }
+        if (current.length) chunks.push(current);
+        return chunks;
+    }
+
+    function countPdfPages(d) {
+        var imgChunks = chunkImagesForPdf(d.images || []);
+        var separatePlotPage = imgChunks.length > 1;
+        return 5 + imgChunks.length + (separatePlotPage ? 1 : 0);
+    }
+
+    function renderPdfGrabHtml(b) {
+        var img = normalizeImageBlock(b);
+        var spanCls = img.pdfWidth >= 2 ? ' pdf-grab span-2' : ' pdf-grab';
+        var h = Math.max(80, Math.min(420, parseInt(img.pdfHeight, 10) || 168));
+        var cap = img.pdfSource ? pdfEsc(img.pdfSource) : '____________________';
+        return '<div class="' + spanCls.trim() + '">' +
+            '<div class="pdf-grab-title">' + pdfEsc(img.title || 'Screen grab') + '</div>' +
+            (img.dataUrl
+                ? '<div class="pdf-grab-img" style="height:' + h + 'px;"><img src="' + img.dataUrl + '" alt="' + pdfEsc(img.title) + '"></div>'
+                : '<div class="pdf-grab-empty" style="height:' + h + 'px;">NO IMAGE UPLOADED</div>') +
+            '<div class="pdf-grab-cap">Source / series / phase: ' + cap + '</div>' +
+        '</div>';
+    }
+
+    function renderPdfPlotSection(assets) {
+        return '<div class="pdf-sub">Diameter plot of the anatomy</div>' +
+            '<div class="pdf-plot">' +
+                (assets.chart ? '<img src="' + assets.chart + '" alt="Dynamic RVOT dimensions plot">' : '<div class="pdf-grab-empty" style="height:120px;">PLOT NOT AVAILABLE</div>') +
+                '<div class="pdf-plot-cap">Dynamic RVOT / MPA dimensional analysis — Dp / Dsa and mean diameters per plane (Systole &amp; Diastole), as entered in the application.</div>' +
+            '</div>' +
+            '<div class="pdf-note"><b>NOTE</b> &nbsp;Use the diameter plot to show the measured contour and its relationship to the proposed landing zone.</div>';
+    }
+
     function buildProformaReport(d, assets) {
-        var TOTAL = 6;
-        var pages = [
-            reportPageCover(d, 1, TOTAL),
-            reportPageClinical(d, 2, TOTAL),
-            reportPageImages(d, assets, 3, TOTAL),
-            reportPageMeasurements(d, assets, 4, TOTAL),
-            reportPageRisk(d, assets, 5, TOTAL),
-            reportPageSignOff(d, assets, 6, TOTAL)
-        ];
+        var imgChunks = chunkImagesForPdf(d.images || []);
+        var separatePlotPage = imgChunks.length > 1;
+        var TOTAL = 5 + imgChunks.length + (separatePlotPage ? 1 : 0);
+        var pages = [];
+        var n = 1;
+
+        pages.push(reportPageCover(d, n++, TOTAL));
+        pages.push(reportPageClinical(d, n++, TOTAL));
+
+        for (var c = 0; c < imgChunks.length; c++) {
+            var includePlot = (c === imgChunks.length - 1) && !separatePlotPage;
+            pages.push(reportPageImageChunk(d, assets, imgChunks[c], c, imgChunks.length, n++, TOTAL, includePlot));
+        }
+        if (separatePlotPage) {
+            pages.push(reportPagePlotOnly(d, assets, n++, TOTAL));
+        }
+
+        pages.push(reportPageMeasurements(d, assets, n++, TOTAL));
+        pages.push(reportPageRisk(d, assets, n++, TOTAL));
+        pages.push(reportPageSignOff(d, assets, n++, TOTAL, true));
+
         var el = document.createElement('div');
         el.id = 'pdf-report';
         el.innerHTML = pages.join('');
@@ -1493,39 +1570,43 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         return html;
     }
 
-    // ---------------- PAGE 3 — 2. IMAGE DOCUMENTATION & PERIMETER PLOT ----------------
-    function reportPageImages(d, assets, n, total) {
-        var html = pdfPageStart(n, total, false) + pdfHeader(n, total) + pdfSection(2, 'IMAGE DOCUMENTATION & PERIMETER PLOT');
+    // ---------------- IMAGE DOCUMENTATION (1+ pages) ----------------
+    function reportPageImageChunk(d, assets, chunk, chunkIdx, chunkTotal, n, total, includePlot) {
+        var cont = chunkTotal > 1 ? ' <span style="font-weight:600; font-size:10px; text-transform:none;">(continued ' + (chunkIdx + 1) + '/' + chunkTotal + ')</span>' : '';
+        var html = pdfPageStart(n, total, false) + pdfHeader(n, total) + pdfSection(2, 'IMAGE DOCUMENTATION & PERIMETER PLOT' + cont);
 
-        html += '<p class="pdf-intro">Representative planning images captured in the application. Record the source series and cardiac phase for each capture.</p>';
+        if (chunkIdx === 0) {
+            html += '<p class="pdf-intro">Representative planning images captured in the application. Record the source series and cardiac phase for each capture.</p>';
+        }
 
         html += '<div class="pdf-sub">Planning image screen grabs</div><div class="pdf-grabs">';
-        var imgs = d.images && d.images.length ? d.images : [];
-        for (var i = 0; i < imgs.length; i++) {
-            var b = imgs[i];
-            html += '<div class="pdf-grab">' +
-                        '<div class="pdf-grab-title">' + pdfEsc(b.title || ('Image ' + (i + 1))) + '</div>' +
-                        (b.dataUrl
-                            ? '<div class="pdf-grab-img"><img src="' + b.dataUrl + '" alt="' + pdfEsc(b.title) + '"></div>'
-                            : '<div class="pdf-grab-empty">NO IMAGE UPLOADED</div>') +
-                        '<div class="pdf-grab-cap">Source / series / phase: ____________________</div>' +
-                    '</div>';
-        }
-        if (imgs.length === 0) {
-            html += '<div class="pdf-grab"><div class="pdf-grab-title">Screen grab</div><div class="pdf-grab-empty">NO IMAGE UPLOADED</div><div class="pdf-grab-cap">Source / series / phase: ____________________</div></div>';
+        if (chunk.length === 0) {
+            html += renderPdfGrabHtml({ title: 'Screen grab', dataUrl: '', pdfHeight: 168, pdfWidth: 1, pdfSource: '' });
+        } else {
+            for (var i = 0; i < chunk.length; i++) {
+                html += renderPdfGrabHtml(chunk[i]);
+            }
         }
         html += '</div>';
 
-        html += '<div class="pdf-sub">Diameter plot of the anatomy</div>' +
-                '<div class="pdf-plot">' +
-                    (assets.chart ? '<img src="' + assets.chart + '" alt="Dynamic RVOT dimensions plot">' : '<div class="pdf-grab-empty" style="height:120px;">PLOT NOT AVAILABLE</div>') +
-                    '<div class="pdf-plot-cap">Dynamic RVOT / MPA dimensional analysis — Dp / Dsa and mean diameters per plane (Systole &amp; Diastole), as entered in the application.</div>' +
-                '</div>';
-
-        html += '<div class="pdf-note"><b>NOTE</b> &nbsp;Use the diameter plot to show the measured contour and its relationship to the proposed landing zone.</div>';
+        if (includePlot) {
+            html += renderPdfPlotSection(assets);
+        }
 
         html += pdfFooter(n, total) + '</div>';
         return html;
+    }
+
+    function reportPagePlotOnly(d, assets, n, total) {
+        var html = pdfPageStart(n, total, false) + pdfHeader(n, total) + pdfSection(2, 'IMAGE DOCUMENTATION & PERIMETER PLOT (continued)');
+        html += renderPdfPlotSection(assets);
+        html += pdfFooter(n, total) + '</div>';
+        return html;
+    }
+
+    // Legacy wrapper (unused — kept for reference)
+    function reportPageImages(d, assets, n, total) {
+        return reportPageImageChunk(d, assets, d.images || [], 0, 1, n, total, true);
     }
 
     // ---------------- PAGE 4 — 3. CT MEASUREMENTS & SIZING SYNTHESIS ----------------
@@ -1632,8 +1713,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
 
     // ---------------- PAGE 6 — 5. FINAL DECISION & SIGN-OFF ----------------
-    function reportPageSignOff(d, assets, n, total) {
-        var html = pdfPageStart(n, total, true) + pdfHeader(n, total) + pdfSection(5, 'FINAL DECISION & SIGN-OFF');
+    function reportPageSignOff(d, assets, n, total, isLast) {
+        var html = pdfPageStart(n, total, !!isLast) + pdfHeader(n, total) + pdfSection(5, 'FINAL DECISION & SIGN-OFF');
 
         html += '<p class="pdf-intro">Complete this section after the imaging, sizing, risk and procedural reviews have been reconciled.</p>';
 
@@ -1728,17 +1809,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     // --- FUNÇÕES DE IMAGEM DINÂMICA ---
     function initImageBlocks() {
         imageBlocks = [
-            { id: generateImgId(), title: "3D Recon 1", dataUrl: "" },
-            { id: generateImgId(), title: "Sagittal (Systole)", dataUrl: "" },
-            { id: generateImgId(), title: "Axial (Systole)", dataUrl: "" }
+            { id: generateImgId(), title: "3D Recon 1", dataUrl: "", pdfHeight: 168, pdfWidth: 1, pdfSource: "" },
+            { id: generateImgId(), title: "Sagittal (Systole)", dataUrl: "", pdfHeight: 168, pdfWidth: 1, pdfSource: "" },
+            { id: generateImgId(), title: "Axial (Systole)", dataUrl: "", pdfHeight: 168, pdfWidth: 1, pdfSource: "" }
         ];
         renderImageBlocks();
     }
 
     function addImageBlock(title) {
         if (!title || typeof title !== 'string') title = "New Image View";
-        imageBlocks.push({ id: generateImgId(), title: title, dataUrl: "" });
+        imageBlocks.push({ id: generateImgId(), title: title, dataUrl: "", pdfHeight: 168, pdfWidth: 1, pdfSource: "" });
         renderImageBlocks();
+    }
+
+    function updateImageLayout(id, field, value) {
+        var block = imageBlocks.find(function(b) { return b.id === id; });
+        if (!block) return;
+        if (field === 'pdfHeight') block.pdfHeight = Math.max(80, Math.min(420, parseInt(value, 10) || 168));
+        else if (field === 'pdfWidth') block.pdfWidth = parseInt(value, 10) >= 2 ? 2 : 1;
+        else if (field === 'pdfSource') block.pdfSource = String(value || '');
     }
 
     function removeImageBlock(id) {
@@ -1778,8 +1867,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var container = document.getElementById('dynamic-images-container');
         container.innerHTML = '';
         imageBlocks.forEach(function(block) {
+            normalizeImageBlock(block);
             var div = document.createElement('div');
-            div.className = 'input-group';
+            div.className = 'image-block-card';
             div.style.position = 'relative';
             
             var titleInput = document.createElement('input');
@@ -1792,15 +1882,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
             var deleteBtn = document.createElement('button');
             deleteBtn.className = 'btn-delete-row';
-            deleteBtn.style.top = '0';
-            deleteBtn.style.right = '0';
+            deleteBtn.style.top = '8px';
+            deleteBtn.style.right = '8px';
             deleteBtn.innerHTML = '🗑️';
-            deleteBtn.title = 'Remove Block';
+            deleteBtn.title = 'Remove image block';
             deleteBtn.onclick = function() { removeImageBlock(block.id); };
 
             var uploadZone = document.createElement('div');
             uploadZone.className = 'upload-zone';
-            uploadZone.style.height = '120px';
+            uploadZone.style.height = Math.round(block.pdfHeight * 0.55) + 'px';
             uploadZone.onclick = function() { document.getElementById('file_' + block.id).click(); };
 
             var fileInput = document.createElement('input');
@@ -1824,21 +1914,68 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 clearBtn.style.borderRadius = '4px';
                 clearBtn.style.zIndex = '10';
                 clearBtn.innerHTML = 'X';
-                clearBtn.title = 'Clear Image';
+                clearBtn.title = 'Clear image';
                 clearBtn.onclick = function(e) { clearImageBlock(e, block.id); };
 
                 uploadZone.appendChild(img);
                 uploadZone.appendChild(clearBtn);
             } else {
                 var span = document.createElement('span');
-                span.innerHTML = 'Click to Upload';
+                span.innerHTML = 'Click to upload';
                 uploadZone.appendChild(span);
             }
 
             uploadZone.appendChild(fileInput);
+
+            var layout = document.createElement('div');
+            layout.className = 'img-layout-controls';
+
+            var heightLbl = document.createElement('label');
+            heightLbl.innerHTML = 'PDF height: <span id="hval_' + block.id + '">' + block.pdfHeight + '</span> px';
+            var heightRange = document.createElement('input');
+            heightRange.type = 'range';
+            heightRange.min = '80';
+            heightRange.max = '420';
+            heightRange.step = '10';
+            heightRange.value = String(block.pdfHeight);
+            heightRange.oninput = function(e) {
+                updateImageLayout(block.id, 'pdfHeight', e.target.value);
+                document.getElementById('hval_' + block.id).textContent = block.pdfHeight;
+                uploadZone.style.height = Math.round(block.pdfHeight * 0.55) + 'px';
+            };
+            heightLbl.appendChild(heightRange);
+
+            var widthLbl = document.createElement('label');
+            widthLbl.textContent = 'PDF width';
+            var widthSel = document.createElement('select');
+            widthSel.innerHTML = '<option value="1">Half page (2 per row)</option><option value="2">Full page width</option>';
+            widthSel.value = String(block.pdfWidth >= 2 ? 2 : 1);
+            widthSel.onchange = function(e) { updateImageLayout(block.id, 'pdfWidth', e.target.value); };
+            widthLbl.appendChild(widthSel);
+
+            var sourceLbl = document.createElement('label');
+            sourceLbl.textContent = 'Source / series / phase (PDF)';
+            sourceLbl.style.gridColumn = '1 / -1';
+            var sourceInput = document.createElement('input');
+            sourceInput.type = 'text';
+            sourceInput.placeholder = 'e.g. CT 0.5 mm, systole';
+            sourceInput.value = block.pdfSource || '';
+            sourceInput.oninput = function(e) { updateImageLayout(block.id, 'pdfSource', e.target.value); };
+            sourceLbl.appendChild(sourceInput);
+
+            var hint = document.createElement('div');
+            hint.className = 'img-layout-hint';
+            hint.textContent = 'Taller or full-width images use more space. Extra images add pages to the exported PDF automatically.';
+
+            layout.appendChild(heightLbl);
+            layout.appendChild(widthLbl);
+            layout.appendChild(sourceLbl);
+            layout.appendChild(hint);
+
             div.appendChild(titleInput);
             div.appendChild(deleteBtn);
             div.appendChild(uploadZone);
+            div.appendChild(layout);
             container.appendChild(div);
         });
     }

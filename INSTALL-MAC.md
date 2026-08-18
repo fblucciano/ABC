@@ -1,62 +1,82 @@
 # VenusP Planning Report — Mac Installation Guide (Apple Silicon)
 
-This package is **fully self-contained**. The doctor's Mac does **not** need Node.js, Python, a web browser install, Java, or any other software. Everything required to run the app is included in this ZIP.
-
-## What is in the ZIP
-
-| File | Purpose |
-|------|---------|
-| `VenusP-Planning-mac_arm64` | Native application (M1 / M2 / M3) |
-| `resources.neu` | Packed app resources (UI, logic, fonts, images) |
-| `Open-VenusP.command` | Double-click launcher |
-| `INSTALL-MAC.md` | This guide |
-
-**Important:** Keep `resources.neu` in the **same folder** as the application. Do not move or delete it.
+**No extra software is required.** This ZIP is fully self-contained (no Node.js, Python, browser, or Java install).
 
 ---
 
-## Step 1 — Download and unzip
+## Which file to open
+
+After unzipping, you will see these files:
+
+| File | What it is |
+|------|------------|
+| **`Open-VenusP.command`** | **← OPEN THIS FILE** (launcher) |
+| `VenusP-Planning-mac_arm64` | Application binary (do not open directly first) |
+| `resources.neu` | Packed resources (must stay in the same folder) |
+| `INSTALL-MAC.md` | This guide |
+| `README.txt` | Quick start |
+
+### Important
+
+- **Always start with `Open-VenusP.command`**
+- Do **not** double-click `VenusP-Planning-mac_arm64` on first use — macOS will block it
+- Keep `resources.neu` in the **same folder** as the app
+
+---
+
+## Step 1 — Unzip
 
 1. Download `VenusP-Desktop-Mac-AppleSilicon.zip`
-2. Double-click the ZIP to unzip it
-3. Move the folder `VenusP-Desktop-Mac-AppleSilicon` to a permanent location (e.g. **Applications** or **Documents/VenusP**)
+2. Double-click the ZIP to extract the folder `VenusP-Desktop-Mac-AppleSilicon`
+3. Move the folder to a permanent location (e.g. **Documents/VenusP** or **Applications**)
 
 ---
 
 ## Step 2 — First launch (macOS security)
 
-Because this app is distributed outside the Mac App Store, macOS may block it the first time.
+macOS blocks apps that are not from the App Store. You only need to approve **once**.
 
-### Recommended method
+### Method A — Right-click Open (try this first)
 
-1. Open the unzipped folder
-2. **Right-click** (or Control-click) **`Open-VenusP.command`**
-3. Click **Open** in the dialog
-4. If prompted again, click **Open** once more
+1. Open the folder `VenusP-Desktop-Mac-AppleSilicon`
+2. Find **`Open-VenusP.command`**
+3. **Right-click** (or Control-click) on **`Open-VenusP.command`**
+4. Choose **Open** from the menu
+5. In the dialog, click **Open** again
 
-### If macOS still blocks the app
+### Method B — Privacy & Security (if Method A does not work)
 
-1. Open **System Settings** → **Privacy & Security**
-2. Scroll down to the message about `VenusP-Planning` or `Open-VenusP.command`
-3. Click **Open Anyway**
+1. Try Method A once (macOS will block or warn you)
+2. Open **System Settings** (Apple menu  → **System Settings**)
+3. In the left sidebar, click **Privacy & Security**
+4. **Scroll all the way down** to the **Security** section at the bottom of the page
+5. Look for a message such as:
+   - *"`Open-VenusP.command` was blocked because it is from an unidentified developer"*, or
+   - *"`VenusP-Planning-mac_arm64` was blocked..."*
+6. Click **Open Anyway** next to that message
+7. Confirm by clicking **Open Anyway** in the popup
+8. Double-click **`Open-VenusP.command`** again
 
-### Alternative — Terminal (one-time)
+### Method C — Terminal (if A and B fail)
+
+1. Open **Terminal** (Applications → Utilities → Terminal)
+2. Run (replace the path with your folder location):
 
 ```bash
-cd /path/to/VenusP-Desktop-Mac-AppleSilicon
-chmod +x VenusP-Planning-mac_arm64 Open-VenusP.command
+cd ~/Documents/VenusP-Desktop-Mac-AppleSilicon
 xattr -cr .
+chmod +x Open-VenusP.command VenusP-Planning-mac_arm64
 ./Open-VenusP.command
 ```
 
-The `xattr -cr .` command clears the macOS quarantine flag from downloaded files. You only need this once per folder.
+`xattr -cr .` removes the macOS quarantine flag from downloaded files. You only need this once.
 
 ---
 
 ## Step 3 — Log in
 
 - Password: `venus2026`
-- The app works **offline** after installation (no internet required for sizing or PDF export)
+- Works **offline** after installation
 
 ---
 
@@ -64,16 +84,15 @@ The `xattr -cr .` command clears the macOS quarantine flag from downloaded files
 
 1. Open the folder
 2. Double-click **`Open-VenusP.command`**
-3. Enter the case data in the app
-4. Click **Export PDF** to generate the 6-page clinical proforma
+3. Enter case data → click **Export PDF**
 
 ---
 
 ## PDF export
 
-- Fills the VenusP pre-implantation planning proforma from the data entered in the app
-- Includes measurements, morphology, chart, deployment simulation, and valve recommendation
-- Save the PDF from the system print/save dialog
+- Minimum **6 pages** (standard proforma)
+- **Additional pages** are added automatically when you include many images
+- Each image has **PDF layout controls** (height, full/half width) in the app
 
 ---
 
@@ -81,22 +100,19 @@ The `xattr -cr .` command clears the macOS quarantine flag from downloaded files
 
 | Problem | Solution |
 |---------|----------|
-| “App is damaged” or won’t open | Run `xattr -cr .` in the app folder (see Terminal method above) |
-| Blank window after login | Re-download the latest ZIP; keep `resources.neu` next to the app |
-| PDF export fails | Ensure case measurements are entered; try Export PDF again |
-| Permission denied on `.command` | Right-click → Open, or run `chmod +x Open-VenusP.command` |
+| Nothing happens when I double-click | Use **right-click → Open** on `Open-VenusP.command` |
+| “App is damaged” or “cannot be opened” | Run Method C (`xattr -cr .`) in Terminal |
+| Blank screen after login | Re-download the latest ZIP; keep `resources.neu` next to the app |
+| Wrong Mac type | This ZIP is for **Apple Silicon only** (M1/M2/M3). Intel Macs need a different build. |
 
 ---
 
-## Technical requirements
+## Requirements
 
 - Mac with **Apple Silicon** (M1, M2, M3, or newer)
 - **macOS 11 (Big Sur)** or later
-- ~15 MB free disk space
-- **No additional software installation required**
+- ~15 MB disk space
 
 ---
 
-## Support
-
-For clinical use, verify all outputs against the current VenusP-Valve IFU and institutional protocols.
+Verify all clinical outputs against the current VenusP-Valve IFU and institutional protocols.
