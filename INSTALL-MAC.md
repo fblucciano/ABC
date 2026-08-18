@@ -10,8 +10,7 @@ After unzipping, you will see these files:
 
 | File | What it is |
 |------|------------|
-| **`Dr-Phuoc.html`** | **← START HERE** (open in browser — simple visual guide) |
-| **`Open-VenusP.command`** | Launcher to open the app |
+| **`Open-VenusP.command`** | **← OPEN THIS FILE** (launcher) |
 | `VenusP-Planning-mac_arm64` | Application binary (do not open directly first) |
 | `resources.neu` | Packed resources (must stay in the same folder) |
 | `INSTALL-MAC.md` | This guide |

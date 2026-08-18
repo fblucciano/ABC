@@ -1,11 +1,6 @@
 VenusP Planning Report — Mac Apple Silicon
 ============================================
 
-START HERE (easiest)
---------------------
-→ Double-click "Dr-Phuoc.html" in your browser
-  (simple picture guide for Dr. Phuoc)
-
 QUICK START
 -----------
 1. Unzip this folder
@@ -13,17 +8,20 @@ QUICK START
 3. If blocked: System Settings → Privacy & Security → scroll down → Open Anyway
 4. Password: venus2026
 
-WHICH FILE TO OPEN THE APP?
----------------------------
+WHICH FILE TO OPEN?
+-------------------
 → Open-VenusP.command   (use this launcher)
   Do NOT double-click VenusP-Planning-mac_arm64 first.
 
 FILES
 -----
-Dr-Phuoc.html                ← Open this first (simple guide)
-Open-VenusP.command          App launcher
+Open-VenusP.command          Launcher (open this)
 VenusP-Planning-mac_arm64    Application
 resources.neu                Required (keep in same folder)
 INSTALL-MAC.md               Full guide
 
 NO EXTRA SOFTWARE NEEDED.
+
+HTML VERSION (simpler — no install)
+-----------------------------------
+Use Dr-Phuoc-Mac.zip instead: just double-click Dr-Phuoc.html in a browser.

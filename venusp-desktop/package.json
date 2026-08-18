@@ -8,6 +8,8 @@
     "build:desktop": "npm run build:protected && cd ../VenusP-Desktop && ../venusp-desktop/node_modules/.bin/neu build --release",
     "package:zips": "node scripts/package-zips.js",
     "package:mac-silicon": "node scripts/package-mac-silicon.js",
+    "build:dr-phuoc": "node scripts/build-dr-phuoc-html.js",
+    "package:dr-phuoc-mac": "npm run build:dr-phuoc && node scripts/package-dr-phuoc-mac.js",
     "build:mac-silicon": "npm run build:desktop && npm run package:mac-silicon",
     "build:all": "npm run build:desktop && npm run package:zips",
     "run:desktop": "npm run build:protected && cd ../VenusP-Desktop && ../venusp-desktop/node_modules/.bin/neu run"

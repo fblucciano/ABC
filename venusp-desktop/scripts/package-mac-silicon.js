@@ -8,7 +8,6 @@ const WORKSPACE = path.join(__dirname, '../..');
 const DIST = path.join(WORKSPACE, 'VenusP-Desktop', 'dist', 'VenusP-Planning');
 const DOC = path.join(WORKSPACE, 'INSTALL-MAC.md');
 const README = path.join(WORKSPACE, 'README.txt');
-const DR_PHUOC = path.join(WORKSPACE, 'Dr-Phuoc.html');
 const BIN = 'VenusP-Planning-mac_arm64';
 const FOLDER = 'VenusP-Desktop-Mac-AppleSilicon';
 
@@ -25,7 +24,6 @@ fs.copyFileSync(path.join(DIST, BIN), path.join(tmp, BIN));
 fs.copyFileSync(path.join(DIST, 'resources.neu'), path.join(tmp, 'resources.neu'));
 fs.copyFileSync(DOC, path.join(tmp, 'INSTALL-MAC.md'));
 if (fs.existsSync(README)) fs.copyFileSync(README, path.join(tmp, 'README.txt'));
-if (fs.existsSync(DR_PHUOC)) fs.copyFileSync(DR_PHUOC, path.join(tmp, 'Dr-Phuoc.html'));
 
 const launcher = [
   '#!/bin/bash',
