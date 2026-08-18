@@ -4,12 +4,12 @@ Use these **direct links**. If the browser opens a page instead of downloading: 
 
 ---
 
-## Dr. Phuoc — HTML app (Mac, no install) — **LATEST**
+## Dr. Phuoc — HTML app (Mac, no install) — **LATEST v3**
 
 | File | Direct download |
 |------|-----------------|
-| **ZIP (recommended)** | [Dr-Phuoc-Mac.zip](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v2-3d/Dr-Phuoc-Mac.zip) |
-| **HTML only** | [Dr-Phuoc.html](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v2-3d/Dr-Phuoc.html) |
+| **ZIP (recommended)** | [Dr-Phuoc-Mac.zip](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v3-fix/Dr-Phuoc-Mac.zip) |
+| **HTML only** | [Dr-Phuoc.html](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v3-fix/Dr-Phuoc.html) |
 
 **Password:** `venus2026`
 
@@ -19,7 +19,7 @@ Use these **direct links**. If the browser opens a page instead of downloading: 
 3. Double-click **`Dr-Phuoc.html`** or **`Open-Dr-Phuoc.command`**
 4. Works offline in Safari or Chrome — nothing to install
 
-**Release page (all files):** https://github.com/fblucciano/ABC/releases/tag/dr-phuoc-v2-3d
+**Release page (all files):** https://github.com/fblucciano/ABC/releases/tag/dr-phuoc-v3-fix
 
 ---
 

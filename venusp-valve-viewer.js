@@ -105,7 +105,9 @@
         var stJ = getStJunctionDist(tablePlanes);
         var bif = getBifurcationDist(tablePlanes);
         switch (landmark) {
-            case 'trans_annular': return valvarDist + 3;
+            case 'supra_annular':
+            case 'trans_annular':
+                return valvarDist;
             case 'st_junction': return stJ;
             case 'bifurcation': return bif;
             case 'annulus':
@@ -183,34 +185,20 @@
         ctx.restore();
 
         var yMid = layout.yCenter || ((layout.yStraightTop + layout.yStraightBottom) / 2);
-        ctx.save();
-        ctx.strokeStyle = 'rgba(100, 72, 252, 0.95)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        ctx.moveTo(centerX - rs - 32, yMid);
-        ctx.lineTo(centerX + rs + 32, yMid);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = '#6448FC';
-        ctx.beginPath();
-        ctx.arc(centerX, yMid, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.font = 'bold 11px "Space Mono", monospace';
-        ctx.textAlign = 'left';
-        global.drawStrokeText(ctx, 'LANDMARK (cylinder centre)', centerX + rs + 38, yMid + 4, '#6448FC', '#FFFFFF', 4);
-        ctx.restore();
-
         if (view === 'deploy') {
             ctx.save();
-            ctx.strokeStyle = 'rgba(16, 185, 129, 0.9)';
+            ctx.strokeStyle = 'rgba(100, 72, 252, 0.75)';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([5, 4]);
             ctx.beginPath();
-            ctx.moveTo(centerX - rs - 20, yMid);
-            ctx.lineTo(centerX + rs + 20, yMid);
+            ctx.moveTo(centerX - rs - 28, yMid);
+            ctx.lineTo(centerX + rs + 28, yMid);
             ctx.stroke();
             ctx.setLineDash([]);
+            ctx.fillStyle = '#6448FC';
+            ctx.beginPath();
+            ctx.arc(centerX, yMid, 4, 0, Math.PI * 2);
+            ctx.fill();
             ctx.restore();
         }
     };
@@ -292,6 +280,164 @@
             off.addEventListener('input', global.onValveViewerUIChange);
         }
         bindCanvasValveDrag();
+        bindPatient3DDrag();
     };
+
+    var patient3d = { rotY: 0.62, drag: false, lastX: 0 };
+
+    function isoProject(x, y, z, rotY) {
+        var c = Math.cos(rotY), s = Math.sin(rotY);
+        return { x: x * c - z * s, y: y, z: x * s + z * c };
+    }
+
+    global.showCanvasPanels = function (view) {
+        var is3d = view === 'patient3d';
+        var dep = document.getElementById('deploymentCanvas');
+        var p3d = document.getElementById('patient3dCanvas');
+        if (dep) dep.style.display = is3d ? 'none' : 'block';
+        if (p3d) p3d.style.display = is3d ? 'block' : 'none';
+    };
+
+    global.drawPatient3DCanvas = function (tablePlanes, phase, sku, offsetMm, landmark) {
+        var canvas = document.getElementById('patient3dCanvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#f4f6f8';
+        ctx.fillRect(0, 0, w, h);
+
+        if (!tablePlanes || tablePlanes.length < 2) {
+            ctx.fillStyle = '#171434';
+            ctx.font = '14px "Space Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('Enter measurement planes to view 3D anatomy', w / 2, h / 2);
+            return;
+        }
+
+        var scale = 4.1;
+        var cx = w * 0.5, cy = h * 0.2;
+        var rotY = patient3d.rotY;
+        var pref = phase === 'diastole' ? 'd' : 's';
+        var stJ = getStJunctionDist(tablePlanes);
+        var bif = getBifurcationDist(tablePlanes);
+        var slices = [];
+
+        for (var i = 0; i < tablePlanes.length; i++) {
+            var p = tablePlanes[i];
+            var adj = getPhaseAdjustedDist(p.dist, phase, stJ, bif);
+            var r = ((p[pref + '1'] + p[pref + '2']) / 2) * scale * 0.5;
+            var pos = isoProject(0, adj * scale, 0, rotY);
+            slices.push({ r: r, x: cx + pos.x, y: cy + pos.y, z: pos.z });
+        }
+        slices.sort(function (a, b) { return a.z - b.z; });
+
+        for (var j = 0; j < slices.length; j++) {
+            var sl = slices[j];
+            var depth = 0.5 + 0.5 * Math.max(0, Math.min(1, (sl.z + 60) / 120));
+            ctx.strokeStyle = 'rgba(75, 85, 99, ' + (0.3 + depth * 0.5) + ')';
+            ctx.fillStyle = 'rgba(234, 236, 239, ' + (0.15 + depth * 0.2) + ')';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.ellipse(sl.x, sl.y, sl.r, sl.r * 0.36, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (var k = 0; k < slices.length; k++) {
+            if (k === 0) ctx.moveTo(slices[k].x, slices[k].y);
+            else ctx.lineTo(slices[k].x, slices[k].y);
+        }
+        ctx.stroke();
+
+        var straightOD = parseInt(sku.split('-')[0].replace('P', ''), 10) || 28;
+        var stentLen = parseInt(sku.split('-')[1], 10) || 25;
+        var landDist = global.getLandmarkAnchorDist(tablePlanes, landmark) + (offsetMm || 0);
+        var vCenter = landDist * scale;
+        var rW = straightOD * scale * 0.5;
+        var rF = (straightOD + 10) * scale * 0.5;
+        var hStent = stentLen * scale;
+        var hFlareO = FLARE_OUT_MM * scale;
+        var hFlareI = FLARE_IN_MM * scale;
+        var yTop = vCenter - hStent / 2 - hFlareO;
+        var yBot = vCenter + hStent / 2 + hFlareI;
+
+        function valveRadiusAt(y) {
+            if (y < vCenter - hStent / 2) {
+                var u = (vCenter - hStent / 2 - y) / hFlareO;
+                return rW + (rF - rW) * Math.min(1, Math.max(0, u));
+            }
+            if (y > vCenter + hStent / 2) {
+                var v = (y - vCenter - hStent / 2) / hFlareI;
+                return rW + (rF - rW) * Math.min(1, Math.max(0, v));
+            }
+            return rW;
+        }
+
+        function drawRing(y, r, color, lw) {
+            var pos = isoProject(0, y, 0, rotY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lw;
+            ctx.beginPath();
+            ctx.ellipse(cx + pos.x, cy + pos.y, r, r * 0.36, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        var ringCount = 14;
+        for (var ri = 0; ri <= ringCount; ri++) {
+            var t = ri / ringCount;
+            var yy = yTop + t * (yBot - yTop);
+            drawRing(yy, valveRadiusAt(yy), '#e68a2e', ri % 3 === 0 ? 2 : 1.2);
+        }
+
+        ctx.strokeStyle = 'rgba(23, 20, 52, 0.55)';
+        ctx.lineWidth = 0.9;
+        for (var di = 0; di < 8; di++) {
+            var a = (di / 8) * Math.PI * 2;
+            var p1 = isoProject(Math.cos(a) * rW * 0.85, vCenter - hStent / 2, Math.sin(a) * rW * 0.85, rotY);
+            var p2 = isoProject(Math.cos(a) * rW * 0.85, vCenter + hStent / 2, Math.sin(a) * rW * 0.85, rotY);
+            ctx.beginPath();
+            ctx.moveTo(cx + p1.x, cy + p1.y);
+            ctx.lineTo(cx + p2.x, cy + p2.y);
+            ctx.stroke();
+        }
+
+        var lm = isoProject(0, vCenter, 0, rotY);
+        ctx.fillStyle = '#6448FC';
+        ctx.beginPath();
+        ctx.arc(cx + lm.x, cy + lm.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#171434';
+        ctx.font = '11px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Drag to rotate patient anatomy · ' + phase.toUpperCase(), w / 2, h - 14);
+    };
+
+    function bindPatient3DDrag() {
+        var canvas = document.getElementById('patient3dCanvas');
+        if (!canvas || canvas.dataset.p3dBound === '1') return;
+        canvas.dataset.p3dBound = '1';
+        canvas.addEventListener('mousedown', function (e) {
+            patient3d.drag = true;
+            patient3d.lastX = e.clientX;
+            canvas.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+        window.addEventListener('mousemove', function (e) {
+            if (!patient3d.drag) return;
+            patient3d.rotY += (e.clientX - patient3d.lastX) * 0.012;
+            patient3d.lastX = e.clientX;
+            if (typeof global.drawRVOTCanvas === 'function') global.drawRVOTCanvas();
+        });
+        window.addEventListener('mouseup', function () {
+            patient3d.drag = false;
+            var c = document.getElementById('patient3dCanvas');
+            if (c) c.style.cursor = 'grab';
+        });
+        canvas.addEventListener('mouseenter', function () { canvas.style.cursor = 'grab'; });
+    }
 
 })(typeof window !== 'undefined' ? window : this);

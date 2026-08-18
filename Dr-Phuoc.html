@@ -616,6 +616,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
         .preview-container { background: #FFFFFF; border: 1px solid var(--input-border); border-radius: 0 0 10px 10px; padding: 0; text-align: center; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative; border-top: none;}
         #deploymentCanvas { background: #FFFFFF; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: block; touch-action: none; }
+        #patient3dCanvas { background: #F4F6F8; width: 100%; max-width: 880px; height: auto; border-radius: 0 0 10px 10px; margin: 0 auto; display: none; touch-action: none; cursor: grab; }
+        #panel-rec { max-width: 760px; margin-left: auto; margin-right: auto; width: 100%; }
+        .length-row .length-phase { font-size: 10px; font-weight: 800; color: var(--venus-blue); text-transform: uppercase; letter-spacing: 0.4px; }
+        .length-row .length-phase.systole { color: #D50000; }
+        .length-row .length-phase.diastole { color: #2979FF; }
         .deployment-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; padding: 12px; background: #F8F9FA; border-radius: 10px; border: 1px solid var(--panel-border); }
         .deployment-controls .input-group label { min-height: 20px; font-size: 10px; }
         .deployment-controls input[type="range"] { width: 100%; accent-color: var(--venus-blue); }
@@ -910,14 +915,28 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <tbody>
                     <tr class="length-row">
                         <td colspan="2" class="length-title">
-                            <input type="text" id="len-name" class="row-name-input" style="width: 250px; color: var(--text-main); padding-left: 0; font-family: 'Inter', sans-serif;" value="LENGTH (valve-PA bifurcation start/end)" onchange="updateUI()">
+                            <input type="text" id="len-name" class="row-name-input" style="width: 250px; color: var(--text-main); padding-left: 0; font-family: 'Inter', sans-serif;" value="LENGTH (valve–PA bifurcation start/end)" onchange="updateUI()">
+                            <div class="length-phase systole" style="margin-top:4px;">Systole</div>
                         </td>
                         <td colspan="3">
                             <div class="length-inputs">
                                 <span>Start:</span>
-                                <input type="number" class="cmr-input" id="len-start" value="0" style="width: 60px;" onchange="updateUI()">
+                                <input type="number" class="cmr-input" id="len-start-s" value="0" style="width: 60px;" onchange="updateUI()">
                                 <span>End:</span>
-                                <input type="number" class="cmr-input" id="len-end" value="35" style="width: 60px;" onchange="updateUI()">
+                                <input type="number" class="cmr-input" id="len-end-s" value="35" style="width: 60px;" onchange="updateUI()">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="length-row">
+                        <td colspan="2" class="length-title">
+                            <div class="length-phase diastole">Diastole</div>
+                        </td>
+                        <td colspan="3">
+                            <div class="length-inputs">
+                                <span>Start:</span>
+                                <input type="number" class="cmr-input" id="len-start-d" value="0" style="width: 60px;" onchange="updateUI()">
+                                <span>End:</span>
+                                <input type="number" class="cmr-input" id="len-end-d" value="38" style="width: 60px;" onchange="updateUI()">
                             </div>
                         </td>
                     </tr>
@@ -946,12 +965,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <div style="margin-top: 15px; border-radius: 10px; overflow: hidden; border: 1px solid var(--panel-border);">
             <div class="deployment-controls">
                 <div class="input-group text-area-group">
-                    <label>Landing landmark (Dr. Phuoc)</label>
+                    <label>Landing position</label>
                     <select id="in-landmark" onchange="onValveViewerUIChange()">
-                        <option value="annulus">Annulus (default)</option>
-                        <option value="trans_annular">Trans-annular / higher</option>
-                        <option value="st_junction">ST junction (~+10 mm)</option>
-                        <option value="bifurcation">Bifurcation / pyramidal</option>
+                        <option value="annulus">Annulus</option>
+                        <option value="supra_annular">Supra-annular (above annulus)</option>
+                        <option value="st_junction">ST junction (reference)</option>
+                        <option value="bifurcation">Bifurcation (Type I pyramidal)</option>
                     </select>
                 </div>
                 <div class="input-group text-area-group">
@@ -972,6 +991,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <button class="tab-btn active" id="tab-anatomy" onclick="setCanvasView('anatomy')">1. Anatomy</button>
                 <button class="tab-btn" id="tab-valve" onclick="setCanvasView('valve')">2. Valve Tech</button>
                 <button class="tab-btn" id="tab-deploy" onclick="setCanvasView('deploy')">3. Deployment</button>
+                <button class="tab-btn" id="tab-patient3d" onclick="setCanvasView('patient3d')">4. Patient 3D</button>
             </div>
             
             <div class="preview-container">
@@ -984,9 +1004,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     </label>
                 </div>
                 <canvas id="deploymentCanvas" width="740" height="600"></canvas>
+                <canvas id="patient3dCanvas" width="740" height="600"></canvas>
             </div>
             <div id="preview-caption" style="font-size: 14px; color: var(--text-grey); font-family: 'Space Mono', monospace; padding: 12px; font-weight: bold; background: #FFFFFF; border-top: 1px solid var(--panel-border); text-align: center;">
-                Landmark at <b>cylinder centre</b> · Drag valve or use slider · Tabs 2–3 for technical view
+                Landmark at <b>stent centre</b> · Drag valve (tabs 2–3) or rotate anatomy (tab 4)
             </div>
         </div>
 
@@ -1263,7 +1284,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var stJ = getStJunctionDist(tablePlanes);
         var bif = getBifurcationDist(tablePlanes);
         switch (landmark) {
-            case 'trans_annular': return valvarDist + 3;
+            case 'supra_annular':
+            case 'trans_annular':
+                return valvarDist;
             case 'st_junction': return stJ;
             case 'bifurcation': return bif;
             case 'annulus':
@@ -1341,34 +1364,20 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         ctx.restore();
 
         var yMid = layout.yCenter || ((layout.yStraightTop + layout.yStraightBottom) / 2);
-        ctx.save();
-        ctx.strokeStyle = 'rgba(100, 72, 252, 0.95)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        ctx.moveTo(centerX - rs - 32, yMid);
-        ctx.lineTo(centerX + rs + 32, yMid);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = '#6448FC';
-        ctx.beginPath();
-        ctx.arc(centerX, yMid, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.font = 'bold 11px "Space Mono", monospace';
-        ctx.textAlign = 'left';
-        global.drawStrokeText(ctx, 'LANDMARK (cylinder centre)', centerX + rs + 38, yMid + 4, '#6448FC', '#FFFFFF', 4);
-        ctx.restore();
-
         if (view === 'deploy') {
             ctx.save();
-            ctx.strokeStyle = 'rgba(16, 185, 129, 0.9)';
+            ctx.strokeStyle = 'rgba(100, 72, 252, 0.75)';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([5, 4]);
             ctx.beginPath();
-            ctx.moveTo(centerX - rs - 20, yMid);
-            ctx.lineTo(centerX + rs + 20, yMid);
+            ctx.moveTo(centerX - rs - 28, yMid);
+            ctx.lineTo(centerX + rs + 28, yMid);
             ctx.stroke();
             ctx.setLineDash([]);
+            ctx.fillStyle = '#6448FC';
+            ctx.beginPath();
+            ctx.arc(centerX, yMid, 4, 0, Math.PI * 2);
+            ctx.fill();
             ctx.restore();
         }
     };
@@ -1450,7 +1459,165 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             off.addEventListener('input', global.onValveViewerUIChange);
         }
         bindCanvasValveDrag();
+        bindPatient3DDrag();
     };
+
+    var patient3d = { rotY: 0.62, drag: false, lastX: 0 };
+
+    function isoProject(x, y, z, rotY) {
+        var c = Math.cos(rotY), s = Math.sin(rotY);
+        return { x: x * c - z * s, y: y, z: x * s + z * c };
+    }
+
+    global.showCanvasPanels = function (view) {
+        var is3d = view === 'patient3d';
+        var dep = document.getElementById('deploymentCanvas');
+        var p3d = document.getElementById('patient3dCanvas');
+        if (dep) dep.style.display = is3d ? 'none' : 'block';
+        if (p3d) p3d.style.display = is3d ? 'block' : 'none';
+    };
+
+    global.drawPatient3DCanvas = function (tablePlanes, phase, sku, offsetMm, landmark) {
+        var canvas = document.getElementById('patient3dCanvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width, h = canvas.height;
+        ctx.fillStyle = '#f4f6f8';
+        ctx.fillRect(0, 0, w, h);
+
+        if (!tablePlanes || tablePlanes.length < 2) {
+            ctx.fillStyle = '#171434';
+            ctx.font = '14px "Space Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('Enter measurement planes to view 3D anatomy', w / 2, h / 2);
+            return;
+        }
+
+        var scale = 4.1;
+        var cx = w * 0.5, cy = h * 0.2;
+        var rotY = patient3d.rotY;
+        var pref = phase === 'diastole' ? 'd' : 's';
+        var stJ = getStJunctionDist(tablePlanes);
+        var bif = getBifurcationDist(tablePlanes);
+        var slices = [];
+
+        for (var i = 0; i < tablePlanes.length; i++) {
+            var p = tablePlanes[i];
+            var adj = getPhaseAdjustedDist(p.dist, phase, stJ, bif);
+            var r = ((p[pref + '1'] + p[pref + '2']) / 2) * scale * 0.5;
+            var pos = isoProject(0, adj * scale, 0, rotY);
+            slices.push({ r: r, x: cx + pos.x, y: cy + pos.y, z: pos.z });
+        }
+        slices.sort(function (a, b) { return a.z - b.z; });
+
+        for (var j = 0; j < slices.length; j++) {
+            var sl = slices[j];
+            var depth = 0.5 + 0.5 * Math.max(0, Math.min(1, (sl.z + 60) / 120));
+            ctx.strokeStyle = 'rgba(75, 85, 99, ' + (0.3 + depth * 0.5) + ')';
+            ctx.fillStyle = 'rgba(234, 236, 239, ' + (0.15 + depth * 0.2) + ')';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.ellipse(sl.x, sl.y, sl.r, sl.r * 0.36, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (var k = 0; k < slices.length; k++) {
+            if (k === 0) ctx.moveTo(slices[k].x, slices[k].y);
+            else ctx.lineTo(slices[k].x, slices[k].y);
+        }
+        ctx.stroke();
+
+        var straightOD = parseInt(sku.split('-')[0].replace('P', ''), 10) || 28;
+        var stentLen = parseInt(sku.split('-')[1], 10) || 25;
+        var landDist = global.getLandmarkAnchorDist(tablePlanes, landmark) + (offsetMm || 0);
+        var vCenter = landDist * scale;
+        var rW = straightOD * scale * 0.5;
+        var rF = (straightOD + 10) * scale * 0.5;
+        var hStent = stentLen * scale;
+        var hFlareO = FLARE_OUT_MM * scale;
+        var hFlareI = FLARE_IN_MM * scale;
+        var yTop = vCenter - hStent / 2 - hFlareO;
+        var yBot = vCenter + hStent / 2 + hFlareI;
+
+        function valveRadiusAt(y) {
+            if (y < vCenter - hStent / 2) {
+                var u = (vCenter - hStent / 2 - y) / hFlareO;
+                return rW + (rF - rW) * Math.min(1, Math.max(0, u));
+            }
+            if (y > vCenter + hStent / 2) {
+                var v = (y - vCenter - hStent / 2) / hFlareI;
+                return rW + (rF - rW) * Math.min(1, Math.max(0, v));
+            }
+            return rW;
+        }
+
+        function drawRing(y, r, color, lw) {
+            var pos = isoProject(0, y, 0, rotY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lw;
+            ctx.beginPath();
+            ctx.ellipse(cx + pos.x, cy + pos.y, r, r * 0.36, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        var ringCount = 14;
+        for (var ri = 0; ri <= ringCount; ri++) {
+            var t = ri / ringCount;
+            var yy = yTop + t * (yBot - yTop);
+            drawRing(yy, valveRadiusAt(yy), '#e68a2e', ri % 3 === 0 ? 2 : 1.2);
+        }
+
+        ctx.strokeStyle = 'rgba(23, 20, 52, 0.55)';
+        ctx.lineWidth = 0.9;
+        for (var di = 0; di < 8; di++) {
+            var a = (di / 8) * Math.PI * 2;
+            var p1 = isoProject(Math.cos(a) * rW * 0.85, vCenter - hStent / 2, Math.sin(a) * rW * 0.85, rotY);
+            var p2 = isoProject(Math.cos(a) * rW * 0.85, vCenter + hStent / 2, Math.sin(a) * rW * 0.85, rotY);
+            ctx.beginPath();
+            ctx.moveTo(cx + p1.x, cy + p1.y);
+            ctx.lineTo(cx + p2.x, cy + p2.y);
+            ctx.stroke();
+        }
+
+        var lm = isoProject(0, vCenter, 0, rotY);
+        ctx.fillStyle = '#6448FC';
+        ctx.beginPath();
+        ctx.arc(cx + lm.x, cy + lm.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#171434';
+        ctx.font = '11px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Drag to rotate patient anatomy · ' + phase.toUpperCase(), w / 2, h - 14);
+    };
+
+    function bindPatient3DDrag() {
+        var canvas = document.getElementById('patient3dCanvas');
+        if (!canvas || canvas.dataset.p3dBound === '1') return;
+        canvas.dataset.p3dBound = '1';
+        canvas.addEventListener('mousedown', function (e) {
+            patient3d.drag = true;
+            patient3d.lastX = e.clientX;
+            canvas.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+        window.addEventListener('mousemove', function (e) {
+            if (!patient3d.drag) return;
+            patient3d.rotY += (e.clientX - patient3d.lastX) * 0.012;
+            patient3d.lastX = e.clientX;
+            if (typeof global.drawRVOTCanvas === 'function') global.drawRVOTCanvas();
+        });
+        window.addEventListener('mouseup', function () {
+            patient3d.drag = false;
+            var c = document.getElementById('patient3dCanvas');
+            if (c) c.style.cursor = 'grab';
+        });
+        canvas.addEventListener('mouseenter', function () { canvas.style.cursor = 'grab'; });
+    }
 
 })(typeof window !== 'undefined' ? window : this);
 
@@ -1461,6 +1628,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     window.currentCanvasView = currentCanvasView; 
     var cmrChart;
     var imageBlocks = [];
+
+    var LENGTH_E_MAP = { "P28-25": 53, "P28-30": 60, "P30-25": 54, "P30-30": 60, "P32-25": 58, "P32-30": 65, "P34-25": 62, "P34-30": 67, "P36-25": 63, "P36-30": 67 };
+
+    function getMpaLengthInputs(phase) {
+        var suf = (phase === 'diastole') ? 'd' : 's';
+        var elStart = document.getElementById('len-start-' + suf);
+        var elEnd = document.getElementById('len-end-' + suf);
+        var lStart = (elStart && elStart.value !== '') ? parseFloat(elStart.value) : 0;
+        var lEnd = (elEnd && elEnd.value !== '') ? parseFloat(elEnd.value) : (phase === 'diastole' ? 38 : 35);
+        var cmrLen = (lEnd > lStart) ? (lEnd - lStart) : lEnd;
+        return { lStart: lStart, lEnd: lEnd, cmrLen: cmrLen };
+    }
+
+    function getActiveCardiacPhase() {
+        var phaseEl = document.querySelector('input[name="cardiac_phase"]:checked');
+        return phaseEl ? phaseEl.value : 'systole';
+    }
 
     var tablePlanes = [
         { id: generateId(), name: "Subvalvar", dist: -10, s1: 32, s2: 32, d1: 33, d2: 33, isFixed: false },
@@ -1573,9 +1757,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     // Captura o gráfico e as 3 vistas do canvas (anatomy / valve / deploy)
     function captureReportAssets() {
-        var assets = { chart: '', anatomy: '', valve: '', deploy: '' };
+        var assets = { chart: '', anatomy: '', valve: '', deploy: '', patient3d: '' };
         try { if (cmrChart) assets.chart = cmrChart.toBase64Image(); } catch (e) { console.warn(e); }
         var canvas = document.getElementById('deploymentCanvas');
+        var p3dCanvas = document.getElementById('patient3dCanvas');
         if (canvas) {
             var savedView = currentCanvasView;
             ['anatomy', 'valve', 'deploy'].forEach(function(v) {
@@ -1585,6 +1770,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     assets[v] = canvas.toDataURL('image/png');
                 } catch (e) { console.warn(e); }
             });
+            try {
+                currentCanvasView = 'patient3d';
+                drawRVOTCanvas();
+                if (p3dCanvas) assets.patient3d = p3dCanvas.toDataURL('image/png');
+            } catch (e) { console.warn(e); }
             currentCanvasView = savedView;
             drawRVOTCanvas();
         }
@@ -1603,13 +1793,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var paLabels = { no_issue: 'No issue', lpa_folding: 'Folding of LPA on top of RPA', bifurcation_folding: 'Bifurcation folding', pa_stenosis: 'PA stenosis' };
         var paKey = radioVal('pa_anatomy') || 'no_issue';
 
-        var lenStart = parseFloat(v('len-start')) || 0;
-        var lenEnd = parseFloat(v('len-end')) || 0;
-        var cmrLen = (lenEnd > lenStart) ? (lenEnd - lenStart) : lenEnd;
+        var lenSystole = getMpaLengthInputs('systole');
+        var lenDiastole = getMpaLengthInputs('diastole');
+        var phase = getActiveCardiacPhase();
+        var activeLenInputs = phase === 'diastole' ? lenDiastole : lenSystole;
+        var lenStart = activeLenInputs.lStart;
+        var lenEnd = activeLenInputs.lEnd;
+        var cmrLen = activeLenInputs.cmrLen;
 
         var morphKey = v('cmr-morph-select') || 'type2';
-        var phaseEl = document.querySelector('input[name="cardiac_phase"]:checked');
-        var phase = phaseEl ? phaseEl.value : 'systole';
 
         var sku = t('res-sku') || 'P28-25';
         var straightOD = parseInt(sku.split('-')[0].replace('P', '')) || 28;
@@ -1664,6 +1856,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             lenStart: lenStart,
             lenEnd: lenEnd,
             cmrLen: cmrLen,
+            lenSystole: lenSystole,
+            lenDiastole: lenDiastole,
             virtualWaist: virtualWaist,
             predictedSku: v('cmr-theo-sku') || sku,
             balloonWaist: balloonWaist,
@@ -1964,15 +2158,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                     '</tr>';
         }
         html += '<tr>' +
-                    '<td class="lvl" colspan="2">' + pdfEsc(d.lenName) + '</td>' +
-                    '<td class="txt" colspan="6" style="text-align:center;">Start: ' + d.lenStart + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; End: ' + d.lenEnd + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; Length: <b>' + d.cmrLen + ' mm</b></td>' +
+                    '<td class="lvl" colspan="2">' + pdfEsc(d.lenName) + ' (Systole)</td>' +
+                    '<td class="txt" colspan="6" style="text-align:center;">Start: ' + d.lenSystole.lStart + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; End: ' + d.lenSystole.lEnd + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; Length: <b>' + d.lenSystole.cmrLen + ' mm</b></td>' +
+                '</tr>';
+        html += '<tr>' +
+                    '<td class="lvl" colspan="2">' + pdfEsc(d.lenName) + ' (Diastole)</td>' +
+                    '<td class="txt" colspan="6" style="text-align:center;">Start: ' + d.lenDiastole.lStart + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; End: ' + d.lenDiastole.lEnd + ' mm &nbsp;&nbsp;&bull;&nbsp;&nbsp; Length: <b>' + d.lenDiastole.cmrLen + ' mm</b></td>' +
                 '</tr>';
         html += '</tbody></table>';
 
         html += '<div class="pdf-cards">' +
                     '<div class="pdf-card"><div class="pdf-card-t">Predicted morphology</div><div class="pdf-card-v" style="font-size:10.5px;">' + pdfEsc(d.morphName) + '</div><div class="pdf-card-s">Incidence: ' + d.morphIncidence + '</div></div>' +
                     '<div class="pdf-card"><div class="pdf-card-t">CT/CMR virtual waist</div><div class="pdf-card-v">' + (isNaN(d.virtualWaist) ? '--' : d.virtualWaist.toFixed(1) + ' mm') + '</div><div class="pdf-card-s">Mean of Dp/Dsa (S+D)</div></div>' +
-                    '<div class="pdf-card"><div class="pdf-card-t">CT/CMR MPA length</div><div class="pdf-card-v">' + (d.cmrLen > 0 ? d.cmrLen + ' mm' : '--') + '</div><div class="pdf-card-s">' + pdfEsc(d.lenName) + '</div></div>' +
+                    '<div class="pdf-card"><div class="pdf-card-t">CT/CMR MPA length</div><div class="pdf-card-v">S: ' + (d.lenSystole.cmrLen > 0 ? d.lenSystole.cmrLen + ' mm' : '--') + ' · D: ' + (d.lenDiastole.cmrLen > 0 ? d.lenDiastole.cmrLen + ' mm' : '--') + '</div><div class="pdf-card-s">' + pdfEsc(d.lenName) + '</div></div>' +
                     '<div class="pdf-card hl"><div class="pdf-card-t">Predicted valve (CT/CMR)</div><div class="pdf-card-v">' + pdfEsc(d.predictedSku) + '</div><div class="pdf-card-s">Pre-balloon estimate</div></div>' +
                 '</div>';
 
@@ -2128,8 +2326,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         ];
         
         document.getElementById('len-name').value = "LENGTH (valve-PA bifurcation start/end)";
-        document.getElementById('len-start').value = "0";
-        document.getElementById('len-end').value = "35";
+        document.getElementById('len-start-s').value = "0";
+        document.getElementById('len-end-s').value = "35";
+        document.getElementById('len-start-d').value = "0";
+        document.getElementById('len-end-d').value = "38";
 
         renderTable();
         initImageBlocks(); 
@@ -2477,14 +2677,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         if(morphSel) morphSel.value = morphType; 
         updateMorphUI();
 
-        var elLStart = document.getElementById('len-start'); 
-        var lStart = (elLStart && elLStart.value !== '') ? parseFloat(elLStart.value) : 0; 
-        var elLEnd = document.getElementById('len-end'); 
-        var lEnd = (elLEnd && elLEnd.value !== '') ? parseFloat(elLEnd.value) : 0;
-        
+        var lenS = getMpaLengthInputs('systole');
+        var lenD = getMpaLengthInputs('diastole');
         var resLength = document.getElementById('cmr-mpa-length');
-        var cmrLenCalc = (lEnd > lStart) ? (lEnd - lStart) : lEnd; 
-        if(resLength) resLength.innerText = cmrLenCalc > 0 ? (cmrLenCalc + " mm") : "--";
+        if (resLength) {
+            var sTxt = lenS.cmrLen > 0 ? ('S: ' + lenS.cmrLen + ' mm') : 'S: --';
+            var dTxt = lenD.cmrLen > 0 ? ('D: ' + lenD.cmrLen + ' mm') : 'D: --';
+            resLength.innerText = sTxt + ' / ' + dTxt;
+        }
     }
 
     function checkTheoWarning() {
@@ -2509,10 +2709,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
         var activeWaist = (!isNaN(waist) && waist > 0) ? waist : window.currentWaistMean;
         
-        var elLStart = document.getElementById('len-start'); 
-        var elLEnd = document.getElementById('len-end'); 
-        var cmrLen = ((elLEnd && elLEnd.value !== '') ? parseFloat(elLEnd.value) : 0) - ((elLStart && elLStart.value !== '') ? parseFloat(elLStart.value) : 0);
-        if (cmrLen < 0) cmrLen = Math.abs(cmrLen);
+        var cmrLen = getMpaLengthInputs(getActiveCardiacPhase()).cmrLen;
         var activeLen = (!isNaN(mpaLen) && mpaLen > 0) ? mpaLen : cmrLen;
 
         var resSku = document.getElementById('res-sku');
@@ -2616,7 +2813,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             var caps = {
                 anatomy: 'Pulmonary anatomy · Segment A (annulus→ST) shorter in systole; Segment B longer in systole',
                 valve: 'Technical stent mesh · D1/D2/D3 and L1/L2/L3 · Purple line = landmark at cylinder centre',
-                deploy: 'Drag valve up/down or use slider · Landmark at waist centre · Oversize check'
+                deploy: 'Drag valve up/down or use slider · Landmark at waist centre · Oversize check',
+                patient3d: 'Patient 3D · Drag left/right to rotate anatomy · Valve at stent centre landmark'
             };
             if (caps[view]) cap.innerHTML = caps[view];
         }
@@ -2677,6 +2875,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     function drawRVOTCanvas() {
         if (typeof readViewerStateFromUI === 'function') readViewerStateFromUI();
 
+        var view = currentCanvasView || 'anatomy';
+        if (typeof showCanvasPanels === 'function') showCanvasPanels(view);
+
+        if (view === 'patient3d') {
+            if (typeof drawPatient3DCanvas === 'function') {
+                var phase3d = getActiveCardiacPhase();
+                var skuEl = document.getElementById('res-sku');
+                var sku3d = skuEl ? String(skuEl.innerText || 'P28-25').trim() : 'P28-25';
+                var landmark3d = (valveViewerState && valveViewerState.landmark) ? valveViewerState.landmark : 'annulus';
+                var offset3d = (valveViewerState && valveViewerState.offsetMm) ? valveViewerState.offsetMm : 0;
+                drawPatient3DCanvas(tablePlanes, phase3d, sku3d, offset3d, landmark3d);
+            }
+            return;
+        }
+
         var canvas = document.getElementById('deploymentCanvas');
         if (!canvas) return;
         var ctx = canvas.getContext('2d');
@@ -2688,10 +2901,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             return;
         }
 
-        var elLStart = document.getElementById('len-start'); 
-        var lStart = (elLStart && elLStart.value !== '') ? parseFloat(elLStart.value) : 0;
-        var elLEnd = document.getElementById('len-end'); 
-        var lEnd = (elLEnd && elLEnd.value !== '') ? parseFloat(elLEnd.value) : 35;
+        var phase = getActiveCardiacPhase();
+        var lenInputs = getMpaLengthInputs(phase);
+        var lStart = lenInputs.lStart;
+        var lEnd = lenInputs.lEnd;
 
         var maxDist = tablePlanes[tablePlanes.length - 1].dist;
         if (lEnd > maxDist) maxDist = lEnd; 
@@ -2709,7 +2922,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var baseY = 120 + (maxDist * scale); 
         var roofY = baseY - (lEnd * scale); 
 
-        var phase = document.querySelector('input[name="cardiac_phase"]:checked').value;
         var pPrefix = phase === 'systole' ? 's' : 'd';
 
         var yLevels = [];
@@ -2919,6 +3131,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     window.drawValvePath = drawValvePath;
     window.drawHorizontalCaliperLeft = drawHorizontalCaliperLeft;
     window.drawVerticalCaliper = drawVerticalCaliper;
+    window.drawStrokeText = drawStrokeText;
     if (typeof bindValveViewerUI === 'function') bindValveViewerUI();
 </script>
 </body>
