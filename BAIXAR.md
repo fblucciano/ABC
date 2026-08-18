@@ -1,24 +1,50 @@
-# Baixar VenusP Planning Report
+# Download VenusP Planning Report
 
-Use estes links **diretos** (clique com botão direito → **Salvar link como…** se o navegador só abrir uma página em vez de baixar).
-
-## App Desktop (código protegido) — recomendado
-
-| Plataforma | Download |
-|------------|----------|
-| **Windows** | [VenusP-Desktop-Windows.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v1/VenusP-Desktop-Windows.zip) |
-| **Mac M1 / M2 / M3** | [VenusP-Desktop-Mac-AppleSilicon.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v1/VenusP-Desktop-Mac-AppleSilicon.zip) |
-| **Mac Intel** | [VenusP-Desktop-Mac-Intel.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v1/VenusP-Desktop-Mac-Intel.zip) |
-
-Senha do app: `venus2026`  
-Instruções: `LEIA-ME-DESKTOP.md` (dentro do ZIP)
-
-## Versão HTML offline (código visível — só testes)
-
-| Download |
-|----------|
-| [VenusP-Offline.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v1/VenusP-Offline.zip) |
+Use these **direct links**. If the browser opens a page instead of downloading: **right-click → Save link as…**
 
 ---
 
-**Se o link não baixar:** copie o endereço, cole numa aba nova do navegador e pressione Enter. No GitHub, também pode ir em **Releases** → **venusp-desktop-v1** e clicar no arquivo `.zip`.
+## Dr. Phuoc — HTML app (Mac, no install) — **LATEST**
+
+| File | Direct download |
+|------|-----------------|
+| **ZIP (recommended)** | [Dr-Phuoc-Mac.zip](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v2-3d/Dr-Phuoc-Mac.zip) |
+| **HTML only** | [Dr-Phuoc.html](https://github.com/fblucciano/ABC/releases/download/dr-phuoc-v2-3d/Dr-Phuoc.html) |
+
+**Password:** `venus2026`
+
+**How to open (Mac):**
+1. Download `Dr-Phuoc-Mac.zip`
+2. Unzip the folder
+3. Double-click **`Dr-Phuoc.html`** or **`Open-Dr-Phuoc.command`**
+4. Works offline in Safari or Chrome — nothing to install
+
+**Release page (all files):** https://github.com/fblucciano/ABC/releases/tag/dr-phuoc-v2-3d
+
+---
+
+## Desktop app (protected code) — Mac Apple Silicon
+
+| Platform | Download |
+|----------|----------|
+| **Mac M1 / M2 / M3** | [VenusP-Desktop-Mac-AppleSilicon.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v3-mac/VenusP-Desktop-Mac-AppleSilicon.zip) |
+
+Instructions inside ZIP: `INSTALL-MAC.md` (English)
+
+---
+
+## Older / other builds
+
+| Build | Link |
+|-------|------|
+| Windows desktop | [VenusP-Desktop-Windows.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v1/VenusP-Desktop-Windows.zip) |
+| Mac Intel desktop | [VenusP-Desktop-Mac-Intel.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v1/VenusP-Desktop-Mac-Intel.zip) |
+| HTML offline (generic) | [VenusP-Offline.zip](https://github.com/fblucciano/ABC/releases/download/venusp-desktop-v1/VenusP-Offline.zip) |
+
+All releases: https://github.com/fblucciano/ABC/releases
+
+---
+
+**Link does not download?**
+1. Copy the full URL and paste in a new browser tab
+2. Or go to **Releases** on GitHub → open **dr-phuoc-v2-3d** → click the `.zip` or `.html` file name
