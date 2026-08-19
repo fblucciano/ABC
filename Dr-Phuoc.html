@@ -1438,15 +1438,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     function stentNodeRows(layout) {
         var ys = [];
-        ys.push(layout.yOutflowTop);
-        ys.push(layout.yOutflowTop + layout.pxFlareOut * 0.58);
         ys.push(layout.yStraightTop);
-        var bodyCells = Math.max(3, Math.round(layout.pxStentLen / Math.max(11, layout.radStraight * 0.46)));
+        var bodyCells = Math.max(3, Math.round(layout.pxStentLen / Math.max(12, layout.radStraight * 0.5)));
         for (var i = 1; i < bodyCells; i++) {
             ys.push(layout.yStraightTop + (layout.yStraightBottom - layout.yStraightTop) * i / bodyCells);
         }
         ys.push(layout.yStraightBottom);
-        ys.push(layout.yStraightBottom + layout.pxFlareIn * 0.50);
+        ys.push(layout.yStraightBottom + layout.pxFlareIn * 0.48);
         ys.push(layout.yInflowBottom);
         return ys;
     }
@@ -1470,7 +1468,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
 
     function strokeVenusPStrut(ctx, centerX, layout, strut, style) {
-        var steps = 8;
+        var steps = strut.crown ? 12 : 8;
         var midDepth = Math.cos(lerpAngle(strut.a0, strut.a1, 0.5));
         var t = (midDepth + 1) / 2;
         var alpha = style.backAlpha + (style.frontAlpha - style.backAlpha) * Math.pow(t, 1.25);
@@ -1479,7 +1477,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         ctx.beginPath();
         for (var i = 0; i <= steps; i++) {
             var u = i / steps;
-            var p = projectStent(centerX, layout, lerpAngle(strut.a0, strut.a1, u), strut.y0 + (strut.y1 - strut.y0) * u);
+            var rise = strut.crown ? (1 - Math.pow(1 - u, 1.55)) : u;
+            var p = projectStent(centerX, layout, lerpAngle(strut.a0, strut.a1, u), strut.y0 + (strut.y1 - strut.y0) * rise);
             if (i === 0) ctx.moveTo(p.x, p.y);
             else ctx.lineTo(p.x, p.y);
         }
@@ -1491,16 +1490,33 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
 
     function drawVenusPFrame(ctx, centerX, layout, style) {
-        var struts = collectStentStruts(centerX, layout);
+        var struts = collectStentStruts(centerX, layout).concat(collectOutflowCrowns(layout));
         struts.sort(function (a, b) {
             return Math.cos(lerpAngle(a.a0, a.a1, 0.5)) - Math.cos(lerpAngle(b.a0, b.a1, 0.5));
         });
         ctx.save();
         ctx.setLineDash([]);
         for (var i = 0; i < struts.length; i++) {
+            var depth = Math.cos(lerpAngle(struts[i].a0, struts[i].a1, 0.5));
+            if (depth < -0.72) continue;
             strokeVenusPStrut(ctx, centerX, layout, struts[i], style);
         }
         ctx.restore();
+    }
+
+    function collectOutflowCrowns(layout) {
+        var n = STENT_CELLS;
+        var struts = [];
+        var yJoin = layout.yStraightTop;
+        var yTip = layout.yOutflowTop;
+        for (var c = 0; c < n; c++) {
+            var aTip = c * Math.PI * 2 / n;
+            var aLeft = aTip - Math.PI / n;
+            var aRight = aTip + Math.PI / n;
+            struts.push({ a0: aLeft, y0: yJoin, a1: aTip, y1: yTip, crown: true });
+            struts.push({ a0: aRight, y0: yJoin, a1: aTip, y1: yTip, crown: true });
+        }
+        return struts;
     }
 
     function drawRadiopaqueMarkers(ctx, centerX, layout) {
