@@ -244,32 +244,65 @@
     }
 
     function drawMeshLattice(ctx, centerX, layout, style) {
-        var rs = layout.radStraight;
-        var yTop = layout.yStraightTop;
-        var yBot = layout.yStraightBottom;
-        var cell = Math.max(7, rs * 0.38);
+        var y0 = layout.yOutflowTop;
+        var y1 = layout.yInflowBottom;
+        var cell = Math.max(6, layout.radStraight * 0.34);
         ctx.strokeStyle = style.mesh;
         ctx.lineWidth = style.meshWidth || 0.85;
 
-        for (var y = yTop; y < yBot; y += cell * 0.72) {
-            var r = valveRadiusAtY(y + cell * 0.36, layout) * 0.94;
+        for (var y = y0; y < y1; y += cell * 0.68) {
+            var r = valveRadiusAtY(y + cell * 0.34, layout) * 0.96;
             ctx.beginPath();
             ctx.moveTo(centerX - r, y);
-            ctx.lineTo(centerX + r, y + cell * 0.72);
+            ctx.lineTo(centerX + r, y + cell * 0.68);
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(centerX + r, y);
-            ctx.lineTo(centerX - r, y + cell * 0.72);
+            ctx.lineTo(centerX - r, y + cell * 0.68);
             ctx.stroke();
         }
 
-        var struts = 10;
+        var struts = 12;
         for (var s = 0; s < struts; s++) {
             var frac = (s + 0.5) / struts;
-            var x = centerX - rs + frac * rs * 2;
+            var prev = null;
+            for (var y2 = y0; y2 <= y1; y2 += cell * 0.55) {
+                var r2 = valveRadiusAtY(y2, layout) * 0.94;
+                var x = centerX - r2 + frac * r2 * 2;
+                if (prev) {
+                    ctx.beginPath();
+                    ctx.moveTo(prev.x, prev.y);
+                    ctx.lineTo(x, y2);
+                    ctx.stroke();
+                }
+                prev = { x: x, y: y2 };
+            }
+        }
+
+        if (style.backMesh) {
+            ctx.strokeStyle = style.backMesh;
+            ctx.lineWidth = (style.meshWidth || 0.85) * 0.75;
+            for (var yb = y0 + cell * 0.3; yb < y1; yb += cell * 0.68) {
+                var rb = valveRadiusAtY(yb, layout) * 0.82;
+                ctx.beginPath();
+                ctx.moveTo(centerX - rb + 3, yb + 2);
+                ctx.lineTo(centerX + rb - 3, yb + cell * 0.68 + 2);
+                ctx.stroke();
+            }
+        }
+    }
+
+    function drawContourRings(ctx, centerX, layout, style) {
+        var y0 = layout.yOutflowTop;
+        var y1 = layout.yInflowBottom;
+        var step = Math.max(5, layout.radStraight * 0.28);
+        ctx.strokeStyle = style.outline;
+        ctx.lineWidth = (style.outlineWidth || 1.5) * 0.65;
+        for (var y = y0; y <= y1; y += step) {
+            var r = valveRadiusAtY(y, layout);
             ctx.beginPath();
-            ctx.moveTo(x, yTop);
-            ctx.lineTo(x, yBot);
+            ctx.moveTo(centerX - r, y);
+            ctx.lineTo(centerX + r, y);
             ctx.stroke();
         }
     }
@@ -349,29 +382,37 @@
             ctx.fill();
         }
         ctx.strokeStyle = style.outline;
-        ctx.lineWidth = style.outlineWidth || 2;
+        ctx.lineWidth = style.outlineWidth || 1.5;
         ctx.stroke();
     }
 
     global.drawTechnicalStentMesh = function (ctx, centerX, layout, view) {
         var isTech = view === 'valve';
+        var isOverlay = view === 'deploy' || view === 'anatomy';
         var style = isTech ? {
-            fill: '#FAFBFC',
-            outline: '#171434',
-            outlineWidth: 2.2,
-            mesh: 'rgba(23, 20, 52, 0.82)',
-            meshWidth: 0.9,
-            strut: '#171434',
-            strutWidth: 1.4
+            fill: null,
+            outline: 'rgba(23, 20, 52, 0.9)',
+            outlineWidth: 2,
+            mesh: 'rgba(23, 20, 52, 0.78)',
+            meshWidth: 0.95,
+            strut: 'rgba(23, 20, 52, 0.88)',
+            strutWidth: 1.3,
+            backMesh: 'rgba(23, 20, 52, 0.28)'
         } : {
-            fill: 'rgba(248, 250, 252, 0.92)',
-            outline: '#171434',
-            outlineWidth: 1.9,
-            mesh: 'rgba(23, 20, 52, 0.72)',
-            meshWidth: 0.8,
-            strut: 'rgba(23, 20, 52, 0.85)',
-            strutWidth: 1.2
+            fill: null,
+            outline: 'rgba(15, 18, 28, 0.82)',
+            outlineWidth: 1.45,
+            mesh: 'rgba(15, 18, 28, 0.72)',
+            meshWidth: 0.85,
+            strut: 'rgba(15, 18, 28, 0.78)',
+            strutWidth: 1.15,
+            backMesh: 'rgba(15, 18, 28, 0.32)'
         };
+
+        if (isOverlay) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+        }
 
         ctx.save();
         clipToValve(ctx, centerX, layout);
@@ -379,10 +420,13 @@
         drawMeshLattice(ctx, centerX, layout, style);
         ctx.restore();
 
+        drawContourRings(ctx, centerX, layout, style);
         drawCrownStruts(ctx, centerX, layout, style);
         drawInflowPetals(ctx, centerX, layout, style);
         drawValveOutline(ctx, centerX, layout, style);
         drawRadiopaqueMarkers(ctx, centerX, layout, 1);
+
+        if (isOverlay) ctx.restore();
 
         var yMid = layout.yCenter || ((layout.yStraightTop + layout.yStraightBottom) / 2);
         if (view === 'deploy') {
@@ -491,11 +535,6 @@
             ctx.fillText(dims.sku + ' · B ' + dims.straightOD + 'mm · D ' + dims.stentLen + 'mm', 8, h - 8);
         }
         return canvas.toDataURL('image/png');
-    };
-
-    global.renderRecommendationValvePreview = function (sku) {
-        var canvas = document.getElementById('rec-valve-canvas');
-        if (canvas) global.renderValveTechnicalDrawing(canvas, sku, { darkBg: true, showSku: false });
     };
 
     global.drawPhuocValveLabels = function (ctx, centerX, layout, straightOD, stentLenVal, totalLenText) {
