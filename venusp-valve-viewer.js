@@ -205,47 +205,184 @@
         };
     };
 
-    global.drawTechnicalStentMesh = function (ctx, centerX, layout, view) {
-        var y0 = layout.yOutflowTop;
-        var y1 = layout.yInflowBottom;
+    var LENGTH_E_MAP = {
+        'P24-20': 48, 'P24-25': 53, 'P26-20': 50, 'P26-25': 55, 'P28-20': 52, 'P28-25': 53, 'P28-30': 60,
+        'P30-20': 54, 'P30-25': 54, 'P30-30': 60, 'P32-25': 58, 'P32-30': 65, 'P34-20': 60, 'P34-25': 62,
+        'P34-30': 67, 'P36-25': 63, 'P36-30': 67
+    };
+
+    global.parseValveSku = function (sku) {
+        sku = String(sku || 'P28-25').trim();
+        var straightOD = parseInt(sku.split('-')[0].replace('P', ''), 10) || 28;
+        var stentLen = parseInt(sku.split('-')[1], 10) || 25;
+        var totalLen = LENGTH_E_MAP[sku] || (stentLen + 28);
+        return { sku: sku, straightOD: straightOD, stentLen: stentLen, flareOD: straightOD + 10, totalLen: totalLen };
+    };
+
+    function valveRadiusAtY(y, layout) {
         var rs = layout.radStraight;
         var rf = layout.radFlare;
-        var alpha = view === 'valve' ? 0.55 : 0.42;
+        var yTop = layout.yStraightTop;
+        var yBot = layout.yStraightBottom;
+        var flareOut = layout.pxFlareOut || FLARE_OUT_MM;
+        var flareIn = layout.pxFlareIn || FLARE_IN_MM;
+        if (y < yTop) {
+            var u = Math.max(0, Math.min(1, (yTop - y) / flareOut));
+            return rs + (rf - rs) * (0.4 + 0.6 * Math.sin(u * Math.PI * 0.5));
+        }
+        if (y > yBot) {
+            var v = Math.max(0, Math.min(1, (y - yBot) / flareIn));
+            return rs + (rf - rs) * (1 - 0.2 * v);
+        }
+        return rs;
+    }
 
-        ctx.save();
+    function clipToValve(ctx, centerX, layout) {
         ctx.beginPath();
-        global.drawValvePath(ctx, centerX, rs, rf, layout.yStraightTop, layout.yStraightBottom,
-            layout.yOutflowTop, layout.yInflowBottom, layout.pxFlareOut);
-        ctx.clip();
+        global.drawValvePath(ctx, centerX, layout.radStraight, layout.radFlare,
+            layout.yStraightTop, layout.yStraightBottom, layout.yOutflowTop, layout.yInflowBottom, layout.pxFlareOut);
+    }
 
-        ctx.strokeStyle = 'rgba(23, 20, 52, 0.85)';
-        ctx.lineWidth = 0.9;
-        var cell = 11;
-        for (var y = y0 - 15; y < y1 + 15; y += cell) {
-            for (var x = centerX - rf - 25; x < centerX + rf + 25; x += cell) {
+    function drawMeshLattice(ctx, centerX, layout, style) {
+        var rs = layout.radStraight;
+        var yTop = layout.yStraightTop;
+        var yBot = layout.yStraightBottom;
+        var cell = Math.max(7, rs * 0.38);
+        ctx.strokeStyle = style.mesh;
+        ctx.lineWidth = style.meshWidth || 0.85;
+
+        for (var y = yTop; y < yBot; y += cell * 0.72) {
+            var r = valveRadiusAtY(y + cell * 0.36, layout) * 0.94;
+            ctx.beginPath();
+            ctx.moveTo(centerX - r, y);
+            ctx.lineTo(centerX + r, y + cell * 0.72);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(centerX + r, y);
+            ctx.lineTo(centerX - r, y + cell * 0.72);
+            ctx.stroke();
+        }
+
+        var struts = 10;
+        for (var s = 0; s < struts; s++) {
+            var frac = (s + 0.5) / struts;
+            var x = centerX - rs + frac * rs * 2;
+            ctx.beginPath();
+            ctx.moveTo(x, yTop);
+            ctx.lineTo(x, yBot);
+            ctx.stroke();
+        }
+    }
+
+    function drawCrownStruts(ctx, centerX, layout, style) {
+        var rs = layout.radStraight;
+        var rf = layout.radFlare;
+        var yBase = layout.yStraightTop;
+        var yCrown = layout.yOutflowTop - 2;
+        var arches = 7;
+        ctx.strokeStyle = style.strut;
+        ctx.lineWidth = style.strutWidth || 1.35;
+        for (var i = 0; i < arches; i++) {
+            var t = i / (arches - 1);
+            var x = centerX - rf * 0.82 + t * rf * 1.64;
+            var archH = layout.pxFlareOut * (0.55 + 0.25 * Math.sin(t * Math.PI));
+            ctx.beginPath();
+            ctx.moveTo(x, yBase);
+            ctx.bezierCurveTo(x, yBase - archH * 0.45, centerX, yCrown, x, yCrown + 4);
+            ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(centerX - rf, yCrown);
+        ctx.quadraticCurveTo(centerX, yCrown - 6, centerX + rf, yCrown);
+        ctx.stroke();
+    }
+
+    function drawInflowPetals(ctx, centerX, layout, style) {
+        var rs = layout.radStraight;
+        var rf = layout.radFlare;
+        var yBase = layout.yStraightBottom;
+        var yTip = layout.yInflowBottom + 2;
+        var petals = 6;
+        ctx.strokeStyle = style.strut;
+        ctx.lineWidth = style.strutWidth || 1.2;
+        for (var p = 0; p < petals; p++) {
+            var t = p / (petals - 1);
+            var x = centerX - rf * 0.78 + t * rf * 1.56;
+            ctx.beginPath();
+            ctx.moveTo(x, yBase);
+            ctx.quadraticCurveTo(x + (centerX - x) * 0.15, (yBase + yTip) / 2, x, yTip);
+            ctx.stroke();
+        }
+    }
+
+    function drawRadiopaqueMarkers(ctx, centerX, layout, scale) {
+        var rs = layout.radStraight;
+        var yTop = layout.yStraightTop;
+        var yBot = layout.yStraightBottom;
+        var markerW = Math.max(4, rs * 0.14);
+        var markerH = Math.max(6, rs * 0.22);
+        var positions = [centerX - rs * 0.62, centerX, centerX + rs * 0.62];
+        var rows = [yTop, yBot];
+        for (var r = 0; r < rows.length; r++) {
+            for (var m = 0; m < positions.length; m++) {
+                var mx = positions[m];
+                var my = rows[r];
+                var grd = ctx.createLinearGradient(mx - markerW, my, mx + markerW, my);
+                grd.addColorStop(0, '#B8860B');
+                grd.addColorStop(0.45, '#FFD700');
+                grd.addColorStop(1, '#B8860B');
+                ctx.fillStyle = grd;
+                ctx.strokeStyle = '#8B6914';
+                ctx.lineWidth = 0.8;
                 ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x + cell, y + cell);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x + cell, y);
-                ctx.lineTo(x, y + cell);
+                ctx.rect(mx - markerW / 2, my - markerH / 2, markerW, markerH);
+                ctx.fill();
                 ctx.stroke();
             }
         }
-        ctx.restore();
+    }
+
+    function drawValveOutline(ctx, centerX, layout, style) {
+        clipToValve(ctx, centerX, layout);
+        if (style.fill) {
+            ctx.fillStyle = style.fill;
+            ctx.fill();
+        }
+        ctx.strokeStyle = style.outline;
+        ctx.lineWidth = style.outlineWidth || 2;
+        ctx.stroke();
+    }
+
+    global.drawTechnicalStentMesh = function (ctx, centerX, layout, view) {
+        var isTech = view === 'valve';
+        var style = isTech ? {
+            fill: '#FAFBFC',
+            outline: '#171434',
+            outlineWidth: 2.2,
+            mesh: 'rgba(23, 20, 52, 0.82)',
+            meshWidth: 0.9,
+            strut: '#171434',
+            strutWidth: 1.4
+        } : {
+            fill: 'rgba(248, 250, 252, 0.92)',
+            outline: '#171434',
+            outlineWidth: 1.9,
+            mesh: 'rgba(23, 20, 52, 0.72)',
+            meshWidth: 0.8,
+            strut: 'rgba(23, 20, 52, 0.85)',
+            strutWidth: 1.2
+        };
 
         ctx.save();
-        ctx.beginPath();
-        global.drawValvePath(ctx, centerX, rs, rf, layout.yStraightTop, layout.yStraightBottom,
-            layout.yOutflowTop, layout.yInflowBottom, layout.pxFlareOut);
-        ctx.fillStyle = view === 'valve' ? 'rgba(230, 138, 46, ' + alpha + ')' :
-            'rgba(230, 138, 46, ' + (alpha - 0.1) + ')';
-        ctx.fill();
-        ctx.strokeStyle = '#171434';
-        ctx.lineWidth = view === 'valve' ? 2.2 : 1.8;
-        ctx.stroke();
+        clipToValve(ctx, centerX, layout);
+        ctx.clip();
+        drawMeshLattice(ctx, centerX, layout, style);
         ctx.restore();
+
+        drawCrownStruts(ctx, centerX, layout, style);
+        drawInflowPetals(ctx, centerX, layout, style);
+        drawValveOutline(ctx, centerX, layout, style);
+        drawRadiopaqueMarkers(ctx, centerX, layout, 1);
 
         var yMid = layout.yCenter || ((layout.yStraightTop + layout.yStraightBottom) / 2);
         if (view === 'deploy') {
@@ -254,8 +391,8 @@
             ctx.lineWidth = 1.5;
             ctx.setLineDash([5, 4]);
             ctx.beginPath();
-            ctx.moveTo(centerX - rs - 28, yMid);
-            ctx.lineTo(centerX + rs + 28, yMid);
+            ctx.moveTo(centerX - layout.radStraight - 28, yMid);
+            ctx.lineTo(centerX + layout.radStraight + 28, yMid);
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.fillStyle = '#6448FC';
@@ -264,6 +401,101 @@
             ctx.fill();
             ctx.restore();
         }
+    };
+
+    global.buildValveLayoutForCanvas = function (canvasW, canvasH, straightOD, stentLen, padding) {
+        padding = padding || { top: 18, bottom: 18, side: 24 };
+        var availH = canvasH - padding.top - padding.bottom;
+        var totalMm = stentLen + FLARE_OUT_MM + FLARE_IN_MM + 8;
+        var scale = availH / totalMm;
+        var pxStentLen = stentLen * scale;
+        var pxFlareOut = FLARE_OUT_MM * scale;
+        var pxFlareIn = FLARE_IN_MM * scale;
+        var radStraight = (straightOD * scale) / 2;
+        var radFlare = ((straightOD + 10) * scale) / 2;
+        var totalDrawH = pxStentLen + pxFlareOut + pxFlareIn;
+        var yOutflowTop = padding.top + (availH - totalDrawH) / 2;
+        var yStraightTop = yOutflowTop + pxFlareOut;
+        var yStraightBottom = yStraightTop + pxStentLen;
+        var yInflowBottom = yStraightBottom + pxFlareIn;
+        return {
+            centerX: canvasW / 2,
+            yCenter: (yStraightTop + yStraightBottom) / 2,
+            yOutflowTop: yOutflowTop,
+            yStraightTop: yStraightTop,
+            yStraightBottom: yStraightBottom,
+            yInflowBottom: yInflowBottom,
+            radStraight: radStraight,
+            radFlare: radFlare,
+            pxFlareOut: pxFlareOut,
+            pxFlareIn: pxFlareIn,
+            pxStentLen: pxStentLen,
+            scale: scale
+        };
+    };
+
+    global.renderValveTechnicalDrawing = function (canvas, sku, options) {
+        if (!canvas) return;
+        options = options || {};
+        var dims = global.parseValveSku(sku);
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width;
+        var h = canvas.height;
+        var dark = !!options.darkBg;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = dark ? '#0B0C10' : '#FFFFFF';
+        ctx.fillRect(0, 0, w, h);
+
+        var layout = global.buildValveLayoutForCanvas(w, h, dims.straightOD, dims.stentLen, options.padding);
+        if (dark) {
+            ctx.save();
+            clipToValve(ctx, layout.centerX, layout);
+            ctx.clip();
+            ctx.strokeStyle = 'rgba(220, 225, 235, 0.55)';
+            ctx.lineWidth = 0.75;
+            var cell = Math.max(5, layout.radStraight * 0.34);
+            for (var y = layout.yOutflowTop; y < layout.yInflowBottom; y += cell * 0.7) {
+                var r = valveRadiusAtY(y + cell * 0.35, layout) * 0.95;
+                ctx.beginPath();
+                ctx.moveTo(layout.centerX - r, y);
+                ctx.lineTo(layout.centerX + r, y + cell * 0.7);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(layout.centerX + r, y);
+                ctx.lineTo(layout.centerX - r, y + cell * 0.7);
+                ctx.stroke();
+            }
+            for (var s = 0; s < 10; s++) {
+                var x = layout.centerX - layout.radStraight + (s + 0.5) / 10 * layout.radStraight * 2;
+                ctx.beginPath();
+                ctx.moveTo(x, layout.yStraightTop);
+                ctx.lineTo(x, layout.yStraightBottom);
+                ctx.stroke();
+            }
+            ctx.restore();
+            drawCrownStruts(ctx, layout.centerX, layout, { strut: 'rgba(235, 240, 250, 0.9)', strutWidth: 1.1 });
+            drawInflowPetals(ctx, layout.centerX, layout, { strut: 'rgba(235, 240, 250, 0.85)', strutWidth: 1 });
+            clipToValve(ctx, layout.centerX, layout);
+            ctx.strokeStyle = 'rgba(245, 248, 255, 0.95)';
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+            drawRadiopaqueMarkers(ctx, layout.centerX, layout, layout.scale);
+        } else {
+            global.drawTechnicalStentMesh(ctx, layout.centerX, layout, 'valve');
+        }
+
+        if (options.showSku !== false) {
+            ctx.fillStyle = dark ? 'rgba(200, 210, 225, 0.85)' : '#6B7280';
+            ctx.font = '10px "Space Mono", monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(dims.sku + ' · B ' + dims.straightOD + 'mm · D ' + dims.stentLen + 'mm', 8, h - 8);
+        }
+        return canvas.toDataURL('image/png');
+    };
+
+    global.renderRecommendationValvePreview = function (sku) {
+        var canvas = document.getElementById('rec-valve-canvas');
+        if (canvas) global.renderValveTechnicalDrawing(canvas, sku, { darkBg: true, showSku: false });
     };
 
     global.drawPhuocValveLabels = function (ctx, centerX, layout, straightOD, stentLenVal, totalLenText) {
@@ -343,453 +575,6 @@
             off.addEventListener('input', global.onValveViewerUIChange);
         }
         bindCanvasValveDrag();
-        bindPatient3DDrag();
     };
-
-    var patient3d = {
-        rotX: 0.42,
-        rotY: 0.85,
-        valveRotY: 0,
-        zoom: 1,
-        drag: null,
-        lastX: 0,
-        lastY: 0,
-        startOffset: 0,
-        startRotY: 0,
-        startRotX: 0,
-        startValveRot: 0
-    };
-
-    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-    function project3D(x, y, z, cam) {
-        var cy = Math.cos(cam.rotY), sy = Math.sin(cam.rotY);
-        var cx = Math.cos(cam.rotX), sx = Math.sin(cam.rotX);
-        var x1 = x * cy - z * sy;
-        var z1 = x * sy + z * cy;
-        var y1 = y * cx - z1 * sx;
-        var z2 = y * sx + z1 * cx;
-        var dist = cam.distance;
-        var persp = dist / (dist + z2);
-        return {
-            x: cam.cx + x1 * persp * cam.zoom,
-            y: cam.cy - y1 * persp * cam.zoom,
-            z: z2,
-            persp: persp
-        };
-    }
-
-    function interpRadius(rings, y) {
-        if (!rings.length) return 10;
-        if (y <= rings[0].y) return rings[0].r;
-        for (var i = 1; i < rings.length; i++) {
-            if (y <= rings[i].y) {
-                var t = (y - rings[i - 1].y) / (rings[i].y - rings[i - 1].y);
-                return rings[i - 1].r + (rings[i].r - rings[i - 1].r) * t;
-            }
-        }
-        return rings[rings.length - 1].r;
-    }
-
-    function buildAnatomyWireframe(tablePlanes, phase, stJ, bif, mmScale) {
-        var pref = phase === 'diastole' ? 'd' : 's';
-        var rings = [];
-        var segments = [];
-        var meridians = 14;
-
-        for (var i = 0; i < tablePlanes.length; i++) {
-            var p = tablePlanes[i];
-            var adj = getPhaseAdjustedDist(p.dist, phase, stJ, bif);
-            var r = ((p[pref + '1'] + p[pref + '2']) / 2) * mmScale * 0.5;
-            rings.push({ y: adj * mmScale, r: r, name: p.name || '' });
-        }
-        rings.sort(function (a, b) { return a.y - b.y; });
-
-        var yMin = rings[0].y - 8 * mmScale;
-        var yMax = rings[rings.length - 1].y + 14 * mmScale;
-        var ringStep = 3 * mmScale;
-        var contourRings = [];
-        for (var y = yMin; y <= yMax; y += ringStep) {
-            contourRings.push({ y: y, r: interpRadius(rings, y) });
-        }
-
-        for (var ri = 0; ri < contourRings.length; ri++) {
-            var cr = contourRings[ri];
-            var pts = [];
-            for (var m = 0; m < meridians; m++) {
-                var a = (m / meridians) * Math.PI * 2;
-                pts.push({ x: Math.cos(a) * cr.r, y: cr.y, z: Math.sin(a) * cr.r });
-            }
-            for (var pti = 0; pti < pts.length; pti++) {
-                var nxt = (pti + 1) % pts.length;
-                segments.push({ a: pts[pti], b: pts[nxt], kind: 'anatomy-ring', depth: cr.y });
-            }
-        }
-
-        for (var mi = 0; mi < meridians; mi++) {
-            var ang = (mi / meridians) * Math.PI * 2;
-            var prev = null;
-            for (var ci = 0; ci < contourRings.length; ci++) {
-                var pt = {
-                    x: Math.cos(ang) * contourRings[ci].r,
-                    y: contourRings[ci].y,
-                    z: Math.sin(ang) * contourRings[ci].r
-                };
-                if (prev) segments.push({ a: prev, b: pt, kind: 'anatomy-meridian', depth: contourRings[ci].y });
-                prev = pt;
-            }
-        }
-
-        var bifY = bif * mmScale;
-        var bifR = interpRadius(rings, bifY);
-        var branchLen = 16 * mmScale;
-        var branchSpread = 0.55;
-        [['LPA', -1], ['RPA', 1]].forEach(function (br) {
-            var side = br[1];
-            var bx = side * bifR * branchSpread;
-            var bz = bifR * 0.35;
-            var top = { x: bx, y: bifY + branchLen, z: bz };
-            var rootA = { x: side * bifR * 0.35, y: bifY, z: bifR * 0.2 };
-            var rootB = { x: side * bifR * 0.75, y: bifY + branchLen * 0.35, z: bifR * 0.55 };
-            segments.push({ a: rootA, b: top, kind: 'anatomy-branch', depth: bifY });
-            segments.push({ a: rootB, b: top, kind: 'anatomy-branch', depth: bifY });
-            for (var bi = 0; bi < 6; bi++) {
-                var t = bi / 5;
-                var ringY = bifY + branchLen * t;
-                var ringR = bifR * (0.35 + 0.12 * (1 - t));
-                var ringPts = [];
-                for (var bj = 0; bj < 8; bj++) {
-                    var ba = (bj / 8) * Math.PI * 2 + side * 0.3;
-                    ringPts.push({
-                        x: bx + Math.cos(ba) * ringR * 0.55,
-                        y: ringY,
-                        z: bz + Math.sin(ba) * ringR * 0.45
-                    });
-                }
-                for (var rk = 0; rk < ringPts.length; rk++) {
-                    var rn = (rk + 1) % ringPts.length;
-                    segments.push({ a: ringPts[rk], b: ringPts[rn], kind: 'anatomy-branch', depth: ringY });
-                }
-            }
-        });
-
-        return { segments: segments, rings: rings, yMin: yMin, yMax: yMax };
-    }
-
-    function valveRadiusAt(y, centerY, rWaist, rFlare, hStent, hOut, hIn) {
-        var yTop = centerY - hStent / 2;
-        var yBot = centerY + hStent / 2;
-        if (y < yTop) {
-            var u = clamp((yTop - y) / hOut, 0, 1);
-            return rWaist + (rFlare - rWaist) * (0.35 + 0.65 * Math.sin(u * Math.PI * 0.5));
-        }
-        if (y > yBot) {
-            var v = clamp((y - yBot) / hIn, 0, 1);
-            return rWaist + (rFlare - rWaist) * (1 - 0.25 * v * v);
-        }
-        return rWaist;
-    }
-
-    function rotateYPoint(x, y, z, angle) {
-        var c = Math.cos(angle), s = Math.sin(angle);
-        return { x: x * c - z * s, y: y, z: x * s + z * c };
-    }
-
-    function buildValveWireframe(straightOD, stentLen, centerY, mmScale, valveRotY) {
-        var segments = [];
-        var rWaist = straightOD * mmScale * 0.5;
-        var rFlare = (straightOD + 10) * mmScale * 0.5;
-        var hStent = stentLen * mmScale;
-        var hOut = FLARE_OUT_MM * mmScale;
-        var hIn = FLARE_IN_MM * mmScale;
-        var yTop = centerY - hStent / 2 - hOut;
-        var yBot = centerY + hStent / 2 + hIn;
-        var struts = 16;
-        var ringStep = 2.2 * mmScale;
-
-        function addSeg(a, b, kind, dashed) {
-            var ra = rotateYPoint(a.x, a.y, a.z, valveRotY);
-            var rb = rotateYPoint(b.x, b.y, b.z, valveRotY);
-            segments.push({ a: ra, b: rb, kind: kind || 'valve', dashed: !!dashed, depth: (ra.y + rb.y) / 2 });
-        }
-
-        var contour = [];
-        for (var y = yTop; y <= yBot + 0.01; y += ringStep) {
-            contour.push({ y: y, r: valveRadiusAt(y, centerY, rWaist, rFlare, hStent, hOut, hIn) });
-        }
-
-        for (var ci = 0; ci < contour.length; ci++) {
-            var ringPts = [];
-            for (var si = 0; si < struts; si++) {
-                var ang = (si / struts) * Math.PI * 2;
-                ringPts.push({
-                    x: Math.cos(ang) * contour[ci].r,
-                    y: contour[ci].y,
-                    z: Math.sin(ang) * contour[ci].r
-                });
-            }
-            for (var rp = 0; rp < ringPts.length; rp++) {
-                var rn = (rp + 1) % ringPts.length;
-                addSeg(ringPts[rp], ringPts[rn], 'valve-ring');
-            }
-        }
-
-        for (var mi = 0; mi < struts; mi++) {
-            var angM = (mi / struts) * Math.PI * 2;
-            var prev = null;
-            for (var ri = 0; ri < contour.length; ri++) {
-                var pt = {
-                    x: Math.cos(angM) * contour[ri].r,
-                    y: contour[ri].y,
-                    z: Math.sin(angM) * contour[ri].r
-                };
-                if (prev) addSeg(prev, pt, 'valve-strut');
-                prev = pt;
-            }
-        }
-
-        var yStraightTop = centerY - hStent / 2;
-        var yStraightBot = centerY + hStent / 2;
-        for (var yi = 0; yi < contour.length - 1; yi++) {
-            if (contour[yi].y < yStraightTop || contour[yi + 1].y > yStraightBot) continue;
-            for (var di = 0; di < struts; di++) {
-                var a0 = (di / struts) * Math.PI * 2;
-                var a1 = a0 + Math.PI / struts;
-                var p0 = { x: Math.cos(a0) * contour[yi].r, y: contour[yi].y, z: Math.sin(a0) * contour[yi].r };
-                var p1 = { x: Math.cos(a1) * contour[yi + 1].r, y: contour[yi + 1].y, z: Math.sin(a1) * contour[yi + 1].r };
-                addSeg(p0, p1, 'valve-mesh');
-                var p2 = { x: Math.cos(a1) * contour[yi].r, y: contour[yi].y, z: Math.sin(a1) * contour[yi].r };
-                var p3 = { x: Math.cos(a0) * contour[yi + 1].r, y: contour[yi + 1].y, z: Math.sin(a0) * contour[yi + 1].r };
-                addSeg(p2, p3, 'valve-mesh');
-            }
-        }
-
-        var crownCount = 8;
-        var crownBaseY = centerY - hStent / 2;
-        var crownTopY = yTop;
-        for (var ck = 0; ck < crownCount; ck++) {
-            var ca = (ck / crownCount) * Math.PI * 2;
-            var base = { x: Math.cos(ca) * rWaist * 0.92, y: crownBaseY, z: Math.sin(ca) * rWaist * 0.92 };
-            var tip = { x: Math.cos(ca + 0.2) * rFlare * 0.55, y: crownTopY + 2 * mmScale, z: Math.sin(ca + 0.2) * rFlare * 0.55 };
-            addSeg(base, tip, 'valve-crown');
-            var neighbor = (ck + 1) % crownCount;
-            var ca2 = (neighbor / crownCount) * Math.PI * 2;
-            var tip2 = { x: Math.cos(ca2 + 0.2) * rFlare * 0.55, y: crownTopY + 2 * mmScale, z: Math.sin(ca2 + 0.2) * rFlare * 0.55 };
-            addSeg(tip, tip2, 'valve-crown');
-        }
-
-        var petals = 6;
-        var petalBaseY = centerY + hStent / 2;
-        for (var pe = 0; pe < petals; pe++) {
-            var pa = (pe / petals) * Math.PI * 2 + Math.PI / petals;
-            var pBase = { x: Math.cos(pa) * rWaist * 0.9, y: petalBaseY, z: Math.sin(pa) * rWaist * 0.9 };
-            var pTip = { x: Math.cos(pa) * rFlare * 0.82, y: yBot, z: Math.sin(pa) * rFlare * 0.82 };
-            addSeg(pBase, pTip, 'valve-petal');
-        }
-
-        for (var li = 0; li < 3; li++) {
-            var la = (li / 3) * Math.PI * 2 + valveRotY;
-            var leafTip = { x: Math.cos(la) * rWaist * 0.78, y: crownTopY + 1.5 * mmScale, z: Math.sin(la) * rWaist * 0.78 };
-            addSeg({ x: 0, y: crownTopY + 1.5 * mmScale, z: 0 }, leafTip, 'valve-leaflet');
-        }
-
-        var land = { x: 0, y: centerY, z: 0 };
-        segments.push({ a: land, b: land, kind: 'landmark', depth: centerY, landmark: true });
-
-        return { segments: segments, yTop: yTop, yBot: yBot, centerY: centerY };
-    }
-
-    function drawWireSegments(ctx, segments, cam, styleMap) {
-        var projected = [];
-        for (var i = 0; i < segments.length; i++) {
-            var seg = segments[i];
-            if (seg.landmark) {
-                var lp = project3D(seg.a.x, seg.a.y, seg.a.z, cam);
-                projected.push({ seg: seg, pa: lp, pb: lp, avgZ: lp.z });
-                continue;
-            }
-            var pa = project3D(seg.a.x, seg.a.y, seg.a.z, cam);
-            var pb = project3D(seg.b.x, seg.b.y, seg.b.z, cam);
-            projected.push({ seg: seg, pa: pa, pb: pb, avgZ: (pa.z + pb.z) / 2 });
-        }
-        projected.sort(function (a, b) { return a.avgZ - b.avgZ; });
-
-        for (var j = 0; j < projected.length; j++) {
-            var item = projected[j];
-            var seg = item.seg;
-            if (seg.landmark) {
-                ctx.fillStyle = '#6448FC';
-                ctx.beginPath();
-                ctx.arc(item.pa.x, item.pa.y, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                continue;
-            }
-            var style = styleMap[seg.kind] || styleMap.valve;
-            var depthFade = clamp(0.35 + (item.avgZ + 120) / 220, 0.25, 1);
-            ctx.strokeStyle = style.color.replace('ALPHA', String(style.alpha * depthFade));
-            ctx.lineWidth = style.width * ((item.pa.persp + item.pb.persp) / 2);
-            if (seg.dashed) ctx.setLineDash([4, 4]); else ctx.setLineDash([]);
-            ctx.beginPath();
-            ctx.moveTo(item.pa.x, item.pa.y);
-            ctx.lineTo(item.pb.x, item.pb.y);
-            ctx.stroke();
-        }
-        ctx.setLineDash([]);
-    }
-
-    global.showCanvasPanels = function (view) {
-        var is3d = view === 'patient3d';
-        var dep = document.getElementById('deploymentCanvas');
-        var p3d = document.getElementById('patient3dCanvas');
-        if (dep) dep.style.display = is3d ? 'none' : 'block';
-        if (p3d) p3d.style.display = is3d ? 'block' : 'none';
-    };
-
-    global.drawPatient3DCanvas = function (tablePlanes, phase, sku, offsetMm, landmark) {
-        var canvas = document.getElementById('patient3dCanvas');
-        if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        var w = canvas.width, h = canvas.height;
-
-        ctx.fillStyle = '#08080c';
-        ctx.fillRect(0, 0, w, h);
-
-        if (!tablePlanes || tablePlanes.length < 2) {
-            ctx.fillStyle = '#d1d5db';
-            ctx.font = '14px "Space Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText('Enter measurement planes to view 3D anatomy', w / 2, h / 2);
-            return;
-        }
-
-        var mmScale = 3.6;
-        var stJ = getStJunctionDist(tablePlanes);
-        var bif = getBifurcationDist(tablePlanes);
-        var straightOD = parseInt(sku.split('-')[0].replace('P', ''), 10) || 28;
-        var stentLen = parseInt(sku.split('-')[1], 10) || 25;
-        var landDist = global.getLandmarkAnchorDist(tablePlanes, landmark) + (offsetMm || 0);
-        var valveCenterY = landDist * mmScale;
-
-        var anatomy = buildAnatomyWireframe(tablePlanes, phase, stJ, bif, mmScale);
-        var valve = buildValveWireframe(straightOD, stentLen, valveCenterY, mmScale, patient3d.valveRotY);
-
-        var spanY = anatomy.yMax - anatomy.yMin + 40 * mmScale;
-        var cam = {
-            rotX: patient3d.rotX,
-            rotY: patient3d.rotY,
-            distance: spanY * 2.4,
-            zoom: patient3d.zoom * (h / 520),
-            cx: w * 0.5,
-            cy: h * 0.54
-        };
-
-        var gridY = anatomy.yMin;
-        ctx.strokeStyle = 'rgba(80, 90, 110, 0.18)';
-        ctx.lineWidth = 1;
-        for (var gx = -80; gx <= 80; gx += 20) {
-            var g1 = project3D(gx, gridY, -80, cam);
-            var g2 = project3D(gx, gridY, 80, cam);
-            ctx.beginPath(); ctx.moveTo(g1.x, g1.y); ctx.lineTo(g2.x, g2.y); ctx.stroke();
-            var g3 = project3D(-80, gridY, gx, cam);
-            var g4 = project3D(80, gridY, gx, cam);
-            ctx.beginPath(); ctx.moveTo(g3.x, g3.y); ctx.lineTo(g4.x, g4.y); ctx.stroke();
-        }
-
-        var anatomyStyle = {
-            'anatomy-ring': { color: 'rgba(180, 195, 210, ALPHA)', alpha: 0.55, width: 0.8 },
-            'anatomy-meridian': { color: 'rgba(140, 155, 175, ALPHA)', alpha: 0.45, width: 0.7 },
-            'anatomy-branch': { color: 'rgba(160, 175, 195, ALPHA)', alpha: 0.5, width: 0.75 }
-        };
-        var valveStyle = {
-            valve: { color: 'rgba(230, 200, 160, ALPHA)', alpha: 0.95, width: 1.1 },
-            'valve-ring': { color: 'rgba(245, 230, 200, ALPHA)', alpha: 1, width: 1.25 },
-            'valve-strut': { color: 'rgba(255, 240, 210, ALPHA)', alpha: 0.95, width: 1.05 },
-            'valve-mesh': { color: 'rgba(220, 200, 170, ALPHA)', alpha: 0.85, width: 0.85 },
-            'valve-crown': { color: 'rgba(255, 245, 220, ALPHA)', alpha: 1, width: 1.2 },
-            'valve-petal': { color: 'rgba(255, 240, 210, ALPHA)', alpha: 0.95, width: 1.1 },
-            'valve-leaflet': { color: 'rgba(255, 255, 255, ALPHA)', alpha: 0.9, width: 1.15 }
-        };
-
-        drawWireSegments(ctx, anatomy.segments, cam, anatomyStyle);
-        drawWireSegments(ctx, valve.segments, cam, valveStyle);
-
-        var landP = project3D(0, valveCenterY, 0, cam);
-        ctx.strokeStyle = 'rgba(100, 72, 252, 0.85)';
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([5, 4]);
-        var ldx = 34;
-        ctx.beginPath();
-        ctx.moveTo(landP.x - ldx, landP.y);
-        ctx.lineTo(landP.x + ldx, landP.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = 'rgba(220, 225, 235, 0.9)';
-        ctx.font = '11px "Space Mono", monospace';
-        ctx.textAlign = 'left';
-        ctx.fillText('VenusP-Valve · P' + straightOD + '-' + stentLen + ' wireframe', 14, 22);
-        var landPlane = (typeof global.getPlaneNameAtDist === 'function')
-            ? global.getPlaneNameAtDist(tablePlanes, landDist) : '—';
-        ctx.fillText(phase.toUpperCase() + ' · Landmark: ' + landPlane + ' · offset ' + (offsetMm > 0 ? '+' : '') + (offsetMm || 0).toFixed(1) + ' mm', 14, 38);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(160, 170, 185, 0.95)';
-        ctx.fillText('Drag ↔ orbit · Drag ↕ move valve · Shift+drag ↔ rotate valve', w / 2, h - 14);
-    };
-
-    function bindPatient3DDrag() {
-        var canvas = document.getElementById('patient3dCanvas');
-        if (!canvas || canvas.dataset.p3dBound === '1') return;
-        canvas.dataset.p3dBound = '1';
-
-        canvas.addEventListener('mousedown', function (e) {
-            if (global.currentCanvasView !== 'patient3d') return;
-            patient3d.drag = e.shiftKey ? 'valve-rot' : 'view';
-            patient3d.lastX = e.clientX;
-            patient3d.lastY = e.clientY;
-            patient3d.startOffset = global.valveViewerState.offsetMm || 0;
-            patient3d.startRotY = patient3d.rotY;
-            patient3d.startRotX = patient3d.rotX;
-            patient3d.startValveRot = patient3d.valveRotY;
-            canvas.style.cursor = 'grabbing';
-            e.preventDefault();
-        });
-
-        window.addEventListener('mousemove', function (e) {
-            if (!patient3d.drag) return;
-            var dx = e.clientX - patient3d.lastX;
-            var dy = e.clientY - patient3d.lastY;
-            if (patient3d.drag === 'valve-rot') {
-                patient3d.valveRotY = patient3d.startValveRot + dx * 0.018;
-            } else if (e.altKey) {
-                patient3d.rotY = patient3d.startRotY + dx * 0.012;
-                patient3d.rotX = clamp(patient3d.startRotX + dy * 0.008, 0.12, 1.2);
-            } else {
-                patient3d.rotY = patient3d.startRotY + dx * 0.012;
-                setOffsetMm(patient3d.startOffset - dy * 0.08);
-            }
-            if (typeof global.drawRVOTCanvas === 'function') global.drawRVOTCanvas();
-        });
-
-        window.addEventListener('mouseup', function () {
-            if (!patient3d.drag) return;
-            patient3d.drag = null;
-            var c = document.getElementById('patient3dCanvas');
-            if (c) c.style.cursor = 'grab';
-        });
-
-        canvas.addEventListener('wheel', function (e) {
-            if (global.currentCanvasView !== 'patient3d') return;
-            patient3d.zoom = clamp(patient3d.zoom * (e.deltaY > 0 ? 0.94 : 1.06), 0.55, 1.8);
-            e.preventDefault();
-            if (typeof global.drawRVOTCanvas === 'function') global.drawRVOTCanvas();
-        }, { passive: false });
-
-        canvas.addEventListener('mouseenter', function () {
-            if (global.currentCanvasView === 'patient3d') canvas.style.cursor = 'grab';
-        });
-    }
 
 })(typeof window !== 'undefined' ? window : this);
