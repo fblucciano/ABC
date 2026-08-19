@@ -1000,7 +1000,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <canvas id="deploymentCanvas" width="740" height="600"></canvas>
                             </div>
             <div id="preview-caption" style="font-size: 14px; color: var(--text-grey); font-family: 'Space Mono', monospace; padding: 12px; font-weight: bold; background: #FFFFFF; border-top: 1px solid var(--panel-border); text-align: center;">
-                Landmark at <b>stent centre</b> · Transparent stent mesh over virtual anatomy · Drag valve on tabs 2–3
+                Landmark at <b>stent centre</b> · Open VenusP nitinol frame over virtual anatomy · Drag valve on tabs 2–3
             </div>
         </div>
 
@@ -2355,9 +2355,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var cap = document.getElementById('preview-caption');
         if (cap) {
             var caps = {
-                anatomy: 'Virtual patient anatomy · Transparent VenusP stent mesh overlay',
-                valve: 'Technical VenusP stent · Transparent wireframe · Gold radiopaque markers · Dimensions',
-                deploy: 'Stent over virtual anatomy · Drag valve · Landmark follows planes · Oversize check'
+                anatomy: 'Virtual patient anatomy · VenusP nitinol frame (open mesh) overlay',
+                valve: 'VenusP frame · Open diamond cells · Outflow/inflow flares · Gold markers · Dimensions',
+                deploy: 'Open VenusP stent over virtual anatomy · Drag valve · Landmark · Oversize'
             };
             if (caps[view]) cap.innerHTML = caps[view];
         }

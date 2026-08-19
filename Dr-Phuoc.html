@@ -1000,7 +1000,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 <canvas id="deploymentCanvas" width="740" height="600"></canvas>
                             </div>
             <div id="preview-caption" style="font-size: 14px; color: var(--text-grey); font-family: 'Space Mono', monospace; padding: 12px; font-weight: bold; background: #FFFFFF; border-top: 1px solid var(--panel-border); text-align: center;">
-                Landmark at <b>stent centre</b> · Transparent stent mesh over virtual anatomy · Drag valve on tabs 2–3
+                Landmark at <b>stent centre</b> · Open VenusP nitinol frame over virtual anatomy · Drag valve on tabs 2–3
             </div>
         </div>
 
@@ -1391,224 +1391,157 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         return { sku: sku, straightOD: straightOD, stentLen: stentLen, flareOD: straightOD + 10, totalLen: totalLen };
     };
 
-    function valveRadiusAtY(y, layout) {
+    var STENT_CELLS = 10;
+    var STENT_TILT = 0.18;
+
+    function smoothstep(t) {
+        t = Math.max(0, Math.min(1, t));
+        return t * t * (3 - 2 * t);
+    }
+
+    function lerpAngle(a, b, t) {
+        var d = b - a;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        return a + d * t;
+    }
+
+    function venusPRadius(layout, y) {
         var rs = layout.radStraight;
         var rf = layout.radFlare;
         var yTop = layout.yStraightTop;
         var yBot = layout.yStraightBottom;
-        var flareOut = layout.pxFlareOut || FLARE_OUT_MM;
-        var flareIn = layout.pxFlareIn || FLARE_IN_MM;
-        if (y < yTop) {
+        var flareOut = Math.max(1, layout.pxFlareOut || FLARE_OUT_MM);
+        var flareIn = Math.max(1, layout.pxFlareIn || FLARE_IN_MM);
+        if (y <= yTop) {
             var u = Math.max(0, Math.min(1, (yTop - y) / flareOut));
-            return rs + (rf - rs) * (0.4 + 0.6 * Math.sin(u * Math.PI * 0.5));
+            var s = smoothstep(u);
+            return rs + (rf - rs) * (0.08 + 0.92 * s);
         }
-        if (y > yBot) {
+        if (y >= yBot) {
             var v = Math.max(0, Math.min(1, (y - yBot) / flareIn));
-            return rs + (rf - rs) * (1 - 0.2 * v);
+            var s2 = smoothstep(v);
+            return rs + (rf - rs) * s2;
         }
         return rs;
     }
 
-    function clipToValve(ctx, centerX, layout) {
-        ctx.beginPath();
-        global.drawValvePath(ctx, centerX, layout.radStraight, layout.radFlare,
-            layout.yStraightTop, layout.yStraightBottom, layout.yOutflowTop, layout.yInflowBottom, layout.pxFlareOut);
-    }
-
-    function stentRowYs(layout) {
-        var y = [];
-        y.push(layout.yOutflowTop);
-        y.push(layout.yOutflowTop + layout.pxFlareOut * 0.48);
-        y.push(layout.yStraightTop);
-        var bodyRows = Math.max(4, Math.round(layout.pxStentLen / Math.max(9, layout.radStraight * 0.48)));
-        for (var i = 1; i < bodyRows; i++) {
-            y.push(layout.yStraightTop + (layout.yStraightBottom - layout.yStraightTop) * i / bodyRows);
-        }
-        y.push(layout.yStraightBottom);
-        y.push(layout.yStraightBottom + layout.pxFlareIn * 0.52);
-        y.push(layout.yInflowBottom);
-        return y;
-    }
-
-    function stentPoint(centerX, layout, angle, y) {
-        var radius = valveRadiusAtY(y, layout);
+    function projectStent(centerX, layout, theta, y) {
+        var radius = venusPRadius(layout, y);
         return {
-            x: centerX + Math.sin(angle) * radius,
-            y: y,
-            depth: Math.cos(angle)
+            x: centerX + Math.sin(theta) * radius,
+            y: y - Math.cos(theta) * radius * STENT_TILT,
+            depth: Math.cos(theta),
+            theta: theta
         };
     }
 
-    function traceProjectedStrut(ctx, centerX, layout, a0, y0, a1, y1) {
-        var delta = a1 - a0;
-        while (delta > Math.PI) delta -= Math.PI * 2;
-        while (delta < -Math.PI) delta += Math.PI * 2;
-        var steps = 7;
+    function stentNodeRows(layout) {
+        var ys = [];
+        ys.push(layout.yOutflowTop);
+        ys.push(layout.yOutflowTop + layout.pxFlareOut * 0.58);
+        ys.push(layout.yStraightTop);
+        var bodyCells = Math.max(3, Math.round(layout.pxStentLen / Math.max(11, layout.radStraight * 0.46)));
+        for (var i = 1; i < bodyCells; i++) {
+            ys.push(layout.yStraightTop + (layout.yStraightBottom - layout.yStraightTop) * i / bodyCells);
+        }
+        ys.push(layout.yStraightBottom);
+        ys.push(layout.yStraightBottom + layout.pxFlareIn * 0.50);
+        ys.push(layout.yInflowBottom);
+        return ys;
+    }
+
+    function collectStentStruts(centerX, layout) {
+        var ys = stentNodeRows(layout);
+        var n = STENT_CELLS;
+        var struts = [];
+        for (var r = 0; r < ys.length - 1; r++) {
+            var off0 = (r % 2) * (Math.PI / n);
+            var off1 = ((r + 1) % 2) * (Math.PI / n);
+            for (var c = 0; c < n; c++) {
+                var a0 = c * Math.PI * 2 / n + off0;
+                var aRight = c * Math.PI * 2 / n + off1;
+                var aLeft = (c - 1) * Math.PI * 2 / n + off1;
+                struts.push({ a0: a0, y0: ys[r], a1: aRight, y1: ys[r + 1] });
+                struts.push({ a0: a0, y0: ys[r], a1: aLeft, y1: ys[r + 1] });
+            }
+        }
+        return struts;
+    }
+
+    function strokeVenusPStrut(ctx, centerX, layout, strut, style) {
+        var steps = 8;
+        var midDepth = Math.cos(lerpAngle(strut.a0, strut.a1, 0.5));
+        var t = (midDepth + 1) / 2;
+        var alpha = style.backAlpha + (style.frontAlpha - style.backAlpha) * Math.pow(t, 1.25);
+        var width = style.minW + (style.maxW - style.minW) * t;
+
+        ctx.beginPath();
         for (var i = 0; i <= steps; i++) {
-            var t = i / steps;
-            var ease = t * t * (3 - 2 * t);
-            var angle = a0 + delta * ease;
-            var yy = y0 + (y1 - y0) * t;
-            var p = stentPoint(centerX, layout, angle, yy);
+            var u = i / steps;
+            var p = projectStent(centerX, layout, lerpAngle(strut.a0, strut.a1, u), strut.y0 + (strut.y1 - strut.y0) * u);
             if (i === 0) ctx.moveTo(p.x, p.y);
             else ctx.lineTo(p.x, p.y);
         }
-    }
-
-    function strokeMetalStrut(ctx, centerX, layout, segment, style, front) {
-        var alpha = front ? style.frontAlpha : style.backAlpha;
+        ctx.strokeStyle = 'rgba(32, 36, 42,' + alpha.toFixed(3) + ')';
+        ctx.lineWidth = width;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-
-        ctx.beginPath();
-        traceProjectedStrut(ctx, centerX, layout, segment.a0, segment.y0, segment.a1, segment.y1);
-        ctx.strokeStyle = 'rgba(18, 22, 27,' + alpha + ')';
-        ctx.lineWidth = style.strutWidth + (front ? 1.6 : 0.8);
-        ctx.stroke();
-
-        ctx.beginPath();
-        traceProjectedStrut(ctx, centerX, layout, segment.a0, segment.y0, segment.a1, segment.y1);
-        ctx.strokeStyle = 'rgba(164, 172, 178,' + (alpha * 0.95) + ')';
-        ctx.lineWidth = Math.max(0.7, style.strutWidth * 0.52);
         ctx.stroke();
     }
 
-    function drawRealisticStentLattice(ctx, centerX, layout, style) {
-        var ys = stentRowYs(layout);
-        var columns = 12;
-        var halfStep = Math.PI / columns;
-        var segments = [];
-
-        for (var r = 1; r < ys.length - 2; r++) {
-            var phase0 = (r % 2) * halfStep;
-            var phase1 = ((r + 1) % 2) * halfStep;
-            for (var c = 0; c < columns; c++) {
-                var a0 = c * Math.PI * 2 / columns + phase0;
-                var next = c * Math.PI * 2 / columns + phase1;
-                var prev = (c - 1) * Math.PI * 2 / columns + phase1;
-                segments.push({ a0: a0, y0: ys[r], a1: next, y1: ys[r + 1],
-                    depth: Math.cos((a0 + next) / 2) });
-                segments.push({ a0: a0, y0: ys[r], a1: prev, y1: ys[r + 1],
-                    depth: Math.cos((a0 + prev) / 2) });
-            }
-        }
-
-        /* Back wall first, then front wall: this gives the open frame cylindrical depth. */
-        for (var pass = 0; pass < 2; pass++) {
-            for (var s = 0; s < segments.length; s++) {
-                var front = segments[s].depth >= 0;
-                if ((pass === 0 && !front) || (pass === 1 && front)) {
-                    strokeMetalStrut(ctx, centerX, layout, segments[s], style, front);
-                }
-            }
-        }
-    }
-
-    function drawEndCrown(ctx, centerX, layout, style, top) {
-        var yTip = top ? layout.yOutflowTop : layout.yInflowBottom;
-        var yJoin = top
-            ? layout.yOutflowTop + layout.pxFlareOut * 0.48
-            : layout.yInflowBottom - layout.pxFlareIn * 0.48;
-        var columns = 12;
-        var step = Math.PI * 2 / columns;
-        var segments = [];
-        for (var c = 0; c < columns; c++) {
-            var tipA = c * step;
-            var leftA = tipA - step * 0.5;
-            var rightA = tipA + step * 0.5;
-            segments.push({ a0: leftA, y0: yJoin, a1: tipA, y1: yTip, depth: Math.cos((leftA + tipA) / 2) });
-            segments.push({ a0: tipA, y0: yTip, a1: rightA, y1: yJoin, depth: Math.cos((tipA + rightA) / 2) });
-        }
-        for (var pass = 0; pass < 2; pass++) {
-            for (var i = 0; i < segments.length; i++) {
-                var front = segments[i].depth >= 0;
-                if ((pass === 0 && !front) || (pass === 1 && front)) {
-                    strokeMetalStrut(ctx, centerX, layout, segments[i], style, front);
-                }
-            }
-        }
-    }
-
-    function drawEndRim(ctx, centerX, layout, style, y) {
-        var radius = valveRadiusAtY(y, layout);
+    function drawVenusPFrame(ctx, centerX, layout, style) {
+        var struts = collectStentStruts(centerX, layout);
+        struts.sort(function (a, b) {
+            return Math.cos(lerpAngle(a.a0, a.a1, 0.5)) - Math.cos(lerpAngle(b.a0, b.a1, 0.5));
+        });
         ctx.save();
-        ctx.beginPath();
-        ctx.ellipse(centerX, y, radius, Math.max(2, radius * 0.10), 0, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(21, 25, 30,' + style.frontAlpha + ')';
-        ctx.lineWidth = style.strutWidth + 1.1;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.ellipse(centerX, y - 0.45, radius, Math.max(2, radius * 0.10), 0, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(176, 184, 190,' + (style.frontAlpha * 0.88) + ')';
-        ctx.lineWidth = Math.max(0.65, style.strutWidth * 0.46);
-        ctx.stroke();
+        ctx.setLineDash([]);
+        for (var i = 0; i < struts.length; i++) {
+            strokeVenusPStrut(ctx, centerX, layout, struts[i], style);
+        }
         ctx.restore();
     }
 
-    function drawRadiopaqueMarkers(ctx, centerX, layout, scale) {
-        var rs = layout.radStraight;
-        var yTop = layout.yStraightTop;
-        var yBot = layout.yStraightBottom;
-        var markerW = Math.max(3, rs * 0.10);
-        var markerH = Math.max(5, rs * 0.17);
-        var positions = [centerX - rs * 0.62, centerX, centerX + rs * 0.62];
-        var rows = [yTop, yBot];
+    function drawRadiopaqueMarkers(ctx, centerX, layout) {
+        var angles = [-0.95, 0, 0.95];
+        var rows = [layout.yStraightTop, layout.yStraightBottom];
+        var markerW = Math.max(3.2, layout.radStraight * 0.09);
+        var markerH = Math.max(5.5, layout.radStraight * 0.16);
         for (var r = 0; r < rows.length; r++) {
-            for (var m = 0; m < positions.length; m++) {
-                var mx = positions[m];
-                var my = rows[r];
-                var grd = ctx.createLinearGradient(mx - markerW, my, mx + markerW, my);
+            for (var m = 0; m < angles.length; m++) {
+                var p = projectStent(centerX, layout, angles[m], rows[r]);
+                var grd = ctx.createLinearGradient(p.x - markerW, p.y, p.x + markerW, p.y);
                 grd.addColorStop(0, '#8A6410');
-                grd.addColorStop(0.42, '#FFE27A');
+                grd.addColorStop(0.45, '#FFE27A');
                 grd.addColorStop(1, '#A97812');
                 ctx.fillStyle = grd;
                 ctx.strokeStyle = '#6D5010';
                 ctx.lineWidth = 0.7;
                 ctx.beginPath();
-                ctx.ellipse(mx, my, markerW / 2, markerH / 2, 0, 0, Math.PI * 2);
+                ctx.rect(p.x - markerW / 2, p.y - markerH / 2, markerW, markerH);
                 ctx.fill();
                 ctx.stroke();
             }
         }
     }
 
-    function drawValveOutline(ctx, centerX, layout, style) {
-        clipToValve(ctx, centerX, layout);
-        if (style.fill) {
-            ctx.fillStyle = style.fill;
-            ctx.fill();
-        }
-        ctx.strokeStyle = style.outline;
-        ctx.lineWidth = style.outlineWidth || 1.5;
-        ctx.stroke();
-    }
-
     global.drawTechnicalStentMesh = function (ctx, centerX, layout, view) {
         var isTech = view === 'valve';
-        var isOverlay = view === 'deploy' || view === 'anatomy';
         var style = isTech ? {
-            strutWidth: 2.15,
-            frontAlpha: 0.94,
-            backAlpha: 0.25
+            maxW: 1.45,
+            minW: 0.42,
+            frontAlpha: 0.92,
+            backAlpha: 0.14
         } : {
-            strutWidth: 1.65,
-            frontAlpha: 0.88,
-            backAlpha: 0.20
+            maxW: 1.2,
+            minW: 0.38,
+            frontAlpha: 0.86,
+            backAlpha: 0.12
         };
 
-        if (isOverlay) {
-            ctx.save();
-            ctx.globalCompositeOperation = 'source-over';
-        }
-
-        drawRealisticStentLattice(ctx, centerX, layout, style);
-        drawEndCrown(ctx, centerX, layout, style, true);
-        drawEndCrown(ctx, centerX, layout, style, false);
-        drawEndRim(ctx, centerX, layout, style, layout.yOutflowTop);
-        drawEndRim(ctx, centerX, layout, style, layout.yInflowBottom);
-        drawRadiopaqueMarkers(ctx, centerX, layout, 1);
-
-        if (isOverlay) ctx.restore();
+        drawVenusPFrame(ctx, centerX, layout, style);
+        drawRadiopaqueMarkers(ctx, centerX, layout);
 
         var yMid = layout.yCenter || ((layout.yStraightTop + layout.yStraightBottom) / 2);
         if (view === 'deploy') {
@@ -2951,9 +2884,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         var cap = document.getElementById('preview-caption');
         if (cap) {
             var caps = {
-                anatomy: 'Virtual patient anatomy · Transparent VenusP stent mesh overlay',
-                valve: 'Technical VenusP stent · Transparent wireframe · Gold radiopaque markers · Dimensions',
-                deploy: 'Stent over virtual anatomy · Drag valve · Landmark follows planes · Oversize check'
+                anatomy: 'Virtual patient anatomy · VenusP nitinol frame (open mesh) overlay',
+                valve: 'VenusP frame · Open diamond cells · Outflow/inflow flares · Gold markers · Dimensions',
+                deploy: 'Open VenusP stent over virtual anatomy · Drag valve · Landmark · Oversize'
             };
             if (caps[view]) cap.innerHTML = caps[view];
         }
