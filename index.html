@@ -6827,7 +6827,12 @@ if (typeof window !== 'undefined') {
         .ops-search-head { display:flex; justify-content:space-between; gap:15px; align-items:center; margin-bottom:8px; }
         .ops-search-head strong { color:var(--v-deep-blue); font-size:13px; }
         .ops-search-clear { border:0; background:transparent; color:var(--v-blue); font-size:11px; font-weight:800; cursor:pointer; padding:4px 8px; }
-        .operations-filter-context { display:none; margin-top:8px; color:var(--v-deep-blue); font-size:12px; font-weight:700; }
+        .operations-filter-context { display:none; margin-top:8px; color:var(--v-deep-blue); font-size:12px; font-weight:700; align-items:center; flex-wrap:wrap; gap:8px; }
+        .trend-filter-token { display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:999px; background:#EEF2FF; border:1px solid #C7D2FE; color:#302B6A; font-family:'Space Mono',monospace; font-size:10px; font-weight:900; }
+        .trend-filter-token button { border:0; background:#302B6A; color:#fff; width:19px; height:19px; border-radius:50%; cursor:pointer; font-size:12px; font-weight:900; line-height:1; }
+        .trend-click-hint { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin:2px 0 4px; color:#64748B; font-size:10px; font-weight:700; }
+        .trend-click-hint strong { color:#302B6A; }
+        .apexcharts-bar-area { cursor:pointer !important; }
         .hero-year-breakdown { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
         .hero-year-chip { min-width:90px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); border-radius:8px; padding:8px 11px; }
         .hero-year-chip span { display:block; font-size:10px; color:rgba(255,255,255,0.72); font-weight:800; text-transform:uppercase; }
@@ -7013,7 +7018,7 @@ if (typeof window !== 'undefined') {
         <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech">
         <h2 data-analysis-title>LATAM Intelligence OS</h2>
         <p>Private access — Galera only</p>
-        <div class="build-badge" style="margin:-12px 0 18px;">✓ BUILD 2026.08.19-R11 · LATAM BASE · GLOBAL UPLOAD READY</div>
+        <div class="build-badge" style="margin:-12px 0 18px;">✓ BUILD 2026.08.20-R12 · LATAM BASE · INTERACTIVE CHART FILTERS</div>
         <input type="password" id="access-password" class="access-input" placeholder="Enter access code" autocomplete="current-password" onkeydown="if(event.key==='Enter') submitAccessGate()">
         <button type="button" class="access-btn" onclick="submitAccessGate()">Enter Dashboard</button>
         <div id="access-error" class="access-error"></div>
@@ -7025,7 +7030,7 @@ if (typeof window !== 'undefined') {
     <img src="https://raw.githubusercontent.com/fblucciano/imagens-venus/73dbf7e477c04a9117f8ad61f6b7367396231718/Venus_logo_OG_adj.2026_logo_main.svg" alt="Venus Medtech" style="max-width: 250px; margin-bottom: 20px;">
     <h1 data-analysis-title style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 38px; margin-bottom: 5px;">LATAM Intelligence OS</h1>
     <p style="opacity: 0.7; margin-bottom: 40px; font-size: 18px;">Client-side Secure Analytics Engine</p>
-    <div class="build-badge" style="margin:-25px 0 28px;">✓ BUILD 2026.08.19-R11 · LATAM BASE · GLOBAL UPLOAD READY</div>
+    <div class="build-badge" style="margin:-25px 0 28px;">✓ BUILD 2026.08.20-R12 · LATAM BASE · INTERACTIVE CHART FILTERS</div>
     
     <label id="drop-zone" for="startup-file-input">
         <div style="font-size: 50px; margin-bottom: 15px;">✅</div>
@@ -7043,7 +7048,7 @@ if (typeof window !== 'undefined') {
             <h1 data-analysis-title>LATAM Intelligence OS</h1>
             <div class="brand-dash">—</div>
             <p class="subtitle">Operational distribution, proctor financial tracking, and dynamic demand forecasting.</p>
-            <div class="build-badge">✓ BUILD 2026.08.19-R11 · LATAM BASE · GLOBAL UPLOAD READY</div>
+            <div class="build-badge">✓ BUILD 2026.08.20-R12 · LATAM BASE · INTERACTIVE CHART FILTERS</div>
         </div>
         
         <!-- EXPORT TO EXCEL BUTTON -->
@@ -8603,6 +8608,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let allCasesGlobal = []; 
     let processedData = []; 
     let opsScopedData = [];
+    let trendChartBaseData = [];
     let fullyFilteredData = [];
     let fileUploads = {}; 
     let builtinClinicalFingerprints = new Set();
@@ -8648,6 +8654,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     let activeSOPDistributor = null;
     let showForecastLines = false;
     let activeTrendMetric = 'cases';
+    let activeTrendBarFilter = null;
     let currentDrilldownProfile = null;
 
     const VENUS_ACCESS_TOKEN = 'venus_galera_v1';
@@ -8968,6 +8975,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         activeProctorCountries.clear();
         activeDistFilter = null;
         activeValveFilter = null;
+        activeTrendBarFilter = null;
         activeSOPCountry = null;
         activeSOPDistributor = null;
         activeSOPValve = null;
@@ -8998,6 +9006,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         activeProctorCountries.clear();
         activeDistFilter = null;
         activeValveFilter = null;
+        activeTrendBarFilter = null;
         activeSOPCountry = null;
         activeSOPDistributor = null;
         activeSOPValve = null;
@@ -10234,12 +10243,17 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
     function setTrendMetric(metric) {
         activeTrendMetric = metric === 'proctor' ? 'proctor' : 'cases';
+        let hadBarFilter = !!activeTrendBarFilter;
+        activeTrendBarFilter = null;
         let casesBtn = document.getElementById('trend-metric-cases');
         let proctorBtn = document.getElementById('trend-metric-proctor');
         if (casesBtn) casesBtn.classList.toggle('active', activeTrendMetric === 'cases');
         if (proctorBtn) proctorBtn.classList.toggle('active', activeTrendMetric === 'proctor');
-        renderTrendChart();
-        if (leafletMap) renderGeo();
+        if (hadBarFilter) processData();
+        else {
+            renderTrendChart();
+            if (leafletMap) renderGeo();
+        }
     }
 
     // --- S&OP HARE-NIEMEYER MATHEMATICAL DISTRIBUTION ---
@@ -11335,6 +11349,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             activeYears.push(y);
         }
         activeYears.sort((a,b) => a - b);
+        if (activeTrendBarFilter && !activeYears.includes(activeTrendBarFilter.year)) activeTrendBarFilter = null;
         activeYearsByScope[analysisScopeLabel] = [...activeYears];
         extractFilters(); 
         processData();
@@ -11383,20 +11398,87 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
     function updateOperationsSearchContext() {
         let el = document.getElementById('operations-filter-context');
         if (!el) return;
-        if (!activeOpsSearchQuery) {
+        if (!activeOpsSearchQuery && !activeTrendBarFilter) {
             el.style.display = 'none';
             el.innerHTML = '';
             return;
         }
-        let label = escapeHtml(getOperationsSearchLabel());
-        let people = getMatchingOperationsPersons();
-        let qualifier = people.length === 1
-            ? 'any role'
-            : people.length > 1
-                ? `${people.length} matching people`
-                : 'any matching field';
-        el.style.display = 'block';
-        el.innerHTML = `${people.length === 1 ? 'Active profile' : 'Active filter'}: <strong>${label}</strong> · ${qualifier} · ${opsScopedData.length} matching procedures`;
+        let parts = [];
+        if (activeOpsSearchQuery) {
+            let label = escapeHtml(getOperationsSearchLabel());
+            let people = getMatchingOperationsPersons();
+            let qualifier = people.length === 1
+                ? 'any role'
+                : people.length > 1
+                    ? `${people.length} matching people`
+                    : 'any matching field';
+            parts.push(`<span>${people.length === 1 ? 'Active profile' : 'Active filter'}: <strong>${label}</strong> · ${qualifier}</span>`);
+        }
+        if (activeTrendBarFilter) {
+            parts.push(`<span class="trend-filter-token">📊 ${escapeHtml(getTrendBarFilterLabel())} · ${fullyFilteredData.length} case${fullyFilteredData.length === 1 ? '' : 's'}<button type="button" title="Clear chart filter" aria-label="Clear chart filter" onclick="clearTrendBarFilter()">×</button></span>`);
+        }
+        el.style.display = 'flex';
+        el.innerHTML = parts.join('');
+    }
+
+    function getTrendBarFilterLabel(filter = activeTrendBarFilter) {
+        if (!filter) return '';
+        let monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        let regionalScope = filter.country
+            ? filter.country
+            : filter.excludeBrazil
+                ? 'LATAM EXCL. BRAZIL'
+                : Array.isArray(filter.regions) && filter.regions.length
+                    ? filter.regions.join(' + ')
+                    : '';
+        let scope = regionalScope ? `${regionalScope} · ` : '';
+        let role = filter.metric === 'proctor' ? 'CASES WITH PROCTOR' : 'ALL PROCEDURES';
+        let cutoff = filter.throughDay ? ` · THROUGH DAY ${filter.throughDay}` : '';
+        return `${scope}${monthNames[filter.month - 1]} ${filter.year} · ${role}${cutoff}`;
+    }
+
+    function caseMatchesTrendBarFilter(caseObj, filter = activeTrendBarFilter) {
+        if (!filter) return true;
+        let parts = getTrendCaseDateParts(caseObj);
+        if (!parts || parts.year !== filter.year || parts.month !== filter.month) return false;
+        if (filter.throughDay && parts.day > filter.throughDay) return false;
+        if (filter.country && caseObj.country !== filter.country) return false;
+        if (Array.isArray(filter.regions) && filter.regions.length && !filter.regions.includes(getCaseRegion(caseObj))) return false;
+        if (filter.excludeBrazil && caseObj.country === 'Brazil') return false;
+        if (filter.metric === 'proctor' && !hasAnyProctor(caseObj)) return false;
+        return true;
+    }
+
+    function clearTrendBarFilter() {
+        if (!activeTrendBarFilter) return;
+        activeTrendBarFilter = null;
+        processData();
+    }
+
+    function toggleTrendBarFilterFromChart(meta, month, latestYear, comparisonYear, cutoffMonth, cutoffDay, regions = [], excludeBrazil = false) {
+        if (!meta || !month || month < 1 || month > 12) return;
+        let throughDay = comparisonYear && month === cutoffMonth && (meta.year === latestYear || meta.year === comparisonYear)
+            ? cutoffDay
+            : null;
+        let next = {
+            year: Number(meta.year),
+            month: Number(month),
+            country: meta.country || null,
+            metric: activeTrendMetric === 'proctor' ? 'proctor' : 'cases',
+            throughDay,
+            regions: Array.isArray(regions) ? [...regions] : [],
+            excludeBrazil: !!excludeBrazil
+        };
+        let same = activeTrendBarFilter
+            && activeTrendBarFilter.year === next.year
+            && activeTrendBarFilter.month === next.month
+            && activeTrendBarFilter.country === next.country
+            && activeTrendBarFilter.metric === next.metric
+            && activeTrendBarFilter.throughDay === next.throughDay
+            && activeTrendBarFilter.excludeBrazil === next.excludeBrazil
+            && JSON.stringify(activeTrendBarFilter.regions || []) === JSON.stringify(next.regions || []);
+        activeTrendBarFilter = same ? null : next;
+        processData();
     }
 
     function setOperationsSearch(query) {
@@ -11408,6 +11490,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             activeProctorCountries.clear();
             activeDistFilter = null;
             activeValveFilter = null;
+            activeTrendBarFilter = null;
         }
         processData();
     }
@@ -11426,6 +11509,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         activeProctorCountries.clear();
         activeDistFilter = null;
         activeValveFilter = null;
+        activeTrendBarFilter = null;
         processData();
     }
 
@@ -11459,12 +11543,13 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 activeCountryExpanded = null;
             }
 
-            fullyFilteredData = opsScopedData.filter(c => {
+            trendChartBaseData = opsScopedData.filter(c => {
                 if (activeCountryExpanded && c.country !== activeCountryExpanded) return false;
                 if (activeDistFilter && c.dist !== activeDistFilter) return false;
                 if (activeValveFilter && c.valveBase !== activeValveFilter) return false;
                 return true;
             });
+            fullyFilteredData = trendChartBaseData.filter(c => caseMatchesTrendBarFilter(c));
 
             gHospMap = {}; gImpMap = {}; gSpecMap = {}; gProcMap = {}; 
             
@@ -11517,7 +11602,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 });
             });
 
-            renderCountryCards(opsScopedData);
+            renderCountryCards(opsScopedData.filter(c => caseMatchesTrendBarFilter(c)));
             renderOperations(); 
             renderTrendChart();
             renderGeo(); 
@@ -11554,7 +11639,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         activeTabId = tabId;
 
         let opsTarget = document.getElementById('ops-target-container');
-        if (opsTarget) opsTarget.style.display = (tabId === 'tab-ops' && !activeOpsSearchQuery) ? 'block' : 'none';
+        if (opsTarget) opsTarget.style.display = (tabId === 'tab-ops' && !activeOpsSearchQuery && !activeTrendBarFilter) ? 'block' : 'none';
 
         if(tabId === 'tab-geo' && leafletMap) { setTimeout(() => leafletMap.invalidateSize(), 100); }
         if(tabId === 'tab-clinical') renderClinical();
@@ -11686,7 +11771,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         if(elCountryLabel) elCountryLabel.innerText = `${searchLabel ? searchLabel.toUpperCase() + ' · ' : ''}${geoLabel}${distLabel} · ${yearsLabel}`;
 
         let heroTitle = document.getElementById('hero-title-label');
-        if (heroTitle) heroTitle.innerText = searchLabel ? 'PERSON / ENTITY PROFILE PROCEDURES' : 'SELECTED PERIOD PROCEDURES';
+        if (heroTitle) heroTitle.innerText = activeTrendBarFilter ? 'CHART-SELECTION PROCEDURES' : searchLabel ? 'PERSON / ENTITY PROFILE PROCEDURES' : 'SELECTED PERIOD PROCEDURES';
 
         let flagImg = document.getElementById('hero-country-flag');
         if (flagImg) {
@@ -11761,7 +11846,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let targetUnits = opsTargetInput ? (Number(opsTargetInput.value) || 399) : 399;
         let opsTargetContainer = document.getElementById('ops-target-container');
         let targetStack = document.getElementById('ops-target-stack');
-        let hideTarget = !!activeOpsSearchQuery;
+        let hideTarget = !!activeOpsSearchQuery || !!activeTrendBarFilter;
         if (opsTargetContainer && activeTabId === 'tab-ops') opsTargetContainer.style.display = hideTarget ? 'none' : 'block';
         if (targetStack) targetStack.style.display = hideTarget ? 'none' : 'block';
         
@@ -12400,17 +12485,15 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
         let selectedProctorCountries = activeTrendMetric === 'proctor'
             ? [...activeProctorCountries].sort()
             : [];
-        let proctorComparisonBase = opsScopedData.filter(c => {
-            if (activeDistFilter && c.dist !== activeDistFilter) return false;
-            if (activeValveFilter && c.valveBase !== activeValveFilter) return false;
-            return true;
-        });
+        let proctorComparisonBase = trendChartBaseData.length || activeTrendBarFilter
+            ? trendChartBaseData
+            : fullyFilteredData;
         selectedProctorCountries = selectedProctorCountries.filter(country =>
             proctorComparisonBase.some(c => c.country === country)
         );
         let chartData = selectedProctorCountries.length
             ? proctorComparisonBase.filter(c => selectedProctorCountries.includes(c.country))
-            : fullyFilteredData;
+            : (trendChartBaseData.length || activeTrendBarFilter ? trendChartBaseData : fullyFilteredData);
         let excludesBrazilFromLATAMDependency = activeTrendMetric === 'proctor'
             && analysisScopeLabel === 'LATAM'
             && selectedProctorCountries.length === 0
@@ -12431,7 +12514,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             }
         }
         let forecastBtn = document.getElementById('toggle-forecast-btn');
-        let canShowForecast = activeTrendMetric === 'cases' && !activeOpsSearchQuery && !comparisonCoverageNote;
+        let canShowForecast = activeTrendMetric === 'cases' && !activeOpsSearchQuery && !activeTrendBarFilter && !comparisonCoverageNote;
         if (forecastBtn) forecastBtn.style.display = canShowForecast ? 'inline-flex' : 'none';
 
         if (chartData.length === 0 || years.length === 0) {
@@ -12721,7 +12804,10 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
 
         container.style.height = 'auto';
         container.style.minHeight = activeTrendMetric === 'proctor' ? '560px' : (showForecastLines && canShowForecast ? '600px' : '560px');
-        container.innerHTML = `<div id="trend-chart-title" class="trend-chart-title">${chartTitleHtml}</div><div id="trend-apex-chart"></div>`;
+        let activeChartFilterHtml = activeTrendBarFilter
+            ? `<span class="trend-filter-token">ACTIVE: ${escapeHtml(getTrendBarFilterLabel())} · ${fullyFilteredData.length} CASE${fullyFilteredData.length === 1 ? '' : 'S'}<button type="button" title="Clear chart filter" aria-label="Clear chart filter" onclick="clearTrendBarFilter()">×</button></span>`
+            : '<strong>Tip:</strong> click any bar to filter countries, hospitals, physicians, specialists and proctors.';
+        container.innerHTML = `<div id="trend-chart-title" class="trend-chart-title">${chartTitleHtml}</div><div class="trend-click-hint">${activeChartFilterHtml}</div><div id="trend-apex-chart"></div>`;
         trendChartTooltipCtx = { metric: activeTrendMetric, stats, monthNames };
 
         let yMax = computeTrendChartYMaxFromSeries(series);
@@ -12739,6 +12825,23 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
                 events: {
                     mounted: () => setTimeout(styleTrendDataLabelTspans, 0),
                     updated: () => setTimeout(styleTrendDataLabelTspans, 0),
+                    dataPointSelection: (_event, _chartContext, config) => {
+                        let meta = seriesMeta[config?.seriesIndex];
+                        let pointIndex = Number(config?.dataPointIndex);
+                        if (!meta || !Number.isInteger(pointIndex) || pointIndex < 0 || pointIndex > 11) return;
+                        let value = series[config.seriesIndex]?.data?.[pointIndex];
+                        if (value === null || value === undefined) return;
+                        toggleTrendBarFilterFromChart(
+                            meta,
+                            pointIndex + 1,
+                            latestYear,
+                            comparisonYear,
+                            cutoffMonth,
+                            cutoffDay,
+                            comparisonCoverageRegions,
+                            excludesBrazilFromLATAMDependency
+                        );
+                    },
                     legendClick: activeTrendMetric === 'proctor' ? undefined : chartContext => setTimeout(() => syncTrendChartYAxis(chartContext), 60),
                     animationEnd: chartContext => {
                         if (activeTrendMetric !== 'proctor') syncTrendChartYAxis(chartContext);
@@ -12928,7 +13031,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
             }
         }
         let mapData = fullyFilteredData;
-        if (activeTrendMetric === 'proctor') {
+        if (activeTrendMetric === 'proctor' && !activeTrendBarFilter) {
             mapData = opsScopedData.filter(c => {
                 if (activeDistFilter && c.dist !== activeDistFilter) return false;
                 if (activeValveFilter && c.valveBase !== activeValveFilter) return false;
@@ -12997,6 +13100,7 @@ if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLE
              if (activeCountryExpanded && c.country !== activeCountryExpanded) return false;
              if (activeDistFilter && c.dist !== activeDistFilter) return false;
              if (activeValveFilter && c.valveBase !== activeValveFilter) return false;
+             if (!caseMatchesTrendBarFilter(c)) return false;
              return true;
         });
 
