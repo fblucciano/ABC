@@ -20,14 +20,17 @@
     <!-- LIBRARIES -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 // Inlined for GitHub Pages — regenerate via scripts/inline-builtin-implants.mjs
 const APP_META = Object.freeze({
-  version: "1.2.0",
-  build: "2026.08.24-R14",
+  version: "1.3.0",
+  build: "2026.08.24-R15",
   generatedDate: "2026-08-24",
-  dataSchemaVersion: 3,
+  dataSchemaVersion: 4,
   outcomesSchemaVersion: "1.4.0",
+  reportsSchemaVersion: "1.0.0",
   latamDataSnapshot: "2026-08-24",
   latamDataCutoff: "2026-08-21",
   label: "LATAM PROCEDURAL OUTCOMES"
@@ -6752,6 +6755,8 @@ if (typeof window !== 'undefined') {
         /* TABS NAVIGATION */
         .tabs-nav { display: flex; background: #100E26; padding: 0 60px; }
         .tab-btn { background: transparent; border: none; color: #ffffff; opacity: 0.5; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; padding: 20px 25px; cursor: pointer; transition: 0.3s; border-bottom: 3px solid transparent;}
+        .tabs-nav { overflow-x:auto; scrollbar-width:thin; }
+        .tab-btn { flex:0 0 auto; }
         .tab-btn:hover { opacity: 1; }
         .tab-btn.active { opacity: 1; border-bottom-color: var(--v-yellow); color: var(--v-yellow);}
 
@@ -7179,6 +7184,108 @@ if (typeof window !== 'undefined') {
         }
 
 
+        /* ================================================================
+           v1.3.0 — REPORTS & CASE TIMELINE
+           Local document index; original PDFs stay in SharePoint.
+           ================================================================ */
+        .reports-hero { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:18px; }
+        .reports-hero-copy { max-width:930px; }
+        .reports-scope-note { display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap:wrap; padding:13px 16px; margin:14px 0; border:1px solid #C7D2FE; border-left:5px solid var(--v-blue); border-radius:10px; background:#EEF2FF; color:var(--v-deep-blue); font-size:11px; line-height:1.55; }
+        .reports-privacy-note { margin:10px 0 16px; padding:12px 15px; border:1px solid #FDE68A; border-radius:9px; background:#FFFBEB; color:#713F12; font-size:10px; line-height:1.55; }
+        .reports-import-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:18px 0; }
+        .reports-import-card { padding:17px; border:1px solid var(--v-border); border-radius:12px; background:#fff; box-shadow:0 8px 20px rgba(23,20,52,.05); }
+        .reports-import-card h3 { margin:0 0 6px; color:var(--v-deep-blue); font-size:13px; }
+        .reports-import-card p { margin:0 0 12px; color:var(--v-text-mutated); font-size:10px; line-height:1.5; }
+        .reports-action-row { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+        .reports-status-line { margin-top:9px; min-height:16px; color:#475569; font-size:9px; line-height:1.45; }
+        .reports-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:18px 0; }
+        .reports-kpi { position:relative; overflow:hidden; min-height:104px; padding:16px; border:1px solid var(--v-border); border-radius:12px; background:#fff; box-shadow:0 8px 20px rgba(23,20,52,.05); cursor:pointer; }
+        .reports-kpi:hover { transform:translateY(-1px); box-shadow:0 12px 26px rgba(23,20,52,.09); }
+        .reports-kpi.active { border-color:var(--v-yellow); box-shadow:0 0 0 2px rgba(240,202,0,.18); }
+        .reports-kpi::before { content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--v-blue); }
+        .reports-kpi.warning::before { background:#D97706; }
+        .reports-kpi.review::before { background:#DC2626; }
+        .reports-kpi .label { color:#64748B; font-size:8px; font-weight:900; letter-spacing:.45px; text-transform:uppercase; }
+        .reports-kpi .value { margin-top:8px; color:var(--v-deep-blue); font-family:'Space Mono',monospace; font-size:27px; font-weight:800; }
+        .reports-kpi .sub { margin-top:5px; color:#64748B; font-size:9px; line-height:1.35; }
+        .reports-toolbar { display:grid; grid-template-columns:minmax(250px,2fr) repeat(4,minmax(135px,1fr)) auto; gap:10px; align-items:end; padding:14px; margin:12px 0; border:1px solid var(--v-border); border-radius:12px; background:#F8FAFC; }
+        .reports-control-group label { display:block; margin-bottom:5px; color:#475569; font-size:8px; font-weight:900; letter-spacing:.35px; text-transform:uppercase; }
+        .reports-control { width:100%; box-sizing:border-box; min-height:36px; padding:8px 10px; border:1px solid #CBD5E1; border-radius:7px; background:#fff; color:var(--v-deep-blue); font-family:'Inter',sans-serif; font-size:10px; }
+        .reports-table-wrap { max-height:720px; overflow:auto; border:1px solid var(--v-border); border-radius:11px; background:#fff; }
+        .reports-table { min-width:1320px; }
+        .reports-table th { position:sticky; top:0; z-index:2; }
+        .reports-table td { vertical-align:top; font-size:10px; line-height:1.45; }
+        .report-case-id { color:var(--v-deep-blue); font-family:'Space Mono',monospace; font-size:9px; font-weight:800; }
+        .report-muted { display:block; margin-top:3px; color:#64748B; font-size:8px; line-height:1.4; }
+        .report-pill { display:inline-flex; align-items:center; gap:4px; padding:4px 7px; border-radius:999px; font-size:7px; font-weight:900; letter-spacing:.35px; text-transform:uppercase; white-space:nowrap; }
+        .report-linked { background:#DCFCE7; color:#166534; }
+        .report-unmatched { background:#FEF3C7; color:#92400E; }
+        .report-ambiguous, .report-review { background:#FEE2E2; color:#991B1B; }
+        .report-pending { background:#E0E7FF; color:#3730A3; }
+        .report-type { background:#E0F2FE; color:#075985; }
+        .report-source { background:#F1F5F9; color:#475569; }
+        .report-warning { margin-top:5px; padding:6px 8px; border-left:3px solid #D97706; border-radius:4px; background:#FFFBEB; color:#713F12; font-size:8px; line-height:1.45; }
+        .report-actions { display:flex; gap:5px; flex-wrap:wrap; min-width:190px; }
+        .report-mini-btn { padding:5px 7px; border:1px solid #CBD5E1; border-radius:6px; background:#fff; color:var(--v-deep-blue); font-size:7px; font-weight:900; cursor:pointer; text-transform:uppercase; }
+        .report-mini-btn.primary { border-color:var(--v-blue); background:var(--v-blue); color:#fff; }
+        .report-mini-btn.danger { border-color:#FCA5A5; color:#991B1B; }
+        .report-mini-btn:disabled { cursor:not-allowed; opacity:.45; }
+        .reports-empty { padding:48px 20px; text-align:center; color:#64748B; }
+        .reports-empty strong { display:block; margin-bottom:7px; color:var(--v-deep-blue); font-size:16px; }
+        .reports-empty .empty-icon { margin-bottom:8px; font-size:34px; }
+        .report-preview-modal { width:min(1120px,96vw); max-height:92vh; }
+        .report-preview-table { width:100%; border-collapse:collapse; min-width:980px; }
+        .report-preview-table th { padding:8px; background:#171434; color:#fff; font-size:8px; text-align:left; }
+        .report-preview-table td { padding:8px; border-bottom:1px solid #E2E8F0; font-size:9px; vertical-align:top; }
+        .report-preview-scroll { overflow:auto; max-height:54vh; border:1px solid #E2E8F0; border-radius:8px; }
+        .report-preview-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+        .report-preview-stat { padding:10px; border:1px solid #E2E8F0; border-radius:8px; background:#F8FAFC; }
+        .report-preview-stat span { display:block; color:#64748B; font-size:7px; font-weight:900; text-transform:uppercase; }
+        .report-preview-stat strong { display:block; margin-top:4px; color:var(--v-deep-blue); font-family:'Space Mono',monospace; font-size:18px; }
+        .report-preview-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+        .report-privacy-review { display:grid; gap:7px; margin-top:8px; padding:10px; border:1px solid #F59E0B; border-radius:8px; background:#FFFBEB; color:#713F12; }
+        .report-privacy-review strong { font-size:9px; text-transform:uppercase; letter-spacing:.3px; }
+        .report-privacy-review span,.report-privacy-review label { font-size:8px; line-height:1.45; }
+        .report-privacy-review textarea { resize:vertical; min-height:112px; color:#334155; line-height:1.45; }
+        .report-privacy-review label { display:flex; gap:7px; align-items:flex-start; font-weight:800; }
+        .report-privacy-review input[type="checkbox"] { margin-top:2px; accent-color:var(--v-blue); }
+        .timeline-modal { width:min(880px,95vw); max-height:92vh; }
+        .timeline-case-hero { padding:17px; border-radius:11px; background:linear-gradient(135deg,var(--v-deep-blue),var(--v-blue)); color:#fff; }
+        .timeline-case-hero h2 { margin:6px 0 5px; color:#fff; font-size:21px; }
+        .timeline-list { position:relative; margin:18px 0 0 8px; padding-left:28px; }
+        .timeline-list::before { content:""; position:absolute; top:4px; bottom:4px; left:8px; width:2px; background:#CBD5E1; }
+        .timeline-event { position:relative; margin-bottom:13px; padding:13px 14px; border:1px solid #E2E8F0; border-radius:10px; background:#fff; }
+        .timeline-event::before { content:""; position:absolute; left:-26px; top:17px; width:11px; height:11px; border:3px solid #fff; border-radius:50%; background:var(--v-blue); box-shadow:0 0 0 2px var(--v-blue); }
+        .timeline-event.procedure::before { background:#16A34A; box-shadow:0 0 0 2px #16A34A; }
+        .timeline-event.problem::before { background:#DC2626; box-shadow:0 0 0 2px #DC2626; }
+        .timeline-event.engineering::before { background:#7C3AED; box-shadow:0 0 0 2px #7C3AED; }
+        .timeline-event-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+        .timeline-event-title { color:var(--v-deep-blue); font-size:11px; font-weight:900; }
+        .timeline-event-date { color:#64748B; font-family:'Space Mono',monospace; font-size:8px; white-space:nowrap; }
+        .timeline-event-body { margin-top:7px; color:#334155; font-size:9px; line-height:1.55; white-space:pre-wrap; }
+        .timeline-professionals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:10px; padding:10px; border:1px solid #E2E8F0; border-radius:8px; background:#F8FAFC; }
+        .timeline-professionals > strong { grid-column:1/-1; color:var(--v-deep-blue); font-size:8px; letter-spacing:.3px; text-transform:uppercase; }
+        .timeline-professionals > div { color:#334155; font-size:8px; line-height:1.45; }
+        .timeline-professionals > div > span { display:block; margin-bottom:3px; color:#64748B; font-size:7px; font-weight:900; text-transform:uppercase; }
+        .timeline-comparison { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:12px 0; }
+        .timeline-comparison > div { padding:10px; border:1px solid #E2E8F0; border-radius:8px; background:#F8FAFC; }
+        .timeline-comparison span { display:block; color:#64748B; font-size:7px; font-weight:900; text-transform:uppercase; }
+        .timeline-comparison strong { display:block; margin-top:4px; color:var(--v-deep-blue); font-size:10px; }
+        .case-report-bridge { margin-top:15px; padding:13px; border:1px solid #C7D2FE; border-radius:10px; background:#EEF2FF; }
+        .case-report-bridge-head { display:flex; justify-content:space-between; gap:9px; align-items:center; }
+        .case-report-bridge h3 { margin:0; color:var(--v-deep-blue); font-size:12px; }
+        .case-report-bridge p { margin:7px 0 0; color:#475569; font-size:9px; line-height:1.5; }
+        .reports-progress { display:none; position:fixed; inset:0; z-index:10000030; place-items:center; background:rgba(15,23,42,.55); backdrop-filter:blur(2px); }
+        .reports-progress.active { display:grid; }
+        .reports-progress-card { width:min(420px,88vw); padding:22px; border-radius:12px; background:#fff; box-shadow:0 22px 55px rgba(0,0,0,.25); text-align:center; }
+        .reports-progress-card strong { display:block; color:var(--v-deep-blue); font-size:14px; }
+        .reports-progress-card span { display:block; margin-top:8px; color:#64748B; font-size:10px; line-height:1.5; }
+        .reports-spinner { width:34px; height:34px; margin:0 auto 12px; border:4px solid #E2E8F0; border-top-color:var(--v-blue); border-radius:50%; animation:reportsSpin .8s linear infinite; }
+        @keyframes reportsSpin { to { transform:rotate(360deg); } }
+        @media (max-width:1180px) { .reports-toolbar { grid-template-columns:repeat(3,minmax(0,1fr)); } .reports-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width:760px) { .reports-import-grid,.reports-summary-grid,.reports-toolbar,.timeline-comparison { grid-template-columns:1fr; } .report-preview-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+
         /* ACCESS GATE (private PWA) */
         #access-gate { display: none; position: fixed; inset: 0; z-index: 100000000; background: var(--v-deep-blue); color: #fff; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; box-sizing: border-box; }
         #access-gate.active { display: flex; }
@@ -7253,6 +7360,7 @@ if (typeof window !== 'undefined') {
         <button class="tab-btn" onclick="switchTab('tab-sop', event)">04. S&OP & Future</button>
         <button class="tab-btn" onclick="switchTab('tab-clinical', event)">05. Clinical Excellence</button>
         <button class="tab-btn" id="tab-outcomes-btn" onclick="switchTab('tab-outcomes', event)">06. Procedural Outcomes <span style="font-size:8px;opacity:.75;">LATAM</span></button>
+        <button class="tab-btn" id="tab-reports-btn" onclick="switchTab('tab-reports', event)">07. Reports &amp; Case Timeline · LATAM</button>
     </div>
 
     <!-- GLOBAL ACTION BAR -->
@@ -7717,6 +7825,75 @@ if (typeof window !== 'undefined') {
         <div class="clinical-coverage-note" style="margin-top:8px;font-size:10px;"><strong>EOA availability:</strong> EOA was not systematically collected because it requires dedicated post-procedural echocardiographic acquisition/assessment and was not part of a funded standardized Corelab protocol.</div>
         </div><!-- /outcomes-2026-content -->
     </div>
+
+    <!-- TAB 07: REPORTS & CASE TIMELINE — local metadata index, originals remain in SharePoint -->
+    <div id="tab-reports" class="tab-content">
+        <div class="reports-hero">
+            <div class="reports-hero-copy">
+                <h2 style="margin-bottom:4px;">Reports &amp; Case Timeline</h2>
+                <div class="section-dash">—</div>
+                <p style="font-size:13px;color:var(--v-text-mutated);line-height:1.6;">Local LATAM document intelligence for 3mensio planning, procedure outcomes, Clinical Excellence reports and Engineering / HQ reviews. The app stores a private metadata index and opens the original SharePoint document only when requested.</p>
+            </div>
+            <div class="reports-action-row" id="reports-export-actions">
+                <button type="button" class="upload-btn" onclick="v13ExportReportBackup()">⭳ INTERNAL BACKUP</button>
+                <input id="reports-restore-input" type="file" accept=".json" hidden>
+                <button type="button" class="upload-btn" onclick="document.getElementById('reports-restore-input').click()">↥ RESTORE BACKUP</button>
+            </div>
+        </div>
+
+        <div id="reports-year-empty" class="outcomes-year-empty"><div class="empty-icon">🕰️</div><h3>No report intelligence available for 2025</h3><p>The private Reports &amp; Case Timeline registry begins in 2026. Enable <strong>2026</strong> in Time Travel to restore report cards, imports, links and timelines.</p></div>
+        <div id="reports-2026-content">
+
+        <div class="reports-scope-note">
+            <span><strong>One case, independent evidence.</strong> Planning recommendation, implanted valve, procedure comment, problem report and engineering review remain separate events in the same timeline.</span>
+            <span id="reports-registry-status" class="scope-region-badge" style="margin:0;white-space:nowrap;">Local registry loading…</span>
+        </div>
+        <div class="reports-privacy-note"><strong>Private local mode.</strong> Patient names are used only in memory to calculate a one-way match token and are then discarded. PDFs are not embedded in this HTML. SharePoint links stay in this browser’s private registry, may contain a patient filename, and are excluded from Nikki / HQ Excel and PDF exports.</div>
+
+        <div class="reports-import-grid">
+            <div class="reports-import-card">
+                <h3>1. Read planning or engineering reports</h3>
+                <p>Select one or many PDFs. Text is extracted locally with PDF.js; OCR runs only when a usable text layer is unavailable. Every proposed link is reviewed before it is saved.</p>
+                <input id="reports-pdf-input" type="file" accept="application/pdf,.pdf" multiple hidden>
+                <div class="reports-action-row">
+                    <button type="button" class="upload-btn export-btn" onclick="document.getElementById('reports-pdf-input').click()">⬆ IMPORT PDF REPORTS</button>
+                    <button type="button" class="upload-btn" id="reports-undo-btn" onclick="v13UndoLastReportChange()">↶ UNDO LAST</button>
+                    <button type="button" class="upload-btn" id="reports-clear-btn" onclick="v13ClearImportedReports()">CLEAR IMPORTED</button>
+                </div>
+                <div id="reports-pdf-status" class="reports-status-line">No PDF batch selected.</div>
+            </div>
+            <div class="reports-import-card">
+                <h3>2. Add the SharePoint tracking links</h3>
+                <p>Import a static Microsoft Lists export (.xlsx, .xls, .csv or .tsv). The app matches by report number and private patient token. An .iqy connection file is not a static workbook and is intentionally rejected. Opening an original uses the Microsoft session already active in the browser; this app never requests or stores a SharePoint password.</p>
+                <input id="reports-tracking-input" type="file" accept=".xlsx,.xls,.csv,.tsv" hidden>
+                <div class="reports-action-row">
+                    <button type="button" class="upload-btn export-btn" onclick="document.getElementById('reports-tracking-input').click()">🔗 IMPORT SHAREPOINT LIST</button>
+                    <button type="button" class="upload-btn" onclick="v13OpenTrackingHelp()">HOW TO EXPORT</button>
+                </div>
+                <div id="reports-tracking-status" class="reports-status-line">No tracking-list snapshot imported.</div>
+            </div>
+        </div>
+
+        <div id="reports-kpi-grid" class="reports-summary-grid"></div>
+
+        <div class="reports-toolbar">
+            <div class="reports-control-group"><label for="reports-search">Search case, report, hospital, country or recommendation</label><input id="reports-search" class="reports-control" type="search" autocomplete="off" placeholder="e.g. LATAM Case 2026-23, L29, hospital…" oninput="v13ScheduleRenderReports()"></div>
+            <div class="reports-control-group"><label for="reports-period-filter">Period</label><select id="reports-period-filter" class="reports-control" onchange="v13RenderReports()"><option value="">Active years · all periods</option><option value="H1">H1</option><option value="H2">H2</option></select></div>
+            <div class="reports-control-group"><label for="reports-type-filter">Report type</label><select id="reports-type-filter" class="reports-control" onchange="v13RenderReports()"><option value="">All report types</option><option value="3mensio_planning">3mensio planning</option><option value="engineering_review">Engineering / HQ review</option><option value="other">Other report</option></select></div>
+            <div class="reports-control-group"><label for="reports-match-filter">Case match</label><select id="reports-match-filter" class="reports-control" onchange="v13RenderReports()"><option value="">All match statuses</option><option value="linked">Linked to implant</option><option value="unmatched">Implant not found</option><option value="ambiguous">Ambiguous / review</option><option value="pending_review">Pending review</option></select></div>
+            <div class="reports-control-group"><label for="reports-country-filter">Country</label><select id="reports-country-filter" class="reports-control" onchange="v13RenderReports()"><option value="">All countries</option></select></div>
+            <button type="button" class="upload-btn" onclick="v13ClearReportFilters()">CLEAR ✕</button>
+        </div>
+
+        <div class="reports-table-wrap">
+            <table id="reports-table" class="reports-table">
+                <thead><tr><th>Case / Match</th><th>Report</th><th>Country / Context</th><th>Planning Recommendation</th><th>Implanted Device</th><th>Recommendation × Implant</th><th>Evidence / Warning</th><th>Original</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="clinical-method-note"><strong>Interpretation rule:</strong> “Implant not found” means only that no matching procedure exists in the app’s current local database. It never means that the patient was not implanted. A planning warning such as poor image quality is not an adverse event.</div>
+        </div><!-- /reports-2026-content -->
+    </div>
 </div>
 
 <!-- LATAM OUTCOME CASE DRAWER -->
@@ -7729,6 +7906,34 @@ if (typeof window !== 'undefined') {
 
 <div id="professional-contact-overlay" class="contact-overlay" onclick="if(event.target===this)v12CloseProfessionalContact()"><div class="contact-modal" onclick="event.stopPropagation()"><div class="contact-modal-head"><button type="button" class="contact-modal-close" onclick="v12CloseProfessionalContact()">×</button><div style="font-size:9px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;opacity:.75;">Professional contact directory</div><h2 id="professional-contact-name">Professional</h2><div id="professional-contact-role" style="font-size:10px;opacity:.82;"></div></div><div id="professional-contact-body" class="contact-modal-body"></div></div></div>
 <div id="outcome-import-preview-overlay" class="contact-overlay" onclick="if(event.target===this)v12CloseOutcomeImportPreview()"><div class="contact-modal import-preview-modal" onclick="event.stopPropagation()"><div class="contact-modal-head"><button type="button" class="contact-modal-close" onclick="v12CloseOutcomeImportPreview()">×</button><div style="font-size:9px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;opacity:.75;">Safe incremental merge</div><h2>Outcome import preview</h2><div style="font-size:10px;opacity:.82;">Nothing changes until you apply the preview.</div></div><div id="outcome-import-preview-body" class="contact-modal-body"></div></div></div>
+
+<div id="report-import-preview-overlay" class="contact-overlay" onclick="if(event.target===this)v13CloseReportPreview()">
+    <div class="contact-modal report-preview-modal" onclick="event.stopPropagation()">
+        <div class="contact-modal-head">
+            <button type="button" class="contact-modal-close" onclick="v13CloseReportPreview()">×</button>
+            <div style="font-size:9px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;opacity:.75;">Local private document registry</div>
+            <h2 id="report-preview-title">Report import preview</h2>
+            <div id="report-preview-subtitle" style="font-size:10px;opacity:.82;">Nothing changes until you apply the preview.</div>
+        </div>
+        <div id="report-preview-body" class="contact-modal-body"></div>
+    </div>
+</div>
+
+<div id="report-timeline-overlay" class="contact-overlay" onclick="if(event.target===this)v13CloseTimeline()">
+    <div class="contact-modal timeline-modal" onclick="event.stopPropagation()">
+        <div class="contact-modal-head">
+            <button type="button" class="contact-modal-close" onclick="v13CloseTimeline()">×</button>
+            <div style="font-size:9px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;opacity:.75;">Unified case evidence</div>
+            <h2>Case Timeline</h2>
+            <div style="font-size:10px;opacity:.82;">Planning, procedure, Clinical Excellence and engineering evidence remain independent.</div>
+        </div>
+        <div id="report-timeline-body" class="contact-modal-body"></div>
+    </div>
+</div>
+
+<div id="reports-progress" class="reports-progress" aria-live="polite" aria-busy="true">
+    <div class="reports-progress-card"><div class="reports-spinner"></div><strong id="reports-progress-title">Reading reports locally…</strong><span id="reports-progress-detail">The original PDF is not being uploaded to a server.</span></div>
+</div>
 
 <!-- MODAL DRILLDOWN -->
 <div class="modal-overlay" id="drilldown-modal" onclick="closeModal('drilldown-modal')">
@@ -17821,6 +18026,2388 @@ if (typeof window !== "undefined") {
         let yearNote=document.getElementById('outcomes-year-context');if(yearNote)yearNote.textContent=activeYears.includes(2025)?'Time Travel includes 2025 + 2026; this qualitative registry remains 2026-only.':'2026 structured outcomes active.';
         renderOutcomeFilterContext();renderOutcomesRegistryStatus(periodRows);renderOutcomesKPIs(statusRows);renderOutcomesCharts(statusRows,pvlRows);renderOutcomesTable(tableRows);v12RenderOutcomeImportStatus();
     }
+
+
+(function attachV13ReportsCore(root, factory) {
+    const api = factory();
+    root.V13ReportsCore = api;
+    [
+        'v13ParseReportText', 'v13RedactDocumentText', 'v13ValidateSharePointUrl',
+        'v13ParseTrackingMatrix', 'v13CompareRecommendationToImplant',
+        'v13NormalizeDate', 'v13NormalizeReportNumber'
+    ].forEach(name => { root[name] = api[name]; });
+    if (typeof module === 'object' && module && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function buildV13ReportsCore() {
+    'use strict';
+
+    const PARSER_VERSION = '1.0.0';
+    const DOCUMENT_SCHEMA = 1;
+    const SHAREPOINT_HOST = 'venusmedtecheurope.sharepoint.com';
+
+    const TRACKING_HEADER_ALIASES = Object.freeze({
+        patientName: [
+            'patient name', 'patient', 'name', 'patient full name', 'nome do paciente',
+            'nome paciente', 'paciente', 'nombre del paciente', 'nombre paciente'
+        ],
+        reportUrl: [
+            'report url', 'report link', '3mensio report link', '3mensio link', 'pdf link',
+            'document link', 'sharepoint link', 'link to report', 'url', 'link'
+        ],
+        fileName: [
+            'file name', 'filename', 'report file', 'document name', 'pdf name',
+            'nome do arquivo', 'nombre del archivo', 'name of report'
+        ],
+        reportNumber: [
+            'report number', 'report no', 'report id', '3mensio report number',
+            'numero do report', 'numero do relatorio', 'numero de informe', 'id report'
+        ],
+        reportDate: [
+            'report date', 'creation date', 'created date', 'date created', 'data do report',
+            'data do relatorio', 'fecha del informe', 'fecha de creacion'
+        ],
+        reportType: ['report type', 'document type', 'tipo de report', 'tipo de relatorio', 'tipo de informe'],
+        officialCaseId: [
+            'case id', 'latam case id', 'official case id', 'app case id',
+            'id do caso', 'id de caso', 'case number'
+        ],
+        formsId: ['forms id', 'form id', 'record id', 'forms record id', 'microsoft forms id'],
+        procedureDate: [
+            'procedure date', 'implant date', 'date of procedure', 'data do procedimento',
+            'data do implante', 'fecha del procedimiento', 'fecha de implante'
+        ],
+        serial: [
+            'valve serial', 'serial number', 'device serial', 'valve lot', 'serial',
+            'numero de serie', 'numero da serie', 'lote da valvula'
+        ],
+        country: ['country', 'market', 'pais', 'país'],
+        hospital: ['hospital', 'implanting hospital', 'site', 'hospital name', 'nome do hospital'],
+        status: ['status', 'report status', 'tracking status', 'estado'],
+        createdBy: ['created by', 'submitted by', 'report owner', 'creator', 'criado por', 'creado por'],
+        notes: ['notes', 'comments', 'comment', 'observations', 'observacoes', 'observaciones']
+    });
+
+    function cleanString(value) {
+        return value === null || value === undefined ? '' : String(value).replace(/\u00a0/g, ' ').trim();
+    }
+
+    function normalizeText(value) {
+        return cleanString(value)
+            .replace(/\r\n?/g, '\n')
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .replace(/[ \t]+/g, ' ')
+            .replace(/ *\n */g, '\n')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+
+    function flattenText(value) {
+        return normalizeText(value).replace(/\s+/g, ' ').trim();
+    }
+
+    function normalizeIdentity(value) {
+        return cleanString(value)
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function validDateParts(year, month, day) {
+        const y = Number(year), m = Number(month), d = Number(day);
+        if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+        if (y < 1900 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) return false;
+        const probe = new Date(Date.UTC(y, m - 1, d));
+        return probe.getUTCFullYear() === y && probe.getUTCMonth() === m - 1 && probe.getUTCDate() === d;
+    }
+
+    function isoFromParts(year, month, day) {
+        if (!validDateParts(year, month, day)) return '';
+        return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function normalizeIsoDate(value) {
+        if (value instanceof Date && !Number.isNaN(value.getTime())) {
+            return isoFromParts(value.getUTCFullYear(), value.getUTCMonth() + 1, value.getUTCDate());
+        }
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            const asDigits = String(Math.trunc(value));
+            if (/^(?:19|20)\d{6}$/.test(asDigits)) {
+                return isoFromParts(asDigits.slice(0, 4), asDigits.slice(4, 6), asDigits.slice(6, 8));
+            }
+            if (value >= 20000 && value <= 90000) {
+                const excelEpoch = Date.UTC(1899, 11, 30);
+                const date = new Date(excelEpoch + Math.round(value) * 86400000);
+                return isoFromParts(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
+            }
+        }
+        const raw = cleanString(value);
+        if (!raw) return '';
+        let match = raw.match(/\b((?:19|20)\d{2})[\/.\-](\d{1,2})[\/.\-](\d{1,2})\b/);
+        if (match) return isoFromParts(match[1], match[2], match[3]);
+        match = raw.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-]((?:19|20)\d{2})\b/);
+        if (match) return isoFromParts(match[3], match[2], match[1]);
+        return '';
+    }
+
+    function normalizeReportNumber(value) {
+        return cleanString(value)
+            .replace(/^\s*Report\s*(?:No\.?|Number|#|ID)?\s*[:#-]?\s*/i, '')
+            .replace(/\.0$/, '').replace(/\s+/g, '').trim();
+    }
+
+    function escapeRegExp(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function cleanNameCandidate(value) {
+        return cleanString(value)
+            .replace(/\b(?:Height|NYHA|Weight|BMI|Gender|Sex|EuroSCORE|STS\s*Score)\s*:.*$/i, '')
+            .replace(/\s{2,}/g, ' ').replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '').trim();
+    }
+
+    function looksLikePatientName(value) {
+        const text = cleanNameCandidate(value);
+        if (!text || /\d/.test(text) || text.length > 120) return false;
+        const words = text.split(/\s+/).filter(Boolean);
+        if (!words.length || words.length > 12) return false;
+        return words.every(word => /^[A-Za-zÀ-ÖØ-öø-ÿ'’.-]+$/.test(word));
+    }
+
+    function extractPatientName(value, options) {
+        const text = normalizeText(value);
+        const opts = options || {};
+        if (cleanString(opts.patientNameHint)) return cleanNameCandidate(opts.patientNameHint);
+        const lines = text.split('\n');
+        for (let index = 0; index < lines.length; index += 1) {
+            const lineMatch = lines[index].match(/^\s*(?:(?:Patient\s+)?Name|Patient|Paciente|Nome(?:\s+do\s+Paciente)?|Nombre(?:\s+del\s+Paciente)?|Subject(?:\s+Name)?)\s*:\s*(.*)$/i);
+            if (!lineMatch) continue;
+            let candidate = cleanNameCandidate(lineMatch[1]);
+            for (let next = index + 1; next < Math.min(lines.length, index + 4); next += 1) {
+                const line = cleanString(lines[next]);
+                if (!line || /^(?:Gender|G[eê]nero|Sexo|Sex|Weight|Peso|BMI|Year\s+Of\s+Birth|Ano\s+de\s+Nascimento|Año\s+de\s+Nacimiento|DOB|Comments?|Coment[aá]rios?|Observaciones?)\s*:/i.test(line)) break;
+                const continuation = cleanNameCandidate(line);
+                if (!looksLikePatientName(continuation)) break;
+                candidate = `${candidate} ${continuation}`.trim();
+            }
+            if (looksLikePatientName(candidate)) return candidate;
+        }
+        const flat = flattenText(text);
+        const flatMatch = flat.match(/\b(?:(?:Patient\s+)?Name|Patient|Paciente|Nome(?:\s+do\s+Paciente)?|Nombre(?:\s+del\s+Paciente)?|Subject(?:\s+Name)?)\s*:\s*(.{2,120}?)\s+(?=(?:Height|Altura|NYHA|Gender|G[eê]nero|Sexo|Sex|Weight|Peso|BMI|Year\s+Of\s+Birth|Ano\s+de\s+Nascimento|Año\s+de\s+Nacimiento|DOB)\s*:)/i);
+        return flatMatch && looksLikePatientName(flatMatch[1]) ? cleanNameCandidate(flatMatch[1]) : '';
+    }
+
+    function replaceSensitiveValue(text, value, token) {
+        const words = cleanString(value).split(/\s+/).filter(Boolean);
+        if (!words.length) return text;
+        const pattern = words.map(escapeRegExp).join('[\\s,;._\\-]+');
+        try { return text.replace(new RegExp(pattern, 'giu'), token); }
+        catch (error) { return text.split(value).join(token); }
+    }
+
+    function redactSensitiveText(value, options) {
+        const opts = options || {};
+        let text = normalizeText(value);
+        const sensitive = []
+            .concat(opts.sensitiveValues || [])
+            .concat(opts.patientName || [])
+            .map(cleanString).filter(Boolean)
+            .sort((left, right) => right.length - left.length);
+        sensitive.forEach(item => { text = replaceSensitiveValue(text, item, '[PATIENT REDACTED]'); });
+        text = text
+            .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[EMAIL REDACTED]')
+            .replace(/\b(https?:\/\/|www\.)[^\s<>()]+/gi, '[URL REDACTED]')
+            .replace(/\b((?:DOB|Date\s+of\s+Birth|Birth\s+Date|Year\s+of\s+Birth|YOB|Data\s+de\s+Nascimento|Ano\s+de\s+Nascimento|Fecha\s+de\s+Nacimiento|Año\s+de\s+Nacimiento)\s*[:#-]?\s*)(?:\d{1,4}[\/.-]\d{1,2}[\/.-]\d{1,4}|\d{4}|[^\n]{2,35})/gi, '$1[DOB REDACTED]')
+            .replace(/\b((?:MRN|Medical\s+Record(?:\s+Number)?|Hospital\s+Record|Prontu[aá]rio|Registro\s+M[eé]dico|Historia\s+Cl[ií]nica)\s*[:#-]?\s*)[A-Z0-9][A-Z0-9._\/-]{2,}/gi, '$1[ID REDACTED]')
+            .replace(/\b((?:Patient|Paciente)\s*(?:ID|Identifier|No\.?|Number|Record)\s*[:#-]?\s*)[A-Z0-9][A-Z0-9._\/-]{2,}/gi, '$1[ID REDACTED]')
+            .replace(/\b((?:Phone|Telephone|Tel\.?|Mobile|WhatsApp|Telefone|Telefono)\s*[:#-]?\s*)\+?[\d().\s-]{7,}\d/gi, '$1[PHONE REDACTED]');
+        if (!sensitive.length) {
+            text = text.replace(/(^|\n)(\s*(?:(?:Patient\s+)?Name|Patient|Paciente|Nome(?:\s+do\s+Paciente)?|Nombre(?:\s+del\s+Paciente)?|Subject(?:\s+Name)?)\s*:\s*)[^\n]+/gi, '$1$2[PATIENT REDACTED]');
+        }
+        return text.trim();
+    }
+
+    function extractReportNumber(value) {
+        const text = normalizeText(value);
+        const labelled = text.match(/\bReport\s*(?:No\.?|Number|#|ID)\s*[:#-]?\s*(\d{5,})\b/i);
+        if (labelled) return labelled[1];
+        const footer = text.match(/^\s*(\d{5,})\s+[A-ZÀ-ÖØ-Þ][^\n]{1,100}\s+Page\s+\d+\s+of\s+\d+/mi);
+        return footer ? footer[1] : '';
+    }
+
+    function extractReportDate(value) {
+        const text = normalizeText(value);
+        const match = text.match(/\b(?:Creation|Report|Created|Issued|Review)\s+Date\s*:\s*([^\n]{4,30})/i);
+        return normalizeIsoDate(match ? match[1] : '');
+    }
+
+    function extractLabelText(value, labelPattern, stopPattern) {
+        const text = normalizeText(value);
+        const stop = stopPattern || '(?:\\n|\\.|$)';
+        const expression = new RegExp(`\\b(?:${labelPattern})\\s*:\\s*([\\s\\S]{1,200}?)(?=${stop})`, 'i');
+        const match = text.match(expression);
+        return match ? cleanString(match[1]).replace(/\s+/g, ' ').replace(/[.;,\s]+$/g, '') : '';
+    }
+
+    function detectValveFamily(value) {
+        const key = normalizeIdentity(value).replace(/\s+/g, '');
+        if (/powerx/.test(key)) return 'Venus PowerX';
+        if (/pvalve/.test(key)) return 'Venus P-Valve';
+        if (/vitae/.test(key)) return 'Venus Vitae';
+        if (/venusapro|venusapro/.test(key)) return 'VenusA-Pro';
+        if (/venusaplus/.test(key)) return 'VenusA-Plus';
+        if (/venusa/.test(key)) return 'Venus-A';
+        return '';
+    }
+
+    function canonicalValveOption(prefix, size) {
+        const cleanPrefix = cleanString(prefix).replace(/[^A-Za-z]/g, '').toUpperCase();
+        const cleanSize = String(Number(size));
+        if (!/^\d{1,2}$/.test(cleanSize) || Number(cleanSize) < 10 || Number(cleanSize) > 50) return '';
+        return `${cleanPrefix}${cleanSize}`;
+    }
+
+    function extractValveOptions(value) {
+        const text = cleanString(value).replace(/[、，]/g, ',');
+        const found = [];
+        let match;
+        const prefixed = /\b(L|AB|PX|P|V)\s*[- ]?\s*(\d{2})\b/gi;
+        while ((match = prefixed.exec(text))) {
+            const option = canonicalValveOption(match[1], match[2]);
+            if (option && !found.includes(option)) found.push(option);
+        }
+        const explicitSize = /\b(?:valve\s*(?:size)?|device\s*size|size)\s*(?:of\s*)?[:#-]?\s*(\d{2})\b/gi;
+        while ((match = explicitSize.exec(text))) {
+            const option = canonicalValveOption('', match[1]);
+            if (option && !found.includes(option)) found.push(option);
+        }
+        return found;
+    }
+
+    function extractStrategies(value) {
+        const text = normalizeIdentity(value);
+        const strategies = [];
+        const tests = [
+            ['balloon sizing', /balloon sizing|sizing balloon|balloon test/],
+            ['pre-dilatation', /pre dilat|predilat|pre balloon/],
+            ['post-dilatation', /post dilat|postdilat|post balloon/],
+            ['coronary protection', /coronary protection|protect coronary/],
+            ['cerebral protection', /cerebral protection|embolic protection/],
+            ['BASILICA', /basilica/],
+            ['chimney stent', /chimney/],
+            ['valve-in-valve', /valve in valve|viv/],
+            ['alternative access', /alternative access|transapical|transaortic|subclavian|carotid access/]
+        ];
+        tests.forEach(([label, expression]) => { if (expression.test(text)) strategies.push(label); });
+        return strategies;
+    }
+
+    function parseRecommendation(value) {
+        const text = normalizeText(value);
+        let match = text.match(/((?:Venus\s*[- ]?\s*(?:A(?:\s*[- ]?\s*(?:Pro|Plus))?|P\s*[- ]?\s*Valve|PowerX|Vitae)|(?:TAVR|THV|transcatheter)\s+valve)[^\n:]{0,100}?\brecommendation)\s*:\s*([\s\S]{1,500}?)(?=(?:\n\s*(?:This report|Aortic Valve|Patient Information|Measurements?|Report Details|Comments?)\b)|(?:\s+This report\b)|$)/i);
+        if (!match) {
+            match = text.match(/(valve\s+recommendation)\s*:\s*([\s\S]{1,400}?)(?=(?:\n\s*[A-Z][A-Za-z ]{2,40}\s*$)|(?:\s+This report\b)|$)/im);
+        }
+        if (!match) return { rawRedacted: '', valveFamily: '', options: [], strategies: [] };
+        const label = cleanString(match[1]);
+        const raw = cleanString(match[2]).replace(/[、，]/g, ',').replace(/\s+/g, ' ').replace(/\s*([,;])\s*/g, '$1 ').replace(/[\s.]+$/g, '');
+        const combined = `${label}: ${raw}`;
+        return {
+            rawRedacted: raw,
+            valveFamily: detectValveFamily(label) || detectValveFamily(raw),
+            options: extractValveOptions(raw),
+            strategies: extractStrategies(raw),
+            sourceLabel: label
+        };
+    }
+
+    function extractQualityWarning(value) {
+        const flat = flattenText(value);
+        const precise = flat.match(/\b(?:poor|suboptimal|limited|insufficient|low)\s+(?:image|scan|ct)\s+quality\b(?:\s*[;,]\s*measurements?\s+(?:are\s+|may\s+be\s+)?approximate(?:\s+only)?)?/i);
+        if (precise) return cleanString(precise[0]);
+        const pattern = /(?:[^.!?]{0,80})\b(?:poor|suboptimal|limited|insufficient|low)\s+(?:image|scan|ct)\s+quality\b[^.!?]{0,180}[.!]?/i;
+        const match = flat.match(pattern);
+        if (match) return cleanString(match[0]).replace(/^.*?Comments\s*:\s*/i, '').trim();
+        const approximate = flat.match(/\bmeasurements?\s+(?:are\s+|may\s+be\s+)?approximate\s+only\b[.!]?/i);
+        return approximate ? cleanString(approximate[0]) : '';
+    }
+
+    function extractMeasurement(value, labelPattern, unit) {
+        const text = normalizeText(value);
+        const unitPattern = unit || '(?:mm(?:²|2)?|°|deg(?:rees?)?)?';
+        const expression = new RegExp(`\\b(?:${labelPattern})\\s*:?\\s*(-?\\d+(?:[.,]\\d+)?)\\s*${unitPattern}`, 'i');
+        const match = text.match(expression);
+        return match ? Number(match[1].replace(',', '.')) : null;
+    }
+
+    function detectReportType(value, options) {
+        const text = flattenText(value);
+        const fileName = cleanString(options && options.fileName);
+        const evidence = `${fileName} ${text}`;
+        if (/engineering\s+(?:review|report|analysis)|root\s+cause|failure\s+analysis|technical\s+investigation|quality\s+investigation|complaint\s+(?:report|investigation)|incident\s+investigation|device\s+investigation|product\s+complaint|corrective\s+action|post[- ]market\s+investigation/i.test(evidence)) {
+            return 'engineering_review';
+        }
+        if (/3mensio\s+Structural\s+Heart|Venus\s*[- ]?\s*(?:A|P\s*[- ]?Valve|PowerX|Vitae)[^:]{0,100}valve recommendation|Aortic Annulus/i.test(evidence)) {
+            return '3mensio_planning';
+        }
+        return 'other';
+    }
+
+    function detectSourceLanguage(value) {
+        const text = cleanString(value);
+        if (/[\u4E00-\u9FFF]/.test(text)) return 'zh';
+        const key = normalizeIdentity(text);
+        if (/\b(?:paciente|procedimento|relatorio|valvula|hospital|medico)\b/.test(key)) return 'pt';
+        if (/\b(?:paciente|procedimiento|informe|valvula|medico|fecha)\b/.test(key)) return 'es';
+        if (/\b(?:patient|procedure|report|valve|physician|date)\b/.test(key)) return 'en';
+        return 'unknown';
+    }
+
+    function parse3mensioText(value, options) {
+        const opts = options || {};
+        const text = normalizeText(value);
+        const patientName = extractPatientName(text, opts);
+        const recommendation = parseRecommendation(text);
+        const rawRedacted = redactSensitiveText(text, { sensitiveValues: [patientName].concat(opts.sensitiveValues || []) });
+        const gender = extractLabelText(text, 'Gender|Sex', '(?:\\s+(?:Weight|BMI|EuroSCORE|STS\\s*Score)\\s*:|\\n|$)');
+        const birthMatch = text.match(/\b(?:Year\s+Of\s+Birth|YOB)\s*(?:\(Age\))?\s*:\s*((?:19|20)\d{2})(?:\s*\((\d{1,3})\))?/i);
+        const valveType = extractLabelText(text, 'Aortic\\s+valve\\s+type', '(?:\\.|\\n|$)');
+        const access = extractLabelText(text, 'Access', '(?:\\.|\\n|$)');
+        const qualityWarning = extractQualityWarning(text);
+        const warnings = [];
+        if (!extractReportNumber(text)) warnings.push('Report number was not detected.');
+        if (!extractReportDate(text)) warnings.push('Report date was not detected.');
+        if (!patientName) warnings.push('Patient identity was not detected; manual matching may be required.');
+        if (!recommendation.rawRedacted) warnings.push('Valve recommendation was not detected.');
+        return {
+            parserVersion: PARSER_VERSION,
+            type: '3mensio_planning',
+            reportNumber: extractReportNumber(text),
+            reportDate: extractReportDate(text),
+            qualityWarning,
+            transient: { patientName },
+            demographic: {
+                gender: gender || '',
+                yearOfBirth: birthMatch ? Number(birthMatch[1]) : null,
+                ageAtReport: birthMatch && birthMatch[2] ? Number(birthMatch[2]) : null
+            },
+            recommendation: Object.assign({}, recommendation, {
+                rawRedacted: redactSensitiveText(recommendation.rawRedacted, { sensitiveValues: [patientName] })
+            }),
+            structuredFields: {
+                valveType,
+                plannedAccess: access,
+                measurements: {
+                    annulusPerimeterMm: extractMeasurement(text, 'Perimeter', 'mm'),
+                    perimeterDerivedDiameterMm: extractMeasurement(text, 'Perimeter\\s+Derived\\s+(?:Ø|Diameter)', 'mm'),
+                    annulusAreaMm2: extractMeasurement(text, 'Area', 'mm(?:²|2)'),
+                    areaDerivedDiameterMm: extractMeasurement(text, 'Area\\s+Derived\\s+(?:Ø|Diameter)', 'mm'),
+                    lvotDiameterMm: extractMeasurement(text, 'LVOT\\s+(?:Ø|Diameter)', 'mm'),
+                    stjDiameterMm: extractMeasurement(text, 'STJ\\s+(?:Ø|Diameter)', 'mm'),
+                    ascendingAortaDiameterMm: extractMeasurement(text, '(?:Asc\\.?|Ascending)\\s+Aorta\\s+(?:Ø|Diameter)', 'mm'),
+                    lcaHeightMm: extractMeasurement(text, 'LCA\\s+Height', 'mm'),
+                    rcaHeightMm: extractMeasurement(text, 'RCA\\s+Height', 'mm'),
+                    horizontalAortaAngleDeg: extractMeasurement(text, 'Horizontal\\s+Aorta\\s+Angle', '(?:°|deg(?:rees?)?)?')
+                }
+            },
+            narrative: {
+                originalRedacted: rawRedacted,
+                englishReference: '',
+                sourceLanguage: detectSourceLanguage(text)
+            },
+            extraction: {
+                mode: cleanString(opts.mode) || 'text',
+                warnings
+            },
+            matchHints: Object.assign({}, opts.matchHints || {})
+        };
+    }
+
+    function parseEngineeringText(value, options) {
+        const opts = options || {};
+        const text = normalizeText(value);
+        const patientName = extractPatientName(text, opts);
+        const recommendation = parseRecommendation(text);
+        const qualityWarning = extractQualityWarning(text);
+        return {
+            parserVersion: PARSER_VERSION,
+            type: 'engineering_review',
+            reportNumber: extractReportNumber(text),
+            reportDate: extractReportDate(text),
+            qualityWarning,
+            transient: { patientName },
+            recommendation: Object.assign({}, recommendation, {
+                rawRedacted: redactSensitiveText(recommendation.rawRedacted, { sensitiveValues: [patientName] })
+            }),
+            structuredFields: {
+                classification: 'unclassified',
+                requiresManualClassification: true
+            },
+            narrative: {
+                originalRedacted: redactSensitiveText(text, { sensitiveValues: [patientName].concat(opts.sensitiveValues || []) }),
+                englishReference: '',
+                sourceLanguage: detectSourceLanguage(text)
+            },
+            extraction: {
+                mode: cleanString(opts.mode) || 'text',
+                warnings: ['Engineering evidence is stored independently and is not automatically classified as an adverse event.']
+            },
+            matchHints: Object.assign({}, opts.matchHints || {})
+        };
+    }
+
+    function parseOtherReportText(value, options) {
+        const opts = options || {};
+        const text = normalizeText(value);
+        const patientName = extractPatientName(text, opts);
+        const recommendation = parseRecommendation(text);
+        return {
+            parserVersion: PARSER_VERSION,
+            type: 'other',
+            reportNumber: extractReportNumber(text),
+            reportDate: extractReportDate(text),
+            qualityWarning: extractQualityWarning(text),
+            transient: { patientName },
+            recommendation: Object.assign({}, recommendation, {
+                rawRedacted: redactSensitiveText(recommendation.rawRedacted, { sensitiveValues: [patientName] })
+            }),
+            structuredFields: { classification: 'unclassified', requiresManualClassification: true },
+            narrative: {
+                originalRedacted: redactSensitiveText(text, { sensitiveValues: [patientName].concat(opts.sensitiveValues || []) }),
+                englishReference: '',
+                sourceLanguage: detectSourceLanguage(text)
+            },
+            extraction: { mode: cleanString(opts.mode) || 'text', warnings: ['Document type requires manual review.'] },
+            matchHints: Object.assign({}, opts.matchHints || {})
+        };
+    }
+
+    function parseReportText(value, options) {
+        const type = detectReportType(value, options || {});
+        if (type === '3mensio_planning') return parse3mensioText(value, options);
+        if (type === 'engineering_review') return parseEngineeringText(value, options);
+        return parseOtherReportText(value, options);
+    }
+
+    function validateSharePointUrl(value) {
+        const raw = cleanString(value);
+        if (!raw) return { valid: false, url: '', host: '', reason: 'missing_url' };
+        let parsed;
+        try { parsed = raw.startsWith('/') ? new URL(raw,`https://${SHAREPOINT_HOST}`) : new URL(raw); }
+        catch (error) { return { valid: false, url: '', host: '', reason: 'invalid_url' }; }
+        const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
+        if (parsed.protocol !== 'https:') return { valid: false, url: '', host, reason: 'https_required' };
+        if (parsed.username || parsed.password) return { valid: false, url: '', host, reason: 'embedded_credentials_rejected' };
+        if (host !== SHAREPOINT_HOST) return { valid: false, url: '', host, reason: 'tenant_not_allowed' };
+        const directSitePath = /^\/sites\/LATAMClinicalReports(?:\/|$)/i.test(parsed.pathname);
+        const approvedSharePath = /^\/:\w:\/(?:r\/sites\/LATAMClinicalReports|s\/LATAMClinicalReports|s\/sites\/LATAMClinicalReports)(?:\/|$)/i.test(parsed.pathname);
+        if (!directSitePath && !approvedSharePath) {
+            return { valid: false, url: '', host, reason: 'site_not_allowed' };
+        }
+        return { valid: true, url: parsed.href, host, reason: '' };
+    }
+
+    function normalizeHeader(value) {
+        return normalizeIdentity(value).replace(/\burl address\b/g, 'url');
+    }
+
+    function headerAliasScore(header, alias) {
+        if (!header || !alias) return 0;
+        if (header === alias) return 100;
+        if (alias.length >= 6 && (header.startsWith(`${alias} `) || header.endsWith(` ${alias}`))) return 82;
+        if (alias.length >= 8 && header.includes(alias)) return 72;
+        if (header.length >= 8 && alias.includes(header)) return 62;
+        return 0;
+    }
+
+    function mapTrackingHeaders(headers) {
+        const source = (Array.isArray(headers) ? headers : []).map(cleanString);
+        const normalized = source.map(normalizeHeader);
+        const fields = {};
+        const used = new Set();
+        Object.entries(TRACKING_HEADER_ALIASES).forEach(([field, aliases]) => {
+            let best = { index: -1, score: 0 };
+            normalized.forEach((header, index) => {
+                if (used.has(index)) return;
+                aliases.map(normalizeHeader).forEach(alias => {
+                    const score = headerAliasScore(header, alias);
+                    if (score > best.score) best = { index, score };
+                });
+            });
+            if (best.index >= 0 && best.score >= 62) {
+                fields[field] = best.index;
+                used.add(best.index);
+            }
+        });
+        const unknownHeaders = source.filter((header, index) => header && !used.has(index));
+        const warnings = [];
+        if (fields.patientName === undefined && fields.reportNumber === undefined) warnings.push('No patient-name or report-number column was detected.');
+        if (fields.reportUrl === undefined) warnings.push('No SharePoint report-link column was detected.');
+        return { fields, headers: source, unknownHeaders, warnings };
+    }
+
+    function scoreTrackingHeaderRow(row) {
+        const mapped = mapTrackingHeaders(row).fields;
+        let score = Object.keys(mapped).length;
+        if (mapped.patientName !== undefined) score += 3;
+        if (mapped.reportUrl !== undefined) score += 3;
+        if (mapped.reportNumber !== undefined) score += 2;
+        return score;
+    }
+
+    function rowCell(row, index) {
+        if (index === undefined || index === null || index < 0) return '';
+        return Array.isArray(row) ? row[index] : '';
+    }
+
+    function parseTrackingRows(input, options) {
+        const opts = options || {};
+        let matrix = [];
+        if (Array.isArray(input) && input.length && !Array.isArray(input[0]) && input[0] && typeof input[0] === 'object') {
+            const headers = Object.keys(input[0]);
+            matrix = [headers].concat(input.map(item => headers.map(header => item[header])));
+        } else if (Array.isArray(input)) {
+            matrix = input.map(row => Array.isArray(row) ? row.slice() : [row]);
+        }
+        if (!matrix.length) return { headerRowIndex: -1, mapping: mapTrackingHeaders([]), records: [], warnings: ['The tracking table is empty.'] };
+        let headerRowIndex = Number.isInteger(opts.headerRowIndex) ? opts.headerRowIndex : -1;
+        if (headerRowIndex < 0) {
+            let best = { index: 0, score: -1 };
+            matrix.slice(0, 12).forEach((row, index) => {
+                const score = scoreTrackingHeaderRow(row);
+                if (score > best.score) best = { index, score };
+            });
+            headerRowIndex = best.index;
+        }
+        const mapping = mapTrackingHeaders(matrix[headerRowIndex] || []);
+        const records = [];
+        const warnings = mapping.warnings.slice();
+        matrix.slice(headerRowIndex + 1).forEach((row, relativeIndex) => {
+            const rowNumber = headerRowIndex + relativeIndex + 2;
+            if (!row.some(cell => cleanString(cell))) return;
+            const fields = mapping.fields;
+            const patientName = cleanString(rowCell(row, fields.patientName));
+            const rawUrl = cleanString(rowCell(row, fields.reportUrl));
+            const checkedUrl = validateSharePointUrl(rawUrl);
+            const record = {
+                rowNumber,
+                reportNumber: cleanString(rowCell(row, fields.reportNumber)).replace(/\.0$/, ''),
+                reportDate: normalizeIsoDate(rowCell(row, fields.reportDate)),
+                type: cleanString(rowCell(row, fields.reportType)),
+                transient: { patientName },
+                source: {
+                    provider: rawUrl ? 'sharepoint' : 'tracking_list',
+                    localLink: checkedUrl.valid ? checkedUrl.url : '',
+                    originalFileName: cleanString(rowCell(row, fields.fileName))
+                },
+                matchHints: {
+                    officialCaseId: cleanString(rowCell(row, fields.officialCaseId)),
+                    formsId: cleanString(rowCell(row, fields.formsId)).replace(/\.0$/, ''),
+                    procedureDate: normalizeIsoDate(rowCell(row, fields.procedureDate)),
+                    serial: cleanString(rowCell(row, fields.serial))
+                },
+                geography: {
+                    country: cleanString(rowCell(row, fields.country)),
+                    hospital: cleanString(rowCell(row, fields.hospital))
+                },
+                status: cleanString(rowCell(row, fields.status)),
+                createdBy: cleanString(rowCell(row, fields.createdBy)),
+                notes: redactSensitiveText(rowCell(row, fields.notes), { sensitiveValues: [patientName] }),
+                importWarnings: []
+            };
+            if (rawUrl && !checkedUrl.valid) record.importWarnings.push(`SharePoint link rejected: ${checkedUrl.reason}.`);
+            if (!patientName && !record.reportNumber && !record.matchHints.officialCaseId) record.importWarnings.push('No patient, report number, or Case ID was provided.');
+            records.push(record);
+        });
+        return { headerRowIndex, mapping, records, warnings };
+    }
+
+    function normalizeValveFamilyKey(value) {
+        return normalizeIdentity(detectValveFamily(value) || value).replace(/\s+/g, '_');
+    }
+
+    function normalizeImplantedValve(value) {
+        let raw = value;
+        if (value && typeof value === 'object') {
+            raw = [value.family, value.product, value.name, value.size, value.raw].filter(Boolean).join(' ');
+        }
+        const text = cleanString(raw);
+        if (!text || /^(?:n\/?a|na|unknown|not (?:documented|available)|pending|-+)$/i.test(text)) {
+            return { raw: text, family: '', size: '', option: '', documented: false };
+        }
+        const family = detectValveFamily(text);
+        let match = text.match(/\b(?:L|AB|PX|P|V)\s*[- ]?\s*(\d{2})\b/i);
+        if (!match) match = text.match(/\b(?:size\s*)?(1[8-9]|2\d|3\d|4[0-2])\s*(?:mm)?\b/i);
+        const size = match ? String(Number(match[1])) : '';
+        return { raw: text, family, size, option: size, documented: Boolean(size || family) };
+    }
+
+    function recommendationSizeSet(recommendation) {
+        const options = Array.isArray(recommendation && recommendation.options) ? recommendation.options : [];
+        const sizes = new Set();
+        options.forEach(option => {
+            const match = cleanString(option).match(/(\d{2})\b/);
+            if (match) sizes.add(String(Number(match[1])));
+        });
+        return sizes;
+    }
+
+    function compareRecommendationToImplant(recommendation, implantedValue) {
+        const implanted = normalizeImplantedValve(implantedValue);
+        const sizes = recommendationSizeSet(recommendation || {});
+        if (!implanted.documented || !implanted.size) {
+            return { status: 'not_assessable', label: 'Not assessable', reason: 'Implanted valve is not documented.', implanted };
+        }
+        if (!sizes.size) {
+            return { status: 'not_assessable', label: 'Not assessable', reason: 'No structured recommendation option is documented.', implanted };
+        }
+        const recommendedFamily = normalizeValveFamilyKey(recommendation && recommendation.valveFamily);
+        const implantedFamily = normalizeValveFamilyKey(implanted.family);
+        if (recommendedFamily && implantedFamily && recommendedFamily !== implantedFamily) {
+            return { status: 'outside_recommendation', label: 'Outside documented recommendation', reason: 'The implanted valve family differs from the documented recommendation.', implanted };
+        }
+        if (sizes.has(implanted.size)) {
+            return { status: 'within_recommendation', label: 'Within documented recommendation', reason: 'The implanted size is one of the documented options.', implanted };
+        }
+        return { status: 'outside_recommendation', label: 'Outside documented recommendation', reason: 'The implanted size is not one of the documented options.', implanted };
+    }
+
+    function firstPath(object, paths) {
+        for (const path of paths) {
+            const parts = String(path).split('.');
+            let value = object;
+            for (const part of parts) value = value === null || value === undefined ? undefined : value[part];
+            if (value !== undefined && value !== null && cleanString(value)) return value;
+        }
+        return '';
+    }
+
+    function valueList(value) {
+        if (Array.isArray(value)) return value.flat(Infinity).map(cleanString).filter(Boolean);
+        const raw = cleanString(value);
+        return raw ? raw.split(/[;,|]+/).map(cleanString).filter(Boolean) : [];
+    }
+
+    function caseValues(caseObject) {
+        const outcome = caseObject && caseObject.outcome ? caseObject.outcome : {};
+        const forms = []
+            .concat(valueList(firstPath(caseObject, ['_formsCaseId', 'formsId', 'source.forms_record_ids'])))
+            .concat(valueList(firstPath(outcome, ['source.forms_record_ids', 'formsId'])));
+        const workbookCaseId = cleanString(
+            firstPath(caseObject, ['_workbookCaseId', 'workbookCaseId', 'workbook_case_id']) ||
+            firstPath(outcome, ['workbookCaseId', 'workbook_case_id'])
+        );
+        const sourceCaseId = cleanString(
+            firstPath(caseObject, ['_sourceCaseId', 'sourceCaseId', 'case_id', 'app_case_id']) ||
+            firstPath(outcome, ['case_id', 'app_case_id'])
+        );
+        return {
+            formsIds: Array.from(new Set(forms.map(item => item.replace(/\.0$/, '')))),
+            officialCaseId: workbookCaseId || cleanString(firstPath(caseObject, ['officialCaseId'])) || sourceCaseId,
+            workbookCaseId,
+            sourceCaseId,
+            procedureDate: normalizeIsoDate(firstPath(caseObject, ['procedureDate', 'date', '_procedureDate']) || firstPath(outcome, ['date'])),
+            serial: cleanString(firstPath(caseObject, ['serial', 'finalDevice.serial']) || firstPath(outcome, ['lots.valve', 'finalDevice.serial'])),
+            patientHash: cleanString(firstPath(caseObject, ['patientHash', '_patientHash']) || firstPath(outcome, ['patientHash'])),
+            raw: caseObject
+        };
+    }
+
+    function buildCaseReferenceKey(caseObject) {
+        const values = caseValues(caseObject || {});
+        if (values.formsIds.length) return `forms:${values.formsIds.slice().sort().join('+')}`;
+        if (values.officialCaseId && values.procedureDate) return `case:${normalizeIdentity(values.officialCaseId)}|${values.procedureDate}`;
+        if (values.serial && values.procedureDate) return `serial:${normalizeIdentity(values.serial)}|${values.procedureDate}`;
+        if (values.workbookCaseId && values.procedureDate) return `workbook:${normalizeIdentity(values.workbookCaseId)}|${values.procedureDate}`;
+        return '';
+    }
+
+    function toCaseReference(caseObject) {
+        const values = caseValues(caseObject || {});
+        return {
+            key: buildCaseReferenceKey(caseObject),
+            formsIds: values.formsIds,
+            officialCaseId: values.officialCaseId,
+            workbookCaseId: values.workbookCaseId,
+            sourceCaseId: values.sourceCaseId,
+            procedureDate: values.procedureDate,
+            serial: values.serial,
+            displayId: values.officialCaseId || values.workbookCaseId || values.formsIds[0] || values.serial || 'Case'
+        };
+    }
+
+    function dedupeCaseCandidates(candidates) {
+        const byKey = new Map();
+        candidates.forEach(candidate => {
+            const ref = toCaseReference(candidate);
+            const key = ref.key || JSON.stringify(ref);
+            if (!byKey.has(key)) byKey.set(key, { case: candidate, caseRef: ref });
+        });
+        return Array.from(byKey.values());
+    }
+
+    function makeMatchResult(status, method, confidence, candidates, reason) {
+        return {
+            status,
+            method,
+            confidence,
+            candidates: dedupeCaseCandidates(candidates || []),
+            reason: reason || '',
+            requiresConfirmation: true
+        };
+    }
+
+    function matchReportToCases(report, cases, patientLookup) {
+        const source = report || {};
+        const hints = Object.assign({}, source.matchHints || {}, source.match || {});
+        const collection = Array.isArray(cases) ? cases.filter(Boolean) : [];
+        const formsId = cleanString(hints.formsId || source.formsId).replace(/\.0$/, '');
+        if (formsId) {
+            const matches = collection.filter(item => caseValues(item).formsIds.includes(formsId));
+            if (matches.length === 1) return makeMatchResult('pending_review', 'forms_id', 1, matches, 'Exact Forms record ID match.');
+            if (matches.length > 1) return makeMatchResult('ambiguous', 'forms_id', 1, matches, 'The Forms record ID maps to multiple case records.');
+        }
+        const officialCaseId = cleanString(hints.officialCaseId || hints.caseId || source.officialCaseId);
+        const procedureDate = normalizeIsoDate(hints.procedureDate || source.procedureDate);
+        if (officialCaseId && procedureDate) {
+            const officialKey = normalizeIdentity(officialCaseId);
+            const matches = collection.filter(item => {
+                const values = caseValues(item);
+                return normalizeIdentity(values.officialCaseId) === officialKey && values.procedureDate === procedureDate;
+            });
+            if (matches.length === 1) return makeMatchResult('pending_review', 'official_case_id_and_date', 0.99, matches, 'Official Case ID and procedure date match.');
+            if (matches.length > 1) return makeMatchResult('ambiguous', 'official_case_id_and_date', 0.99, matches, 'Official Case ID and date remain non-unique.');
+        }
+        const serial = cleanString(hints.serial || source.serial);
+        if (serial && procedureDate) {
+            const serialKey = normalizeIdentity(serial);
+            const matches = collection.filter(item => {
+                const values = caseValues(item);
+                return normalizeIdentity(values.serial) === serialKey && values.procedureDate === procedureDate;
+            });
+            if (matches.length === 1) return makeMatchResult('pending_review', 'serial_and_date', 0.98, matches, 'Valve serial and procedure date match.');
+            if (matches.length > 1) return makeMatchResult('ambiguous', 'serial_and_date', 0.98, matches, 'Serial and date map to multiple case records.');
+        }
+        const patientHash = cleanString(hints.patientHash || source.patientHash);
+        if (patientHash) {
+            let matches = collection.filter(item => caseValues(item).patientHash === patientHash);
+            const refs = patientLookup && Array.isArray(patientLookup[patientHash]) ? patientLookup[patientHash] : [];
+            if (!matches.length && refs.length) {
+                matches = collection.filter(item => {
+                    const values = caseValues(item);
+                    return refs.some(ref => {
+                        const refForms = valueList(ref.formsId || ref.formsIds).map(id => id.replace(/\.0$/, ''));
+                        if (refForms.some(id => values.formsIds.includes(id))) return true;
+                        const refDate = normalizeIsoDate(ref.date || ref.procedureDate);
+                        const refCase = normalizeIdentity(ref.caseId || ref.officialCaseId);
+                        return Boolean(refDate && refCase && values.procedureDate === refDate && normalizeIdentity(values.officialCaseId) === refCase);
+                    });
+                });
+            }
+            const deduped = dedupeCaseCandidates(matches);
+            if (deduped.length === 1) return makeMatchResult('pending_review', 'patient_hash', 0.92, matches, 'One private patient-hash match was found.');
+            if (deduped.length > 1 || refs.length > 1) return makeMatchResult('ambiguous', 'patient_hash', 0.75, matches, 'The private patient hash maps to multiple possible cases.');
+        }
+        return makeMatchResult('unmatched', 'none', 0, [], 'Report found; implant not found in the current database.');
+    }
+
+    function documentFingerprint(document) {
+        const item = document || {};
+        const sha = cleanString(firstPath(item, ['contentSha256', 'source.contentSha256', 'source.fileSha256', 'extraction.contentSha256'])).toLowerCase();
+        if (/^[a-f0-9]{64}$/.test(sha)) return `sha256:${sha}`;
+        const providerId = cleanString(firstPath(item, ['source.itemId', 'source.driveItemId']));
+        if (providerId) return `sharepoint:${providerId}`;
+        const reportNumber = cleanString(item.reportNumber);
+        const reportDate = normalizeIsoDate(item.reportDate);
+        if (reportNumber) return `report:${normalizeIdentity(reportNumber)}|${reportDate}`;
+        const documentId = cleanString(item.documentId);
+        return documentId ? `document:${documentId}` : '';
+    }
+
+    const PRIVATE_FIELD_NAMES = new Set([
+        'patientname', 'privatepatientname', 'rawpatientname', 'patientfullname',
+        'patient_name', 'private_patient_name', 'filename', 'originalfilename',
+        'rawfilename', 'patientfilename'
+    ]);
+    const PORTABLE_PRIVATE_FIELD_NAMES = new Set([
+        'locallink', 'reporturl', 'rawurl', 'weburl', 'downloadurl'
+    ]);
+
+    function sanitizeStateValue(value, options, seen) {
+        if (value === null || value === undefined || typeof value !== 'object') return value;
+        if (seen.has(value)) return undefined;
+        seen.add(value);
+        if (Array.isArray(value)) {
+            const array = value.map(item => sanitizeStateValue(item, options, seen)).filter(item => item !== undefined);
+            seen.delete(value);
+            return array;
+        }
+        const output = {};
+        Object.entries(value).forEach(([key, child]) => {
+            if (key === '__proto__' || key === 'prototype' || key === 'constructor') return;
+            const normalizedKey = key.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            if (normalizedKey === 'transient' || PRIVATE_FIELD_NAMES.has(normalizedKey)) return;
+            if (options.forExport && PORTABLE_PRIVATE_FIELD_NAMES.has(normalizedKey)) return;
+            const sanitized = sanitizeStateValue(child, options, seen);
+            if (sanitized !== undefined) output[key] = sanitized;
+        });
+        seen.delete(value);
+        return output;
+    }
+
+    function normalizeDocumentState(value, options) {
+        const opts = Object.assign({ forExport: false }, options || {});
+        const raw = value && typeof value === 'object' ? value : {};
+        const documents = Array.isArray(raw.documents) ? raw.documents : [];
+        const deduped = [];
+        const seenFingerprints = new Set();
+        documents.forEach(document => {
+            const clean = sanitizeStateValue(document, opts, new WeakSet());
+            const fingerprint = documentFingerprint(clean);
+            if (fingerprint && seenFingerprints.has(fingerprint)) return;
+            if (fingerprint) seenFingerprints.add(fingerprint);
+            deduped.push(clean);
+        });
+        return {
+            schema: DOCUMENT_SCHEMA,
+            documents: deduped,
+            links: sanitizeStateValue(Array.isArray(raw.links) ? raw.links : [], opts, new WeakSet()),
+            importFingerprints: sanitizeStateValue(raw.importFingerprints && typeof raw.importFingerprints === 'object' ? raw.importFingerprints : {}, opts, new WeakSet()),
+            audit: sanitizeStateValue(Array.isArray(raw.audit) ? raw.audit : [], opts, new WeakSet()),
+            lastUndo: sanitizeStateValue(raw.lastUndo || null, opts, new WeakSet()),
+            updatedAt: cleanString(raw.updatedAt) || null
+        };
+    }
+
+    function linkedToCase(item, caseKey) {
+        if (!item || !caseKey) return false;
+        const direct = cleanString(firstPath(item, ['match.caseRef.key', 'caseRef.key', 'caseKey']));
+        if (direct && direct === caseKey) return true;
+        return Array.isArray(item.links) && item.links.some(link => cleanString(firstPath(link, ['caseRef.key', 'caseKey'])) === caseKey);
+    }
+
+    function buildCaseTimeline(caseObject, documents, clinicalEvents, options) {
+        const opts = options || {};
+        const caseRef = toCaseReference(caseObject || {});
+        const events = [];
+        (Array.isArray(documents) ? documents : []).filter(item => linkedToCase(item, caseRef.key)).forEach(document => {
+            const type = document.type === '3mensio_planning' ? 'planning' : (document.type === 'engineering_review' ? 'engineering_review' : 'document');
+            events.push({
+                id: cleanString(document.documentId) || documentFingerprint(document),
+                type,
+                date: normalizeIsoDate(document.reportDate),
+                title: type === 'planning' ? '3mensio planning' : (type === 'engineering_review' ? 'Engineering / HQ review' : 'Linked report'),
+                source: 'report',
+                payload: document
+            });
+        });
+        const caseData = caseValues(caseObject || {});
+        if (caseData.procedureDate || caseObject && caseObject.outcome) {
+            events.push({
+                id: `procedure:${caseRef.key}`,
+                type: 'procedure_outcome',
+                date: caseData.procedureDate,
+                title: 'Procedure outcome',
+                source: 'outcomes',
+                payload: caseObject && caseObject.outcome ? caseObject.outcome : caseObject
+            });
+        }
+        (Array.isArray(clinicalEvents) ? clinicalEvents : []).filter(item => {
+            if (opts.clinicalEventsArePrelinked) return true;
+            return linkedToCase(item, caseRef.key) || cleanString(item.caseKey) === caseRef.key;
+        }).forEach(event => {
+            events.push({
+                id: cleanString(event.id || event.eventId) || `clinical:${events.length}`,
+                type: 'clinical_problem',
+                date: normalizeIsoDate(event.date || event.procedureDate),
+                title: 'Clinical Excellence event',
+                source: 'clinical_excellence',
+                payload: event
+            });
+        });
+        const typeOrder = { planning: 1, procedure_outcome: 2, clinical_problem: 3, engineering_review: 4, document: 5 };
+        events.sort((left, right) => {
+            const leftDate = left.date || '9999-12-31';
+            const rightDate = right.date || '9999-12-31';
+            return leftDate.localeCompare(rightDate) || (typeOrder[left.type] || 9) - (typeOrder[right.type] || 9);
+        });
+        return { caseRef, events };
+    }
+
+    function v13ParseReportText(text, meta) {
+        return parseReportText(text, meta || {});
+    }
+
+    function v13RedactDocumentText(text, privateTerms) {
+        return redactSensitiveText(text, { sensitiveValues: Array.isArray(privateTerms) ? privateTerms : [privateTerms].filter(Boolean) });
+    }
+
+    function v13ValidateSharePointUrl(url) {
+        return validateSharePointUrl(url);
+    }
+
+    function v13ParseTrackingMatrix(matrix, worksheet) {
+        const options = worksheet && typeof worksheet === 'object' && !Array.isArray(worksheet) ? worksheet : {};
+        return parseTrackingRows(matrix, options);
+    }
+
+    function v13CompareRecommendationToImplant(options, implantedLabel) {
+        const recommendation = Array.isArray(options) ? { options } : (options || {});
+        return compareRecommendationToImplant(recommendation, implantedLabel);
+    }
+
+    function v13NormalizeDate(value) {
+        return normalizeIsoDate(value);
+    }
+
+    function v13NormalizeReportNumber(value) {
+        return normalizeReportNumber(value);
+    }
+
+    return Object.freeze({
+        PARSER_VERSION,
+        DOCUMENT_SCHEMA,
+        SHAREPOINT_HOST,
+        TRACKING_HEADER_ALIASES,
+        normalizeText,
+        normalizeIdentity,
+        normalizeIsoDate,
+        normalizeReportNumber,
+        extractPatientName,
+        redactSensitiveText,
+        detectReportType,
+        parseRecommendation,
+        parse3mensioText,
+        parseEngineeringText,
+        parseReportText,
+        validateSharePointUrl,
+        mapTrackingHeaders,
+        parseTrackingRows,
+        normalizeImplantedValve,
+        compareRecommendationToImplant,
+        documentFingerprint,
+        normalizeDocumentState,
+        buildCaseReferenceKey,
+        matchReportToCases,
+        buildCaseTimeline,
+        v13ParseReportText,
+        v13RedactDocumentText,
+        v13ValidateSharePointUrl,
+        v13ParseTrackingMatrix,
+        v13CompareRecommendationToImplant,
+        v13NormalizeDate,
+        v13NormalizeReportNumber
+    });
+});
+
+
+    // =====================================================================
+    // v1.3.0 REPORTS & CASE TIMELINE
+    // PDFs are read locally. Only redacted metadata and an optional private
+    // SharePoint web link are persisted; file binaries and patient names are not.
+    // =====================================================================
+    const V13_REPORT_STORAGE_KEY = 'venus_latam_report_registry_v1';
+    const V13_REPORT_SCHEMA = 1;
+    const V13_REPORT_PARSER_VERSION = 'reports-1.0.0';
+    const V13_REPORT_MAX_TEXT = 60000;
+    const V13_REPORT_MAX_NARRATIVE = 60000;
+    const V13_REPORT_MAX_OCR_PAGES = 30;
+    const V13_TRANSLATION_CHUNK_CHARS = 1400;
+    const V13_REPORT_TYPE_LABELS = Object.freeze({
+        '3mensio_planning':'3mensio planning',
+        'engineering_review':'Engineering / HQ review',
+        'other':'Other report'
+    });
+    const V13_REPORT_MATCH_LABELS = Object.freeze({
+        linked:'Linked to implant',
+        unmatched:'Report available · implant not found in current database',
+        ambiguous:'Ambiguous match · review required',
+        pending_review:'Pending review'
+    });
+
+    let v13ReportState = {
+        schema:V13_REPORT_SCHEMA,
+        documents:[],
+        audit:[],
+        lastUndo:null,
+        updatedAt:null
+    };
+    let v13PendingPreview = null;
+    let v13ReportRenderTimer = null;
+    let v13ReportQuickFilter = '';
+    let v13ActiveTimelineDocumentId = '';
+    let v13BridgeCaseRefs = new Map();
+    let v13BridgeSequence = 0;
+    let v13TimelineTextRefs = new Map();
+    let v13TimelineTextSequence = 0;
+
+    function v13Clone(value) {
+        if (value === undefined) return undefined;
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function v13Now() { return new Date().toISOString(); }
+
+    function v13SafeDocumentId(value,index=0) {
+        let raw = String(value || '').trim();
+        if (/^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/.test(raw)) return raw;
+        return `restored-${Date.now().toString(36)}-${Number(index).toString(36)}`;
+    }
+
+    function v13SanitizeLoadedDocuments(documents) {
+        let used = new Set();
+        return (Array.isArray(documents) ? documents : []).map((rawDoc,index) => {
+            let doc = rawDoc && typeof rawDoc === 'object' ? rawDoc : {};
+            delete doc.patientName; delete doc.privatePatientName; delete doc.filename; delete doc.sourceFilename; delete doc.transient;
+            let baseId = v13SafeDocumentId(doc.documentId,index), uniqueId = baseId, suffix = 1;
+            while (used.has(uniqueId)) uniqueId = `${baseId.slice(0,104)}-restored-${suffix++}`;
+            used.add(uniqueId); doc.documentId = uniqueId;
+            if (doc.source?.webUrl) {
+                let valid = v13ValidateSharePointUrl(doc.source.webUrl);
+                doc.source.webUrl = valid.valid ? valid.url : '';
+            }
+            return doc;
+        });
+    }
+
+    function v13NormalizeReportType(value) {
+        let key = v12NormalizeIdentity(value || '');
+        if (!key || /3mensio|planning|pre procedure|preprocedure/.test(key)) return '3mensio_planning';
+        if (/engineer|hq|root cause|investigation|technical review|failure analysis/.test(key)) return 'engineering_review';
+        return ['3mensio_planning','engineering_review','other'].includes(value) ? value : 'other';
+    }
+
+    function v13EscapeAttribute(value) {
+        return escapeHtml(String(value ?? '')).replace(/`/g,'&#96;');
+    }
+
+    async function v13ReadReportState() {
+        try {
+            let db = await v12OpenOutcomeDB();
+            let value = await new Promise((resolve,reject) => {
+                let tx = db.transaction(V12_OUTCOME_DB_STORE,'readonly');
+                let request = tx.objectStore(V12_OUTCOME_DB_STORE).get(V13_REPORT_STORAGE_KEY);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => reject(request.error);
+            });
+            db.close();
+            if (value) return value;
+        } catch (err) { /* localStorage fallback */ }
+        try {
+            let raw = localStorage.getItem(V13_REPORT_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (err) { return null; }
+    }
+
+    async function v13WriteReportState() {
+        v13ReportState.schema = V13_REPORT_SCHEMA;
+        v13ReportState.updatedAt = v13Now();
+        let payload = v13Clone(v13ReportState);
+        if (window.V13ReportsCore?.normalizeDocumentState) {
+            // Normalize one document at a time so privacy sanitation never lets
+            // a dedupe policy discard the richer side of a tracking/PDF merge.
+            let safeDocuments = (payload.documents || []).map(doc => {
+                let normalized = V13ReportsCore.normalizeDocumentState({schema:V13_REPORT_SCHEMA,documents:[doc]},{forExport:false});
+                return normalized.documents?.[0] || null;
+            }).filter(Boolean);
+            let safeMeta = V13ReportsCore.normalizeDocumentState(Object.assign({},payload,{documents:[]}),{forExport:false});
+            payload = {
+                schema:V13_REPORT_SCHEMA,documents:safeDocuments,audit:safeMeta.audit || [],
+                lastUndo:safeMeta.lastUndo || null,updatedAt:payload.updatedAt
+            };
+            v13ReportState = v13Clone(payload);
+        }
+        let serialized = JSON.stringify(payload);
+        let wroteIndexedDB = false;
+        try {
+            let db = await v12OpenOutcomeDB();
+            await new Promise((resolve,reject) => {
+                let tx = db.transaction(V12_OUTCOME_DB_STORE,'readwrite');
+                tx.objectStore(V12_OUTCOME_DB_STORE).put(payload,V13_REPORT_STORAGE_KEY);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+            db.close();
+            wroteIndexedDB = true;
+        } catch (err) { /* localStorage fallback */ }
+        try { localStorage.setItem(V13_REPORT_STORAGE_KEY,serialized); }
+        catch (err) { if (!wroteIndexedDB) throw err; }
+    }
+
+    function v13SnapshotForUndo(action) {
+        return {
+            action,
+            at:v13Now(),
+            documents:v13Clone(v13ReportState.documents || []),
+            audit:v13Clone(v13ReportState.audit || [])
+        };
+    }
+
+    async function v13CommitReportMutation(action,before,details={}) {
+        v13ReportState.lastUndo = before;
+        v13ReportState.audit = [...(v13ReportState.audit || []),{
+            action,at:v13Now(),details:v13Clone(details),appVersion:APP_META.version,build:APP_META.build
+        }].slice(-100);
+        await v13WriteReportState();
+        v13RenderReports();
+    }
+
+    function v13ReportDocumentById(documentId) {
+        return (v13ReportState.documents || []).find(doc => doc.documentId === documentId) || null;
+    }
+
+    function v13SharePointValidationMessage(validation) {
+        let reason = validation?.reason || 'invalid_url';
+        return ({
+            missing_url:'No SharePoint link was provided.',
+            invalid_url:'The value is not a valid web link.',
+            https_required:'Only an HTTPS SharePoint link is accepted.',
+            embedded_credentials_rejected:'Links containing embedded credentials are rejected.',
+            tenant_not_allowed:'Only the Venus LATAM SharePoint tenant is allowed.',
+            site_not_allowed:'The link must point to the LATAMClinicalReports SharePoint site.'
+        })[reason] || `The SharePoint link was rejected (${reason}).`;
+    }
+
+    function v13CaseDateISO(caseObj) {
+        try {
+            let d = typeof outcomeCaseDate === 'function' ? outcomeCaseDate(caseObj) : null;
+            if (d && Number.isFinite(d.getTime())) return d.toISOString().slice(0,10);
+        } catch (err) { /* fallback below */ }
+        let raw = String(caseObj?.date || '').trim();
+        let dmy = raw.match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})$/);
+        if (dmy) return `${dmy[3]}-${String(dmy[2]).padStart(2,'0')}-${String(dmy[1]).padStart(2,'0')}`;
+        let iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return iso ? `${iso[1]}-${iso[2]}-${iso[3]}` : '';
+    }
+
+    function v13CaseRef(caseObj) {
+        if (!caseObj) return null;
+        let outcome = caseObj.outcome || {};
+        let formsIds = [...new Set([
+            caseObj._formsCaseId,outcome.formsCaseId,...(outcome.provenance?.sourceRecordIds || [])
+        ].map(value => String(value || '').trim()).filter(Boolean))];
+        return {
+            formsId:formsIds[0] || '',
+            sourceCaseId:String(caseObj._sourceCaseId || outcome.sourceCaseId || '').trim(),
+            workbookCaseId:String(outcomeCaseIdentifier(caseObj) || '').trim(),
+            procedureDate:v13CaseDateISO(caseObj),
+            serial:String(caseObj.serial || outcome.finalDevice?.serial || '').trim()
+        };
+    }
+
+    function v13RefKey(ref) {
+        if (!ref) return '';
+        let form = String(ref.formsId || '').trim();
+        if (form) return `forms:${form}`;
+        let source = cleanStr(ref.sourceCaseId || '');
+        if (source) return `source:${source}|${ref.procedureDate || ''}`;
+        let serial = typeof normalizeSerialKey === 'function' ? normalizeSerialKey(ref.serial || '') : cleanStr(ref.serial || '');
+        if (serial && ref.procedureDate) return `serial:${serial}|${ref.procedureDate}`;
+        return `official:${cleanStr(ref.workbookCaseId || '')}|${ref.procedureDate || ''}`;
+    }
+
+    function v13CaseKey(caseObj) { return v13RefKey(v13CaseRef(caseObj)); }
+
+    function v13LatamCases() {
+        return (Array.isArray(allCasesGlobal) ? allCasesGlobal : []).filter(caseObj => {
+            try {
+                if (typeof isOperationsVolumeCase === 'function' && !isOperationsVolumeCase(caseObj)) return false;
+                if (typeof getCaseRegion === 'function' && getCaseRegion(caseObj) !== 'LATAM') return false;
+            } catch (err) { /* retain fallback */ }
+            return true;
+        });
+    }
+
+    function v13ResolveCaseRef(ref) {
+        if (!ref) return null;
+        let cases = v13LatamCases();
+        let forms = String(ref.formsId || '').trim();
+        if (forms) {
+            let byForm = cases.filter(caseObj => {
+                let o = caseObj.outcome || {};
+                return [caseObj._formsCaseId,o.formsCaseId,...(o.provenance?.sourceRecordIds || [])].map(String).includes(forms);
+            });
+            if (byForm.length === 1) return byForm[0];
+        }
+        let source = cleanStr(ref.sourceCaseId || '');
+        if (source) {
+            let bySource = cases.filter(caseObj => cleanStr(caseObj._sourceCaseId || caseObj.outcome?.sourceCaseId || '') === source && (!ref.procedureDate || v13CaseDateISO(caseObj) === ref.procedureDate));
+            if (bySource.length === 1) return bySource[0];
+        }
+        let serial = typeof normalizeSerialKey === 'function' ? normalizeSerialKey(ref.serial || '') : cleanStr(ref.serial || '');
+        if (serial && ref.procedureDate) {
+            let bySerial = cases.filter(caseObj => (typeof normalizeSerialKey === 'function' ? normalizeSerialKey(caseObj.serial || caseObj.outcome?.finalDevice?.serial || '') : cleanStr(caseObj.serial || '')) === serial && v13CaseDateISO(caseObj) === ref.procedureDate);
+            if (bySerial.length === 1) return bySerial[0];
+        }
+        let official = cleanStr(ref.workbookCaseId || '');
+        if (official && ref.procedureDate) {
+            let byOfficialDate = cases.filter(caseObj => cleanStr(outcomeCaseIdentifier(caseObj)) === official && v13CaseDateISO(caseObj) === ref.procedureDate);
+            if (byOfficialDate.length === 1) return byOfficialDate[0];
+        }
+        return null;
+    }
+
+    function v13CaseOptionMap() {
+        let map = new Map();
+        v13LatamCases().forEach(caseObj => map.set(v13CaseKey(caseObj),caseObj));
+        return map;
+    }
+
+    function v13CaseSelectOptions(selectedKey='') {
+        let cases = v13LatamCases().sort((a,b) => {
+            let ad = v13CaseDateISO(a), bd = v13CaseDateISO(b);
+            return bd.localeCompare(ad) || outcomeCaseIdentifier(a).localeCompare(outcomeCaseIdentifier(b));
+        });
+        return `<option value="">No implant match in current database</option>` + cases.map(caseObj => {
+            let key = v13CaseKey(caseObj), label = `${outcomeCaseIdentifier(caseObj)} · ${v13CaseDateISO(caseObj) || caseObj.date || 'date unavailable'} · ${caseObj.country || 'Country unavailable'} · ${caseObj.hospital || 'Hospital unavailable'}`;
+            return `<option value="${v13EscapeAttribute(key)}" ${key === selectedKey ? 'selected':''}>${escapeHtml(label)}</option>`;
+        }).join('');
+    }
+
+    function v13CaseRefsFromPatientToken(patientToken) {
+        if (!patientToken || !v12PatientLookup) return [];
+        let refs = v12PatientLookup[patientToken] || [];
+        let unique = new Map();
+        refs.forEach(ref => {
+            let item = {formsId:String(ref.formsId || ''),workbookCaseId:String(ref.caseId || ''),procedureDate:String(ref.date || '')};
+            let caseObj = v13ResolveCaseRef(item);
+            if (caseObj) unique.set(v13CaseKey(caseObj),caseObj);
+        });
+        return [...unique.values()];
+    }
+
+    function v13ProposePatientMatch(patientToken) {
+        let candidates = v13CaseRefsFromPatientToken(patientToken);
+        if (candidates.length === 1) return {status:'linked',method:'patient_hash',confidence:'high',caseRef:v13CaseRef(candidates[0]),candidateCount:1};
+        if (candidates.length > 1) return {status:'ambiguous',method:'patient_hash',confidence:'low',caseRef:null,candidateCount:candidates.length};
+        return {status:'unmatched',method:'patient_hash',confidence:'none',caseRef:null,candidateCount:0};
+    }
+
+    function v13CaseRefMatches(a,b) {
+        if (!a || !b) return false;
+        let aForm = String(a.formsId || ''), bForm = String(b.formsId || '');
+        if (aForm && bForm) return aForm === bForm;
+        return v13RefKey(a) === v13RefKey(b);
+    }
+
+    function v13DocsForCase(caseObj) {
+        let ref = v13CaseRef(caseObj);
+        return (v13ReportState.documents || []).filter(doc => doc.match?.status === 'linked' && v13CaseRefMatches(doc.match.caseRef,ref));
+    }
+
+    function v13SetProgress(active,title='',detail='') {
+        let overlay = document.getElementById('reports-progress');
+        if (!overlay) return;
+        overlay.classList.toggle('active',Boolean(active));
+        let h = document.getElementById('reports-progress-title'), d = document.getElementById('reports-progress-detail');
+        if (h && title) h.textContent = title;
+        if (d && detail) d.textContent = detail;
+    }
+
+    function v13PdfItemText(content) {
+        let output = '', previous = null;
+        (content?.items || []).forEach(item => {
+            let value = String(item?.str || '');
+            if (value) {
+                if (/^\s+$/.test(value)) {
+                    if (output && !/[\s\n]$/.test(output)) output += ' ';
+                } else {
+                    // Some 3mensio PDFs expose one glyph per PDF.js text item.
+                    // Preserve a word boundary only when the geometric gap is
+                    // meaningful; never inject a space after every glyph.
+                    if (previous && !/[\s\n]$/.test(output)) {
+                        let x = Number(item?.transform?.[4]);
+                        let previousEnd = previous.x + previous.width;
+                        let fontSize = Math.max(Math.abs(Number(item?.transform?.[3]) || 0),Number(item?.height) || 0,8);
+                        let gap = x - previousEnd;
+                        if (Number.isFinite(gap) && gap > Math.max(1,fontSize * .16)) output += ' ';
+                    }
+                    output += value;
+                }
+                previous = {x:Number(item?.transform?.[4]) || 0,width:Number(item?.width) || 0};
+            }
+            if (item.hasEOL) { output += '\n'; previous = null; }
+        });
+        return output.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    }
+
+    async function v13OcrPdfPages(pdf,onProgress=()=>{}) {
+        let texts = [], worker = null, firstType = 'other';
+        let maxPages = Math.min(pdf.numPages,V13_REPORT_MAX_OCR_PAGES);
+        try {
+            if (typeof Tesseract.createWorker === 'function') {
+                worker = await Tesseract.createWorker('eng+por+spa',1,{logger:message => {
+                    if (message?.status === 'recognizing text') onProgress(`OCR · ${Math.round((message.progress || 0)*100)}%`);
+                }});
+            }
+            for (let pageNo=1; pageNo<=maxPages && texts.join('\n').length < V13_REPORT_MAX_TEXT; pageNo++) {
+                onProgress(`OCR · page ${pageNo}/${Math.min(pdf.numPages,maxPages)}`);
+                let page = await pdf.getPage(pageNo);
+                let viewport = page.getViewport({scale:1.8});
+                let canvas = document.createElement('canvas');
+                canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
+                await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+                let result = worker
+                    ? await worker.recognize(canvas)
+                    : await Tesseract.recognize(canvas,'eng+por+spa',{logger:message => {
+                        if (message?.status === 'recognizing text') onProgress(`OCR · ${Math.round((message.progress || 0)*100)}%`);
+                    }});
+                texts.push(String(result?.data?.text || ''));
+                if (pageNo === 1) {
+                    firstType = v13ParseReportText(texts[0],{pageCount:pdf.numPages,mode:'ocr'})?.type || 'other';
+                    if (firstType === '3mensio_planning') maxPages = Math.min(pdf.numPages,3);
+                }
+            }
+        } finally { if (worker) await worker.terminate(); }
+        let combined = texts.join('\n\n');
+        return {text:combined.slice(0,V13_REPORT_MAX_TEXT),pagesRead:texts.length,firstType,extractionIncomplete:texts.length < pdf.numPages || combined.length > V13_REPORT_MAX_TEXT};
+    }
+
+    async function v13ReadPdfText(file,onProgress=()=>{}) {
+        if (!window.pdfjsLib?.getDocument) throw new Error('PDF reader is unavailable. Check the network and reload the app.');
+        if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        let buffer = await file.arrayBuffer();
+        let sha256 = await v12Sha256Buffer(buffer);
+        let pdf = await pdfjsLib.getDocument({data:new Uint8Array(buffer)}).promise;
+        let pageTexts = [];
+        let initialPages = Math.min(pdf.numPages,2);
+        for (let pageNo=1; pageNo<=initialPages; pageNo++) {
+            onProgress(`Reading text layer · page ${pageNo}/${pdf.numPages}`);
+            let page = await pdf.getPage(pageNo);
+            pageTexts.push(v13PdfItemText(await page.getTextContent()));
+        }
+        let initialText = pageTexts.join('\n\n');
+        let initialType = typeof v13ParseReportText === 'function' ? v13ParseReportText(initialText,{pageCount:pdf.numPages,fileName:file.name})?.type : 'other';
+        let pageLimit = initialType === '3mensio_planning' ? Math.min(pdf.numPages,3) : pdf.numPages;
+        for (let pageNo=initialPages+1; pageNo<=pageLimit && pageTexts.join('\n').length < V13_REPORT_MAX_TEXT; pageNo++) {
+            onProgress(`Reading text layer · page ${pageNo}/${pdf.numPages}`);
+            let page = await pdf.getPage(pageNo);
+            pageTexts.push(v13PdfItemText(await page.getTextContent()));
+        }
+        let combinedText = pageTexts.join('\n\n');
+        let text = combinedText.slice(0,V13_REPORT_MAX_TEXT);
+        let extractionMode = 'text', pagesRead = pageTexts.length;
+        let extractionIncomplete = pagesRead < pdf.numPages || combinedText.length > V13_REPORT_MAX_TEXT;
+        if (text.replace(/\s/g,'').length < 120) {
+            if (!window.Tesseract?.recognize && !window.Tesseract?.createWorker) throw new Error('This PDF has no usable text layer and the OCR reader is unavailable. Check the network and retry.');
+            onProgress('No usable text layer · starting local multi-page OCR');
+            let ocr = await v13OcrPdfPages(pdf,onProgress);
+            text = ocr.text;
+            pagesRead = ocr.pagesRead;
+            extractionMode = 'ocr';
+            extractionIncomplete = ocr.extractionIncomplete;
+        }
+        return {text,sha256,pageCount:pdf.numPages,pagesRead,extractionMode,extractionIncomplete};
+    }
+
+    function v13InferCountryFromFilename(filename) {
+        let normalized = v12NormalizeIdentity(filename || '');
+        let map = [
+            ['argentina','Argentina'],['bolivia','Bolivia'],['brasil','Brazil'],['brazil','Brazil'],['chile','Chile'],['colombia','Colombia'],['ecuador','Ecuador'],['mexico','Mexico'],['méxico','Mexico'],['panama','Panama'],['panamá','Panama'],['paraguay','Paraguay'],['peru','Peru'],['perú','Peru'],['uruguay','Uruguay'],['venezuela','Venezuela']
+        ];
+        let hit = map.find(([token]) => normalized.includes(v12NormalizeIdentity(token)));
+        return hit ? {value:hit[1],source:'filename',confidence:'low'} : {value:'',source:'unknown',confidence:'none'};
+    }
+
+    function v13NormalizeTransientTrackingPatient(value) {
+        let text = String(value || '').trim();
+        text = text.replace(/\.pdf$/i,'').replace(/[_]+/g,' ').replace(/\s+/g,' ').trim();
+        text = text.replace(/^\d{8}(?:[ -]?\d{6})?[ -]+/,'');
+        text = text.replace(/^(?:argentina|bolivia|brasil|brazil|chile|colombia|ecuador|mexico|méxico|panama|panamá|paraguay|peru|perú|uruguay|venezuela)[\s_-]+/i,'');
+        return text.replace(/\s+/g,' ').trim();
+    }
+
+    function v13ProposeTrackingMatch(row,patientToken) {
+        if (window.V13ReportsCore?.matchReportToCases) {
+            let result = V13ReportsCore.matchReportToCases({
+                reportNumber:row.reportNumber || '',reportDate:row.reportDate || '',patientHash:patientToken || '',
+                matchHints:Object.assign({},row.matchHints || {},{patientHash:patientToken || ''})
+            },v13LatamCases(),v12PatientLookup || {});
+            let candidates = result?.candidates || [];
+            if (candidates.length === 1 && candidates[0]?.case) {
+                let caseObj = candidates[0].case;
+                return {
+                    proposedMatch:{status:'pending_review',method:result.method || 'tracking_match',confidence:result.confidence || 'high',caseRef:v13CaseRef(caseObj),candidateCount:1},
+                    suggestedCaseKey:v13CaseKey(caseObj),suggestedMethod:result.method || 'tracking_match'
+                };
+            }
+            if (result?.status === 'ambiguous') return {
+                proposedMatch:{status:'ambiguous',method:result.method || 'tracking_match',confidence:result.confidence || 'low',caseRef:null,candidateCount:candidates.length || 2},
+                suggestedCaseKey:'',suggestedMethod:result.method || 'tracking_match'
+            };
+        }
+        let fallback = v13ProposePatientMatch(patientToken);
+        return {proposedMatch:fallback,suggestedCaseKey:fallback.caseRef ? v13RefKey(fallback.caseRef) : '',suggestedMethod:fallback.method || 'patient_hash'};
+    }
+
+    function v13BuildStoredNarrative(parsed,rawText,patientName) {
+        let warning = [parsed?.qualityWarning,...(parsed?.extraction?.warnings || [])].filter(Boolean).join(' · ');
+        let recommendation = parsed?.recommendation?.rawRedacted || parsed?.recommendation?.raw || '';
+        if (parsed?.type === '3mensio_planning') {
+            let pieces = [];
+            if (warning) pieces.push(`Planning warning: ${warning}`);
+            if (recommendation) pieces.push(`Documented recommendation: ${recommendation}`);
+            if (parsed?.structuredFields?.plannedAccess) pieces.push(`Planned access: ${parsed.structuredFields.plannedAccess}`);
+            return pieces.join('\n') || '3mensio planning report indexed; narrative details not available.';
+        }
+        if (parsed?.narrative?.originalRedacted) return String(parsed.narrative.originalRedacted).slice(0,V13_REPORT_MAX_NARRATIVE);
+        let redacted = typeof v13RedactDocumentText === 'function'
+            ? v13RedactDocumentText(rawText,[patientName])
+            : v12SanitizeNarrative(rawText,[patientName]);
+        return String(redacted || '').slice(0,V13_REPORT_MAX_NARRATIVE);
+    }
+
+    function v13RequiresNarrativePrivacyReview(type) {
+        return type === 'engineering_review' || type === 'other';
+    }
+
+    function v13IsAuthoritativeMatch(method) {
+        let value = String(method || '').trim();
+        return value === 'manual' || value === 'manual_unlink' || value === 'reviewed_no_current_match' || /_reviewed$/.test(value);
+    }
+
+    function v13FindCompatibleDocument({reportNumber='',reportDate='',patientToken='',webUrl='',type='',metadataOnly=false}={}) {
+        let candidates = (v13ReportState.documents || []).filter(doc => !metadataOnly || doc.extraction?.mode === 'metadata_only');
+        let validUrl = v13ValidateSharePointUrl(webUrl || '');
+        if (validUrl.valid) {
+            let byUrl = candidates.filter(doc => {
+                let existingUrl = v13ValidateSharePointUrl(doc.source?.webUrl || '');
+                return existingUrl.valid && existingUrl.url === validUrl.url;
+            });
+            if (byUrl.length === 1) return byUrl[0];
+        }
+        let normalizedReport = v13NormalizeReportNumber(reportNumber || '');
+        if (normalizedReport) {
+            let byReport = candidates.filter(doc => {
+                if (v13NormalizeReportNumber(doc.reportNumber || '') !== normalizedReport) return false;
+                let existingDate = v13NormalizeDate(doc.reportDate || '');
+                return !reportDate || !existingDate || existingDate === reportDate;
+            });
+            if (byReport.length === 1) return byReport[0];
+        }
+        if (patientToken && reportDate) {
+            // A patient token alone is never sufficient: one patient may have
+            // several planning or engineering reports. Require the same report
+            // date (and a compatible type when available) before enrichment.
+            let byPatient = candidates.filter(doc => {
+                if (doc.patientToken !== patientToken || v13NormalizeDate(doc.reportDate || '') !== reportDate) return false;
+                if (type && doc.type && v13NormalizeReportType(doc.type) !== v13NormalizeReportType(type)) return false;
+                let existingReport = v13NormalizeReportNumber(doc.reportNumber || '');
+                if (normalizedReport && existingReport && existingReport !== normalizedReport) return false;
+                let existingUrl = v13ValidateSharePointUrl(doc.source?.webUrl || '');
+                if (validUrl.valid && existingUrl.valid && existingUrl.url !== validUrl.url) return false;
+                return true;
+            });
+            if (byPatient.length === 1) return byPatient[0];
+        }
+        return null;
+    }
+
+    async function v13BuildPdfDraft(file,onProgress) {
+        let read = await v13ReadPdfText(file,onProgress);
+        let parsed = v13ParseReportText(read.text,{pageCount:read.pageCount,fileName:file.name,mode:read.extractionMode});
+        let patientName = String(parsed.transient?.patientName || '').trim();
+        let patientToken = patientName ? await v12PatientHash(patientName) : '';
+        let proposedMatch = v13ProposePatientMatch(patientToken);
+        let country = v13InferCountryFromFilename(file.name);
+        let reportNumber = v13NormalizeReportNumber(parsed.reportNumber || '') || '';
+        let existing = (v13ReportState.documents || []).find(doc => doc.source?.fileSha256 === read.sha256);
+        let reportDate = v13NormalizeDate(parsed.reportDate || '');
+        let metadataMerge = v13FindCompatibleDocument({reportNumber,reportDate,patientToken,type:parsed.type || 'other',metadataOnly:true});
+        if (metadataMerge?.match && v13IsAuthoritativeMatch(metadataMerge.match.method)) proposedMatch = v13Clone(metadataMerge.match);
+        let now = v13Now();
+        let documentId = existing?.documentId || metadataMerge?.documentId || `report-${read.sha256.slice(0,24)}`;
+        let narrativeText = v13BuildStoredNarrative(parsed,read.text,patientName);
+        let doc = {
+            documentId,
+            type:parsed.type || 'other',
+            reportNumber,
+            reportDate,
+            country,
+            patientToken,
+            source:{provider:'manual_upload',fileSha256:read.sha256,webUrl:'',importedAt:now},
+            match:proposedMatch,
+            extraction:{
+                parserVersion:V13_REPORT_PARSER_VERSION,mode:read.extractionMode,pageCount:read.pageCount,pagesRead:read.pagesRead,
+                warnings:[parsed.qualityWarning,...(parsed.extraction?.warnings || []),...(read.extractionIncomplete ? [`${read.extractionMode === 'ocr' ? 'OCR':'Text-layer reader'} indexed ${read.pagesRead} of ${read.pageCount} pages or reached the ${V13_REPORT_MAX_TEXT.toLocaleString()}-character local limit; open the original for complete evidence.`]:[])].filter(Boolean),
+                structuredFields:parsed.structuredFields || {},qualitySignals:parsed.qualitySignals || [],
+                privacyReviewStatus:v13RequiresNarrativePrivacyReview(parsed.type) ? 'required':'not_required',extractionIncomplete:Boolean(read.extractionIncomplete)
+            },
+            recommendation:{
+                rawRedacted:v12SanitizeNarrative(parsed.recommendation?.rawRedacted || parsed.recommendation?.raw || '',[patientName]),
+                valveFamily:parsed.recommendation?.valveFamily || '',
+                options:parsed.recommendation?.options || [],
+                strategies:parsed.recommendation?.strategies || []
+            },
+            narrative:{originalRedacted:narrativeText,sourceLanguage:parsed.narrative?.sourceLanguage || v12DetectLanguage(narrativeText),englishReference:parsed.narrative?.englishReference || '',translations:{}},
+            professionals:v13Clone(metadataMerge?.professionals || existing?.professionals || {}),
+            createdAt:existing?.createdAt || metadataMerge?.createdAt || now,
+            updatedAt:now
+        };
+        if (metadataMerge?.source?.webUrl) doc.source = Object.assign({},doc.source,{provider:'sharepoint',webUrl:metadataMerge.source.webUrl,linkUpdatedAt:metadataMerge.source.linkUpdatedAt || metadataMerge.updatedAt});
+        return {doc,duplicate:Boolean(existing),mergeDocumentId:metadataMerge?.documentId || '',suggestedCaseKey:proposedMatch.caseRef ? v13RefKey(proposedMatch.caseRef) : '',suggestedMethod:proposedMatch.method || 'patient_hash',privateNameDiscarded:Boolean(patientName),transientPatientName:patientName};
+    }
+
+    async function v13HandlePdfFiles(files) {
+        let selected = [...(files || [])].filter(file => /\.pdf$/i.test(file.name || '') || file.type === 'application/pdf');
+        let input = document.getElementById('reports-pdf-input'); if (input) input.value = '';
+        if (!selected.length) return;
+        v13SetProgress(true,'Reading reports locally…',`Preparing ${selected.length} PDF report${selected.length === 1 ? '':'s'}.`);
+        let drafts = [], failures = [];
+        try {
+            for (let index=0; index<selected.length; index++) {
+                let file = selected[index];
+                try {
+                    let draft = await v13BuildPdfDraft(file,detail => v13SetProgress(true,`Report ${index+1} of ${selected.length}`,detail));
+                    drafts.push(draft);
+                } catch (err) {
+                    console.error('Report extraction failed',err);
+                    failures.push({index:index+1,error:err.message || String(err)});
+                }
+            }
+        } finally { v13SetProgress(false); }
+        let status = document.getElementById('reports-pdf-status');
+        if (status) status.textContent = `${drafts.length} report(s) ready for preview${failures.length ? ` · ${failures.length} failed`:''}.`;
+        if (!drafts.length) { alert(`No report could be read.${failures[0] ? `\n\n${failures[0].error}`:''}`); return; }
+        v13OpenPdfPreview(drafts,failures);
+    }
+
+    function v13ReportMatchPill(status) {
+        let cls = status === 'linked' ? 'report-linked' : status === 'unmatched' ? 'report-unmatched' : status === 'ambiguous' ? 'report-ambiguous' : 'report-pending';
+        return `<span class="report-pill ${cls}">${escapeHtml(V13_REPORT_MATCH_LABELS[status] || status || 'Pending review')}</span>`;
+    }
+
+    function v13RecommendationLabel(doc) {
+        let family = doc.recommendation?.valveFamily || '';
+        let options = (doc.recommendation?.options || []).join(' / ');
+        let strategies = (doc.recommendation?.strategies || []).join(' · ');
+        return [family,options,strategies].filter(Boolean).join(' · ') || doc.recommendation?.rawRedacted || 'Not documented';
+    }
+
+    function v13OpenPdfPreview(drafts,failures=[]) {
+        v13PendingPreview = {kind:'pdf',drafts,failures};
+        let overlay = document.getElementById('report-import-preview-overlay'), body = document.getElementById('report-preview-body');
+        if (!overlay || !body) return;
+        let title = document.getElementById('report-preview-title'), subtitle = document.getElementById('report-preview-subtitle');
+        if (title) title.textContent = 'PDF report import preview';
+        if (subtitle) subtitle.textContent = 'Detected identifiers are redacted. Review each Case ID and every engineering/other narrative before applying.';
+        let linked = drafts.filter(item => item.doc.match.status === 'linked').length;
+        let duplicates = drafts.filter(item => item.duplicate).length;
+        let unmatched = drafts.filter(item => item.doc.match.status === 'unmatched').length;
+        body.innerHTML = `
+            <div class="report-preview-summary"><div class="report-preview-stat"><span>Readable reports</span><strong>${drafts.length}</strong></div><div class="report-preview-stat"><span>Suggested links</span><strong>${linked}</strong></div><div class="report-preview-stat"><span>Implant not found</span><strong>${unmatched}</strong></div><div class="report-preview-stat"><span>Exact duplicates</span><strong>${duplicates}</strong></div></div>
+            <div class="reports-privacy-note" style="margin-top:0;"><strong>Review rule:</strong> selecting “No implant match” does not say that no implant occurred. It says only that a matching procedure is not present in the current app database.</div>
+            <div class="report-preview-scroll"><table class="report-preview-table"><thead><tr><th>Report</th><th>Extracted evidence</th><th>Proposed Case ID</th><th>Optional SharePoint link</th><th>Status</th></tr></thead><tbody>
+            ${drafts.map((item,index) => {
+                let doc = item.doc, selected = item.suggestedCaseKey || '';
+                let warning = (doc.extraction?.warnings || [])[0] || '';
+                let privacyReview = v13RequiresNarrativePrivacyReview(doc.type) && !item.duplicate ? `<div class="report-privacy-review"><strong>Privacy review required</strong><span>Check the redacted narrative below. Remove any remaining patient name, ID, birth date or other direct identifier before saving.</span><textarea id="report-preview-narrative-${index}" class="reports-control" rows="7">${escapeHtml(doc.narrative?.originalRedacted || '')}</textarea><label><input id="report-preview-privacy-${index}" type="checkbox"> I reviewed this narrative and removed remaining patient identifiers.</label></div>` : '';
+                return `<tr><td><strong>${escapeHtml(V13_REPORT_TYPE_LABELS[doc.type] || doc.type)}</strong><span class="report-muted">${escapeHtml(doc.reportNumber ? `Report ${doc.reportNumber}`:'Report number unavailable')} · ${escapeHtml(doc.reportDate || 'Date unavailable')} · ${doc.extraction?.pagesRead || doc.extraction?.pageCount || '—'}/${doc.extraction?.pageCount || '—'} page(s) read</span></td><td>${escapeHtml(v13RecommendationLabel(doc))}${warning ? `<div class="report-warning">${escapeHtml(warning)}</div>`:''}${privacyReview}</td><td><select id="report-preview-case-${index}" class="reports-control" ${item.duplicate?'disabled':''}>${v13CaseSelectOptions(selected)}</select></td><td><input id="report-preview-link-${index}" class="reports-control" type="url" autocomplete="off" placeholder="https://…sharepoint.com/…" value="${v13EscapeAttribute(doc.source?.webUrl || '')}" ${item.duplicate?'disabled':''}></td><td>${item.duplicate?'<span class="report-pill report-source">Exact PDF already indexed</span>':item.mergeDocumentId?'<span class="report-pill report-linked">Enrich existing tracking record</span>':v13ReportMatchPill(doc.match.status)}</td></tr>`;
+            }).join('')}</tbody></table></div>
+            ${failures.length ? `<div class="report-warning" style="margin-top:10px;">${failures.length} file(s) could not be read. The first error was: ${escapeHtml(failures[0].error)}</div>`:''}
+            <div class="report-preview-footer"><button type="button" class="upload-btn" onclick="v13CloseReportPreview()">CANCEL</button><button type="button" class="upload-btn export-btn" onclick="v13ApplyPdfPreview()">APPLY REVIEWED REPORTS</button></div>`;
+        overlay.classList.add('active');
+    }
+
+    function v13CloseReportPreview() {
+        document.getElementById('report-import-preview-overlay')?.classList.remove('active');
+        v13PendingPreview = null;
+    }
+
+    async function v13ApplyPdfPreview() {
+        if (v13PendingPreview?.kind !== 'pdf') return;
+        let drafts = v13PendingPreview.drafts || [], before = v13SnapshotForUndo('pdf_import');
+        let caseMap = v13CaseOptionMap(), applied = 0, skipped = 0, prepared = [];
+        // Phase 1: validate every row without mutating live state.
+        for (let index=0; index<drafts.length; index++) {
+            let item = drafts[index];
+            if (item.duplicate) { skipped++; continue; }
+            let doc = v13Clone(item.doc);
+            let selectedKey = document.getElementById(`report-preview-case-${index}`)?.value || '';
+            let selectedCase = selectedKey ? caseMap.get(selectedKey) : null;
+            if (selectedCase) {
+                if (selectedKey === item.suggestedCaseKey && v13IsAuthoritativeMatch(item.doc.match?.method)) {
+                    doc.match = v13Clone(item.doc.match);
+                } else {
+                    let reviewedMethod = selectedKey === item.suggestedCaseKey ? `${item.suggestedMethod || 'patient_hash'}_reviewed` : 'manual';
+                    doc.match = {status:'linked',method:reviewedMethod,confidence:'high',caseRef:v13CaseRef(selectedCase),candidateCount:1};
+                }
+                doc.country = {value:selectedCase.country || doc.country?.value || '',source:'linked_case',confidence:'high'};
+            } else if (item.suggestedCaseKey) {
+                doc.match = {status:'unmatched',method:v13IsAuthoritativeMatch(item.doc.match?.method) ? 'manual_unlink':'reviewed_no_current_match',confidence:'none',caseRef:null,candidateCount:0};
+            } else if (v13IsAuthoritativeMatch(item.doc.match?.method)) {
+                doc.match = v13Clone(item.doc.match);
+            } else {
+                doc.match = item.doc.match?.status === 'ambiguous'
+                    ? {status:'ambiguous',method:'patient_hash',confidence:'low',caseRef:null,candidateCount:item.doc.match.candidateCount || 2}
+                    : {status:'unmatched',method:item.suggestedCaseKey ? 'reviewed_no_current_match':'unmatched_pending_reconciliation',confidence:'none',caseRef:null,candidateCount:0};
+            }
+            let link = String(document.getElementById(`report-preview-link-${index}`)?.value || '').trim();
+            if (link) {
+                let validation = v13ValidateSharePointUrl(link);
+                if (!validation.valid) { alert(`Report ${doc.reportNumber || index+1}: ${v13SharePointValidationMessage(validation)}`); return; }
+                doc.source.webUrl = validation.url;
+                doc.source.provider = 'sharepoint';
+            }
+            if (v13RequiresNarrativePrivacyReview(doc.type)) {
+                let reviewed = Boolean(document.getElementById(`report-preview-privacy-${index}`)?.checked);
+                if (!reviewed) { alert(`Report ${doc.reportNumber || index+1}: review the redacted narrative and confirm the privacy checkbox before applying.`); return; }
+                let reviewedText = String(document.getElementById(`report-preview-narrative-${index}`)?.value || '').trim();
+                doc.narrative.originalRedacted = v13RedactDocumentText(reviewedText,[item.transientPatientName || '']).slice(0,V13_REPORT_MAX_NARRATIVE);
+                doc.narrative.sourceLanguage = v12DetectLanguage(doc.narrative.originalRedacted);
+                doc.extraction.privacyReviewStatus = 'reviewed';
+                doc.extraction.privacyReviewedAt = v13Now();
+            }
+            delete doc.patientName; delete doc.filename; delete doc.sourceFilename; delete doc.transient;
+            prepared.push({doc,mergeDocumentId:item.mergeDocumentId || ''});
+        }
+        // Phase 2: apply the complete validated batch atomically.
+        let nextDocuments = v13Clone(v13ReportState.documents || []);
+        prepared.forEach(item => {
+            if (item.mergeDocumentId) nextDocuments = nextDocuments.filter(existingDoc => existingDoc.documentId !== item.mergeDocumentId);
+            nextDocuments = nextDocuments.filter(existingDoc => existingDoc.documentId !== item.doc.documentId);
+            nextDocuments.push(item.doc); applied++;
+        });
+        v13ReportState.documents = nextDocuments;
+        await v13CommitReportMutation('pdf_import',before,{applied,duplicatesSkipped:skipped});
+        document.getElementById('report-import-preview-overlay')?.classList.remove('active');
+        v13PendingPreview = null;
+        let status = document.getElementById('reports-pdf-status'); if (status) status.textContent = `${applied} report(s) applied · ${skipped} exact duplicate(s) skipped.`;
+    }
+
+    function v13ExtractTrackingRowsFromWorkbook(workbook) {
+        let rows = [];
+        for (let sheetName of workbook.SheetNames || []) {
+            let ws = workbook.Sheets[sheetName];
+            if (!ws) continue;
+            if (typeof v12RepairWorksheetRef === 'function') v12RepairWorksheetRef(ws);
+            let matrix = XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+            let parsed = v13ParseTrackingMatrix(matrix,{}) || {records:[]};
+            let urlColumn = parsed.mapping?.fields?.reportUrl;
+            (parsed.records || []).forEach(item => {
+                if (Number.isInteger(urlColumn)) {
+                    let address = XLSX.utils.encode_cell({r:Math.max(0,Number(item.rowNumber || 1)-1),c:urlColumn});
+                    let cell = ws[address] || {};
+                    let target = String(cell.l?.Target || '').trim();
+                    if (!target && /^HYPERLINK\(/i.test(String(cell.f || ''))) {
+                        let formulaMatch = String(cell.f).match(/^HYPERLINK\(\s*"([^"]+)"/i);
+                        target = formulaMatch ? formulaMatch[1] : '';
+                    }
+                    let checked = v13ValidateSharePointUrl(target);
+                    if (checked.valid) item.source.localLink = checked.url;
+                }
+                rows.push({
+                    sheetName,rowNumber:item.rowNumber,patientName:item.transient?.patientName || item.source?.originalFileName || '',
+                    reportNumber:item.reportNumber || '',reportDate:item.reportDate || '',type:v13NormalizeReportType(item.type),
+                    webUrl:item.source?.localLink || '',country:item.geography?.country || '',hospital:item.geography?.hospital || '',
+                    matchHints:item.matchHints || {},createdBy:item.createdBy || '',notes:item.notes || '',importWarnings:item.importWarnings || []
+                });
+            });
+        }
+        return rows;
+    }
+
+    async function v13HandleTrackingFile(files) {
+        let file = [...(files || [])][0], input = document.getElementById('reports-tracking-input'); if (input) input.value = '';
+        if (!file) return;
+        if (/\.iqy$/i.test(file.name || '')) { alert('An .iqy file is a live Excel query connection, not a static workbook snapshot. Export the Microsoft List as CSV, or open it in Excel and save a local .xlsx copy.'); return; }
+        if (typeof XLSX === 'undefined') { alert('The spreadsheet reader is unavailable. Check the network and reload the app.'); return; }
+        v13SetProgress(true,'Reading tracking-list snapshot…','The list is processed locally.');
+        try {
+            let buffer = await file.arrayBuffer();
+            let workbook = XLSX.read(buffer,{type:'array',cellDates:true,cellFormula:true,cellHTML:false});
+            let rawRows = v13ExtractTrackingRowsFromWorkbook(workbook);
+            let proposals = [], invalid = [], seenUrls = new Set(), seenReportKeys = new Set();
+            for (let row of rawRows) {
+                let linkValidation = v13ValidateSharePointUrl(row.webUrl || row.link || '');
+                if (!linkValidation.valid) { invalid.push({row,reason:v13SharePointValidationMessage(linkValidation)}); continue; }
+                let patientName = v13NormalizeTransientTrackingPatient(row.patientName || '');
+                let patientToken = patientName ? await v12PatientHash(patientName) : '';
+                let reportNumber = v13NormalizeReportNumber(row.reportNumber || '');
+                let reportDate = v13NormalizeDate(row.reportDate || '');
+                let reportKey = reportNumber ? `${reportNumber}|${reportDate || ''}` : '';
+                if (seenUrls.has(linkValidation.url) || (reportKey && seenReportKeys.has(reportKey))) {
+                    invalid.push({row,reason:'Duplicate row in this tracking snapshot; the first occurrence was retained.'});
+                    continue;
+                }
+                seenUrls.add(linkValidation.url); if (reportKey) seenReportKeys.add(reportKey);
+                let existing = v13FindCompatibleDocument({reportNumber,reportDate,patientToken,webUrl:linkValidation.url,type:row.type || ''});
+                let matchProposal = v13ProposeTrackingMatch(row,patientToken || existing?.patientToken || '');
+                if (existing?.match && v13IsAuthoritativeMatch(existing.match.method)) {
+                    matchProposal = {
+                        proposedMatch:v13Clone(existing.match),
+                        suggestedCaseKey:existing.match.status === 'linked' && existing.match.caseRef ? v13RefKey(existing.match.caseRef) : '',
+                        suggestedMethod:existing.match.method
+                    };
+                }
+                proposals.push({
+                    row:{reportNumber,reportDate,type:v13NormalizeReportType(row.type),webUrl:linkValidation.url,country:row.country || '',createdBy:row.createdBy || '',matchHints:row.matchHints || {}},
+                    patientToken,
+                    existingDocumentId:existing?.documentId || '',
+                    ambiguousDocumentMatch:false,
+                    proposedMatch:matchProposal.proposedMatch,
+                    suggestedCaseKey:matchProposal.suggestedCaseKey,
+                    suggestedMethod:matchProposal.suggestedMethod
+                });
+            }
+            if (!proposals.length) { alert(`No valid SharePoint document link was found.${invalid[0] ? `\n\n${invalid[0].reason}`:''}`); return; }
+            v13OpenTrackingPreview(proposals,invalid);
+            let status = document.getElementById('reports-tracking-status'); if (status) status.textContent = `${proposals.length} valid link(s) ready for preview${invalid.length ? ` · ${invalid.length} rejected`:''}.`;
+        } catch (err) {
+            console.error(err); alert(`The tracking-list snapshot could not be read.\n\n${err.message || err}`);
+        } finally { v13SetProgress(false); }
+    }
+
+    function v13OpenTrackingPreview(proposals,invalid=[]) {
+        v13PendingPreview = {kind:'tracking',proposals,invalid};
+        let overlay = document.getElementById('report-import-preview-overlay'), body = document.getElementById('report-preview-body');
+        if (!overlay || !body) return;
+        document.getElementById('report-preview-title').textContent = 'SharePoint tracking-list preview';
+        document.getElementById('report-preview-subtitle').textContent = 'Only HTTPS links from the approved Venus SharePoint tenant are accepted.';
+        let updates = proposals.filter(item => item.existingDocumentId).length;
+        body.innerHTML = `
+            <div class="report-preview-summary"><div class="report-preview-stat"><span>Valid links</span><strong>${proposals.length}</strong></div><div class="report-preview-stat"><span>Existing reports updated</span><strong>${updates}</strong></div><div class="report-preview-stat"><span>Metadata-only records</span><strong>${proposals.length-updates}</strong></div><div class="report-preview-stat"><span>Rejected rows</span><strong>${invalid.length}</strong></div></div>
+            <div class="report-preview-scroll"><table class="report-preview-table"><thead><tr><th>Report</th><th>Registry action</th><th>Proposed Case ID</th><th>Private source</th><th>Status</th></tr></thead><tbody>
+            ${proposals.map((item,index) => `<tr><td><strong>${escapeHtml(item.row.reportNumber ? `Report ${item.row.reportNumber}`:'Report number unavailable')}</strong><span class="report-muted">${escapeHtml(item.row.reportDate || 'Date unavailable')} · ${escapeHtml(V13_REPORT_TYPE_LABELS[item.row.type] || 'Report')}</span></td><td>${item.existingDocumentId ? 'Attach / update the SharePoint link on the indexed report':'Create a metadata-only report record; import the PDF later to add extracted evidence'}${item.ambiguousDocumentMatch?'<div class="report-warning">More than one indexed report shares this token; a new record will be created.</div>':''}</td><td><select id="tracking-preview-case-${index}" class="reports-control">${v13CaseSelectOptions(item.suggestedCaseKey || '')}</select></td><td><span class="report-pill report-source">venusmedtecheurope.sharepoint.com</span></td><td>${v13ReportMatchPill(item.proposedMatch.status)}</td></tr>`).join('')}
+            </tbody></table></div>
+            <div class="report-preview-footer"><button type="button" class="upload-btn" onclick="v13CloseReportPreview()">CANCEL</button><button type="button" class="upload-btn export-btn" onclick="v13ApplyTrackingPreview()">APPLY REVIEWED LINKS</button></div>`;
+        overlay.classList.add('active');
+    }
+
+    async function v13ApplyTrackingPreview() {
+        if (v13PendingPreview?.kind !== 'tracking') return;
+        let proposals = v13PendingPreview.proposals || [], before = v13SnapshotForUndo('tracking_import'), caseMap = v13CaseOptionMap();
+        let added = 0, updated = 0;
+        proposals.forEach((item,index) => {
+            let doc = item.existingDocumentId ? v13ReportDocumentById(item.existingDocumentId) : null;
+            if (!doc) {
+                let seed = `${item.row.reportNumber}|${item.patientToken}|${item.row.webUrl}`;
+                let id = `tracking-${Math.abs([...seed].reduce((acc,ch)=>(acc*31+ch.charCodeAt(0))|0,7)).toString(36)}-${Date.now().toString(36)}-${index}`;
+                doc = {
+                    documentId:id,type:item.row.type || '3mensio_planning',reportNumber:item.row.reportNumber || '',reportDate:item.row.reportDate || '',
+                    country:{value:item.row.country || '',source:item.row.country?'tracking_list':'unknown',confidence:item.row.country?'medium':'none'},patientToken:item.patientToken || '',
+                    source:{provider:'sharepoint',fileSha256:'',webUrl:item.row.webUrl,importedAt:v13Now()},
+                    match:{status:'unmatched',method:'tracking_list',confidence:'none',caseRef:null,candidateCount:0},
+                    extraction:{parserVersion:V13_REPORT_PARSER_VERSION,mode:'metadata_only',pageCount:null,warnings:[],structuredFields:{},qualitySignals:[]},
+                    recommendation:{rawRedacted:'',valveFamily:'',options:[],strategies:[]},
+                    narrative:{originalRedacted:'Report indexed from the SharePoint tracking list. Import the PDF to extract planning or engineering evidence.',sourceLanguage:'en',englishReference:'',translations:{}},
+                    professionals:{submittedBy:item.row.createdBy || ''},
+                    createdAt:v13Now(),updatedAt:v13Now()
+                };
+                v13ReportState.documents.push(doc); added++;
+            } else { updated++; }
+            doc.source = Object.assign({},doc.source,{provider:'sharepoint',webUrl:item.row.webUrl,linkUpdatedAt:v13Now()});
+            if (!doc.patientToken && item.patientToken) doc.patientToken = item.patientToken;
+            if (!doc.reportNumber && item.row.reportNumber) doc.reportNumber = item.row.reportNumber;
+            if (!doc.reportDate && item.row.reportDate) doc.reportDate = item.row.reportDate;
+            if (!doc.professionals?.submittedBy && item.row.createdBy) doc.professionals = Object.assign({},doc.professionals,{submittedBy:item.row.createdBy});
+            let selectedKey = document.getElementById(`tracking-preview-case-${index}`)?.value || '';
+            let selectedCase = selectedKey ? caseMap.get(selectedKey) : null;
+            if (selectedCase) {
+                if (selectedKey === item.suggestedCaseKey && v13IsAuthoritativeMatch(item.proposedMatch?.method)) {
+                    doc.match = v13Clone(item.proposedMatch);
+                } else {
+                    doc.match = {status:'linked',method:selectedKey === item.suggestedCaseKey ? `${item.suggestedMethod || 'tracking_match'}_reviewed`:'manual',confidence:'high',caseRef:v13CaseRef(selectedCase),candidateCount:1};
+                }
+                doc.country = {value:selectedCase.country || doc.country?.value || '',source:'linked_case',confidence:'high'};
+            } else if (item.suggestedCaseKey) {
+                doc.match = {status:'unmatched',method:v13IsAuthoritativeMatch(item.proposedMatch?.method) ? 'manual_unlink':'reviewed_no_current_match',confidence:'none',caseRef:null,candidateCount:0};
+            } else if (item.proposedMatch.status === 'ambiguous') {
+                doc.match = {status:'ambiguous',method:item.proposedMatch.method || 'tracking_match',confidence:'low',caseRef:null,candidateCount:item.proposedMatch.candidateCount || 2};
+            } else if (!v13IsAuthoritativeMatch(doc.match?.method)) {
+                doc.match = {status:'unmatched',method:item.suggestedCaseKey ? 'reviewed_no_current_match':'unmatched_pending_reconciliation',confidence:'none',caseRef:null,candidateCount:0};
+            }
+            doc.updatedAt = v13Now();
+        });
+        await v13CommitReportMutation('tracking_import',before,{added,updated});
+        document.getElementById('report-import-preview-overlay')?.classList.remove('active'); v13PendingPreview = null;
+        let status = document.getElementById('reports-tracking-status'); if (status) status.textContent = `${added} report record(s) added · ${updated} existing link(s) updated.`;
+    }
+
+    function v13OpenTrackingHelp() {
+        alert('Microsoft Lists → Export → Export to CSV.\n\nAlternatively, use Export to Excel, open the downloaded .iqy connection in Excel, refresh it, then Save As a local .xlsx file. Upload the CSV or saved workbook here.\n\nThe snapshot should include a patient/name column and an HTTPS link/URL column from the Venus SharePoint tenant.');
+    }
+
+    async function v13EditReportLink(documentId) {
+        let doc = v13ReportDocumentById(documentId); if (!doc) return;
+        let proposed = prompt('Paste the original SharePoint document link. It will remain in this browser’s private report registry and will not enter Nikki/HQ exports.',doc.source?.webUrl || '');
+        if (proposed === null) return;
+        proposed = proposed.trim();
+        if (!proposed) {
+            if (!confirm('Remove the saved SharePoint link from this report?')) return;
+            let before = v13SnapshotForUndo('remove_report_link'); doc.source.webUrl = ''; doc.updatedAt = v13Now();
+            await v13CommitReportMutation('remove_report_link',before,{documentId}); return;
+        }
+        let validation = v13ValidateSharePointUrl(proposed);
+        if (!validation.valid) { alert(v13SharePointValidationMessage(validation)); return; }
+        let before = v13SnapshotForUndo('update_report_link');
+        doc.source = Object.assign({},doc.source,{provider:'sharepoint',webUrl:validation.url,linkUpdatedAt:v13Now()}); doc.updatedAt = v13Now();
+        await v13CommitReportMutation('update_report_link',before,{documentId});
+    }
+
+    function v13OpenReportLink(documentId) {
+        let doc = v13ReportDocumentById(documentId), validation = v13ValidateSharePointUrl(doc?.source?.webUrl || '');
+        if (!validation.valid) { alert('No approved SharePoint link is saved for this report. Use Add / Update Link first.'); return; }
+        window.open(validation.url,'_blank','noopener,noreferrer');
+    }
+
+    function v13OpenRelinkPreview(documentId) {
+        let doc = v13ReportDocumentById(documentId), overlay = document.getElementById('report-import-preview-overlay'), body = document.getElementById('report-preview-body');
+        if (!doc || !overlay || !body) return;
+        v13PendingPreview = {kind:'relink',documentId};
+        document.getElementById('report-preview-title').textContent = 'Link report to a procedure';
+        document.getElementById('report-preview-subtitle').textContent = 'Official Case ID is displayed, but the technical link also keeps date and source identifiers to avoid duplicate-ID ambiguity.';
+        let selected = doc.match?.caseRef ? v13RefKey(doc.match.caseRef) : '';
+        body.innerHTML = `<div class="reports-privacy-note"><strong>${escapeHtml(doc.reportNumber ? `Report ${doc.reportNumber}`:'Indexed report')}</strong><br>${escapeHtml(v13RecommendationLabel(doc))}</div><div class="reports-control-group"><label for="report-relink-case">Procedure in current LATAM database</label><select id="report-relink-case" class="reports-control">${v13CaseSelectOptions(selected)}</select></div><div class="report-preview-footer"><button type="button" class="upload-btn" onclick="v13CloseReportPreview()">CANCEL</button><button type="button" class="upload-btn export-btn" onclick="v13ApplyRelinkPreview()">SAVE LINK</button></div>`;
+        overlay.classList.add('active');
+    }
+
+    async function v13ApplyRelinkPreview() {
+        if (v13PendingPreview?.kind !== 'relink') return;
+        let doc = v13ReportDocumentById(v13PendingPreview.documentId); if (!doc) return;
+        let key = document.getElementById('report-relink-case')?.value || '', caseObj = key ? v13CaseOptionMap().get(key) : null;
+        let before = v13SnapshotForUndo('relink_report');
+        if (caseObj) {
+            doc.match = {status:'linked',method:'manual',confidence:'high',caseRef:v13CaseRef(caseObj),candidateCount:1};
+            doc.country = {value:caseObj.country || doc.country?.value || '',source:'linked_case',confidence:'high'};
+        } else doc.match = {status:'unmatched',method:'manual_unlink',confidence:'none',caseRef:null,candidateCount:0};
+        doc.updatedAt = v13Now();
+        await v13CommitReportMutation('relink_report',before,{documentId:doc.documentId,linked:Boolean(caseObj)});
+        document.getElementById('report-import-preview-overlay')?.classList.remove('active'); v13PendingPreview = null;
+    }
+
+    async function v13DeleteReport(documentId) {
+        let doc = v13ReportDocumentById(documentId); if (!doc) return;
+        if (!confirm(`Remove ${doc.reportNumber ? `report ${doc.reportNumber}`:'this report'} from the local index? The original SharePoint file will not be deleted.`)) return;
+        let before = v13SnapshotForUndo('delete_report');
+        v13ReportState.documents = v13ReportState.documents.filter(item => item.documentId !== documentId);
+        await v13CommitReportMutation('delete_report',before,{documentId});
+    }
+
+    async function v13UndoLastReportChange() {
+        let undo = v13ReportState.lastUndo;
+        if (!undo) return;
+        let current = v13SnapshotForUndo('redo_checkpoint');
+        v13ReportState.documents = v13Clone(undo.documents || []);
+        v13ReportState.audit = v13Clone(undo.audit || []);
+        v13ReportState.lastUndo = current;
+        v13ReportState.audit.push({action:'undo',at:v13Now(),details:{restoredAction:undo.action},appVersion:APP_META.version,build:APP_META.build});
+        await v13WriteReportState(); v13RenderReports();
+    }
+
+    async function v13ClearImportedReports() {
+        if (!(v13ReportState.documents || []).length) return;
+        if (!confirm('Clear all imported report metadata and locally saved SharePoint links? Original SharePoint files and Outcomes data will not be changed. You can use Undo Last immediately afterward.')) return;
+        let before = v13SnapshotForUndo('clear_reports');
+        v13ReportState.documents = [];
+        await v13CommitReportMutation('clear_reports',before,{removed:before.documents.length});
+    }
+
+    function v13DownloadJson(filename,value) {
+        let blob = new Blob([JSON.stringify(value,null,2)],{type:'application/json'});
+        let url = URL.createObjectURL(blob), a = document.createElement('a');
+        a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
+    }
+
+    function v13ExportReportBackup() {
+        let includeLinks = confirm('INTERNAL PRIVATE BACKUP\n\nPress OK to include raw SharePoint links for full recovery. Those links can contain a patient filename/name and must remain strictly internal.\n\nPress Cancel for a link-free metadata backup. PDF binaries and standalone patient-name fields are never included.');
+        let documents = v13Clone(v13ReportState.documents || []);
+        if (!includeLinks) {
+            if (window.V13ReportsCore?.normalizeDocumentState) {
+                documents = V13ReportsCore.normalizeDocumentState({schema:V13_REPORT_SCHEMA,documents},{forExport:true}).documents || [];
+            } else documents.forEach(doc => { if (doc.source) doc.source.webUrl = ''; });
+        }
+        v13DownloadJson(`VenusMedtech_LATAM_Report_Registry_Internal_Backup_${new Date().toISOString().slice(0,10)}_v${APP_META.version}.json`,{
+            backupType:'VENUS_LATAM_REPORT_REGISTRY_INTERNAL',schema:V13_REPORT_SCHEMA,createdAt:v13Now(),containsPrivateSharePointLinks:includeLinks,
+            app:{version:APP_META.version,build:APP_META.build,reportsSchema:APP_META.reportsSchemaVersion || '1.0.0'},
+            state:{schema:V13_REPORT_SCHEMA,documents,audit:v13Clone(v13ReportState.audit || []),lastUndo:null,updatedAt:v13ReportState.updatedAt}
+        });
+    }
+
+    async function v13RestoreReportBackup(files) {
+        let file = [...(files || [])][0], input = document.getElementById('reports-restore-input'); if (input) input.value = '';
+        if (!file) return;
+        try {
+            let parsed = JSON.parse(await file.text());
+            if (parsed.backupType !== 'VENUS_LATAM_REPORT_REGISTRY_INTERNAL' || Number(parsed.schema) !== V13_REPORT_SCHEMA || !Array.isArray(parsed.state?.documents)) throw new Error('This is not a compatible LATAM report-registry backup.');
+            if (!confirm(`Restore ${parsed.state.documents.length} report record(s) from this private backup? Current report metadata will be replaced; Outcomes and procedure data will not change.`)) return;
+            let before = v13SnapshotForUndo('restore_backup');
+            v13ReportState.documents = v13SanitizeLoadedDocuments(v13Clone(parsed.state.documents));
+            v13ReportState.audit = v13Clone(parsed.state.audit || []);
+            await v13CommitReportMutation('restore_backup',before,{restored:v13ReportState.documents.length});
+        } catch (err) { alert(err.message || String(err)); }
+    }
+
+    async function v13ReconcileDocuments({persistIfChanged=true}={}) {
+        let changed = 0;
+        for (let doc of v13ReportState.documents || []) {
+            if (v13IsAuthoritativeMatch(doc.match?.method)) continue;
+            if (doc.match?.caseRef && v13ResolveCaseRef(doc.match.caseRef)) {
+                if (doc.match.status !== 'linked') { doc.match.status = 'linked'; changed++; }
+                continue;
+            }
+            if (!doc.patientToken) continue;
+            let proposal = v13ProposePatientMatch(doc.patientToken);
+            if (proposal.status === 'linked') {
+                doc.match = Object.assign({},proposal,{method:'patient_hash_reconciled'});
+                let caseObj = v13ResolveCaseRef(proposal.caseRef);
+                if (caseObj) doc.country = {value:caseObj.country || doc.country?.value || '',source:'linked_case',confidence:'high'};
+                doc.updatedAt = v13Now(); changed++;
+            } else if (proposal.status === 'ambiguous' && doc.match?.status !== 'ambiguous') {
+                doc.match = proposal; doc.updatedAt = v13Now(); changed++;
+            }
+        }
+        if (changed && persistIfChanged) {
+            v13ReportState.audit.push({action:'automatic_reconciliation',at:v13Now(),details:{linkedOrUpdated:changed},appVersion:APP_META.version,build:APP_META.build});
+            await v13WriteReportState();
+        }
+        return changed;
+    }
+
+    function v13DocumentCase(doc) { return doc.match?.status === 'linked' ? v13ResolveCaseRef(doc.match.caseRef) : null; }
+
+    function v13DocumentCountry(doc) {
+        let caseObj = v13DocumentCase(doc);
+        return caseObj?.country || doc.country?.value || '';
+    }
+
+    function v13DocumentYear(doc) {
+        let caseObj = v13DocumentCase(doc);
+        if (caseObj) {
+            try { return getCaseYear(caseObj); } catch (err) { /* fallback */ }
+        }
+        let date = String(doc.reportDate || '');
+        return /^\d{4}/.test(date) ? Number(date.slice(0,4)) : null;
+    }
+
+    function v13DocumentPeriod(doc) {
+        let date = doc.reportDate || v13CaseDateISO(v13DocumentCase(doc));
+        let month = Number(String(date || '').slice(5,7));
+        if (!month) return '';
+        return month <= 6 ? 'H1' : 'H2';
+    }
+
+    function v13ImplantedDevice(caseObj) {
+        if (!caseObj) return '';
+        return outcomeFinalDeviceLabel(caseObj.outcome) || caseObj.valve || '';
+    }
+
+    function v13DocumentComparison(doc,caseObj=v13DocumentCase(doc)) {
+        return v13CompareRecommendationToImplant(doc.recommendation || {},v13ImplantedDevice(caseObj));
+    }
+
+    function v13PopulateReportCountries(documents) {
+        let select = document.getElementById('reports-country-filter'); if (!select) return;
+        let prior = select.value;
+        let countries = [...new Set(documents.map(v13DocumentCountry).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+        select.innerHTML = '<option value="">All countries</option>' + countries.map(country => `<option value="${v13EscapeAttribute(country)}">${FLAGS[country] || '🌍'} ${escapeHtml(country)}</option>`).join('');
+        if (countries.includes(prior)) select.value = prior;
+    }
+
+    function v13FilteredReportDocuments() {
+        let docs = [...(v13ReportState.documents || [])];
+        let selectedYears = Array.isArray(activeYears) ? activeYears : [];
+        if (selectedYears.length && !selectedYears.includes(2026)) { v13PopulateReportCountries([]); return []; }
+        if (selectedYears.length) docs = docs.filter(doc => {
+            let year = v13DocumentYear(doc);
+            return year === null || selectedYears.includes(year);
+        });
+        v13PopulateReportCountries(docs);
+        let query = v12NormalizeIdentity(document.getElementById('reports-search')?.value || '');
+        let period = document.getElementById('reports-period-filter')?.value || '';
+        let type = document.getElementById('reports-type-filter')?.value || '';
+        let status = document.getElementById('reports-match-filter')?.value || v13ReportQuickFilter || '';
+        let country = document.getElementById('reports-country-filter')?.value || '';
+        return docs.filter(doc => {
+            let caseObj = v13DocumentCase(doc), comparison = v13DocumentComparison(doc,caseObj);
+            if (period && v13DocumentPeriod(doc) !== period) return false;
+            if (type && doc.type !== type) return false;
+            if (status && doc.match?.status !== status && !(status === 'ambiguous' && doc.match?.status === 'pending_review')) return false;
+            if (country && v13DocumentCountry(doc) !== country) return false;
+            if (query) {
+                let text = v12NormalizeIdentity([
+                    doc.reportNumber,doc.reportDate,V13_REPORT_TYPE_LABELS[doc.type],v13DocumentCountry(doc),
+                    caseObj ? outcomeCaseIdentifier(caseObj) : '',caseObj?.hospital,v13RecommendationLabel(doc),
+                    v13ImplantedDevice(caseObj),comparison.label,(doc.extraction?.warnings || []).join(' '),doc.narrative?.originalRedacted
+                ].join(' | '));
+                if (!text.includes(query)) return false;
+            }
+            return true;
+        });
+    }
+
+    function v13SetReportQuickFilter(status) {
+        v13ReportQuickFilter = !status ? '' : (v13ReportQuickFilter === status ? '' : status);
+        let select = document.getElementById('reports-match-filter'); if (select) select.value = '';
+        v13RenderReports();
+    }
+
+    function v13RenderReportKPIs(scopeDocs) {
+        let container = document.getElementById('reports-kpi-grid'); if (!container) return;
+        let counts = {
+            total:scopeDocs.length,
+            linked:scopeDocs.filter(doc => doc.match?.status === 'linked').length,
+            unmatched:scopeDocs.filter(doc => doc.match?.status === 'unmatched').length,
+            ambiguous:scopeDocs.filter(doc => ['ambiguous','pending_review'].includes(doc.match?.status)).length
+        };
+        let card = (status,label,value,sub,cls='') => `<button type="button" class="reports-kpi ${cls} ${v13ReportQuickFilter===status?'active':''}" onclick="v13SetReportQuickFilter('${status}')"><div class="label">${escapeHtml(label)}</div><div class="value">${value}</div><div class="sub">${escapeHtml(sub)}</div></button>`;
+        container.innerHTML = `${card('','Indexed reports',counts.total,'PDF and metadata-only records')}${card('linked','Linked to implant',counts.linked,'Shared case timeline available')}${card('unmatched','Implant not found',counts.unmatched,'Inbox · current database only','warning')}${card('ambiguous','Review required',counts.ambiguous,'Ambiguous or pending match','review')}`;
+    }
+
+    function v13ReportTypePill(type) { return `<span class="report-pill report-type">${escapeHtml(V13_REPORT_TYPE_LABELS[type] || type || 'Report')}</span>`; }
+
+    function v13RenderReportTable(documents) {
+        let tbody = document.querySelector('#reports-table tbody'); if (!tbody) return;
+        let sorted = [...documents].sort((a,b) => String(b.reportDate || b.updatedAt || '').localeCompare(String(a.reportDate || a.updatedAt || '')));
+        if (!sorted.length) {
+            let yearLabel = Array.isArray(activeYears) && activeYears.length ? activeYears.join(' + ') : 'active years';
+            tbody.innerHTML = `<tr><td colspan="9"><div class="reports-empty"><div class="empty-icon">🗂️</div><strong>No reports in the selected scope</strong>Import PDFs or a SharePoint tracking-list snapshot, or change the active Time Travel years (${escapeHtml(yearLabel)}).</div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = sorted.map(doc => {
+            let caseObj = v13DocumentCase(doc), caseId = caseObj ? outcomeCaseIdentifier(caseObj) : 'No current implant match';
+            let country = v13DocumentCountry(doc), comparison = v13DocumentComparison(doc,caseObj), warning = (doc.extraction?.warnings || [])[0] || '';
+            let open = Boolean(v13ValidateSharePointUrl(doc.source?.webUrl || '').valid);
+            let sourceText = doc.extraction?.mode === 'metadata_only' ? 'Tracking-list metadata' : `${doc.extraction?.mode === 'ocr' ? 'OCR':'PDF text'} · ${doc.extraction?.pageCount || '—'} page(s)`;
+            return `<tr>
+                <td><span class="report-case-id">${escapeHtml(caseId)}</span><span class="report-muted">${caseObj ? `${escapeHtml(v13CaseDateISO(caseObj))} · ${escapeHtml(caseObj.hospital || '')}`:'Report available · implant not found in current database'}</span><div style="margin-top:6px;">${v13ReportMatchPill(doc.match?.status)}</div></td>
+                <td>${v13ReportTypePill(doc.type)}<strong style="display:block;margin-top:6px;color:var(--v-deep-blue);">${escapeHtml(doc.reportNumber ? `Report ${doc.reportNumber}`:'Report number unavailable')}</strong><span class="report-muted">${escapeHtml(doc.reportDate || 'Date unavailable')}</span></td>
+                <td><strong>${FLAGS[country] || '🌍'} ${escapeHtml(country || 'Country unavailable')}</strong><span class="report-muted">${escapeHtml(doc.country?.source === 'filename' ? 'Country inferred from filename · low confidence':doc.country?.source === 'linked_case' ? 'Confirmed by linked procedure':'Context pending')}</span></td>
+                <td>${escapeHtml(v13RecommendationLabel(doc))}</td>
+                <td><strong>${escapeHtml(v13ImplantedDevice(caseObj) || 'Pending / not available')}</strong><span class="report-muted">${caseObj?.outcome?.finalDevice?.serial ? `SN ${escapeHtml(caseObj.outcome.finalDevice.serial)}`:'No confirmed implanted-device record'}</span></td>
+                <td><span class="report-pill ${comparison.status === 'within_recommendation' ? 'report-linked':comparison.status === 'outside_recommendation' ? 'report-review':'report-source'}">${escapeHtml(comparison.label)}</span></td>
+                <td>${warning ? `<div class="report-warning">${escapeHtml(warning)}<span class="report-muted">Planning warning · not an adverse event</span></div>`:'No document warning extracted'}</td>
+                <td><span class="report-pill report-source">${escapeHtml(sourceText)}</span><span class="report-muted">${open?'Private SharePoint link saved':'Original link not yet saved'}</span></td>
+                <td><div class="report-actions"><button type="button" class="report-mini-btn primary" onclick="event.stopPropagation();v13OpenReportLink('${v13EscapeAttribute(doc.documentId)}')" ${open?'':'disabled'}>OPEN REPORT</button><button type="button" class="report-mini-btn" onclick="event.stopPropagation();v13OpenTimelineByDocument('${v13EscapeAttribute(doc.documentId)}')">TIMELINE</button><button type="button" class="report-mini-btn" onclick="event.stopPropagation();v13OpenRelinkPreview('${v13EscapeAttribute(doc.documentId)}')">LINK / RELINK</button><button type="button" class="report-mini-btn" onclick="event.stopPropagation();v13EditReportLink('${v13EscapeAttribute(doc.documentId)}')">${open?'UPDATE':'ADD'} LINK</button><button type="button" class="report-mini-btn danger" onclick="event.stopPropagation();v13DeleteReport('${v13EscapeAttribute(doc.documentId)}')">REMOVE</button></div></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function v13ScheduleRenderReports() {
+        clearTimeout(v13ReportRenderTimer); v13ReportRenderTimer = setTimeout(() => v13RenderReports(),160);
+    }
+
+    function v13ClearReportFilters() {
+        ['reports-search','reports-period-filter','reports-type-filter','reports-match-filter','reports-country-filter'].forEach(id => { let el = document.getElementById(id); if (el) el.value = ''; });
+        v13ReportQuickFilter = ''; v13RenderReports();
+    }
+
+    function v13RenderReports() {
+        if (!document.getElementById('tab-reports')) return;
+        let has2026 = !Array.isArray(activeYears) || !activeYears.length || activeYears.includes(2026);
+        let content = document.getElementById('reports-2026-content'), empty = document.getElementById('reports-year-empty'), actions = document.getElementById('reports-export-actions');
+        if (content) content.style.display = has2026 ? 'block':'none';
+        if (empty) empty.style.display = has2026 ? 'none':'block';
+        if (actions) actions.style.display = has2026 ? 'flex':'none';
+        let scopeDocs = has2026 ? [...(v13ReportState.documents || [])].filter(doc => {
+            let year = v13DocumentYear(doc);
+            return !Array.isArray(activeYears) || !activeYears.length || year === null || activeYears.includes(year);
+        }) : [];
+        v13RenderReportKPIs(scopeDocs);
+        let filtered = v13FilteredReportDocuments();
+        v13RenderReportTable(filtered);
+        let linked = scopeDocs.filter(doc => doc.match?.status === 'linked').length;
+        let status = document.getElementById('reports-registry-status');
+        if (status) status.textContent = has2026 ? `${scopeDocs.length} report(s) · ${linked} linked · private local registry` : '2025 selected · 2026 report registry hidden';
+        let undo = document.getElementById('reports-undo-btn'), clear = document.getElementById('reports-clear-btn');
+        if (undo) undo.disabled = !v13ReportState.lastUndo;
+        if (clear) clear.disabled = !(v13ReportState.documents || []).length;
+    }
+
+    function v13ClinicalProblemsForCase(caseObj) {
+        if (!caseObj || typeof getEmbeddedProblemCases !== 'function') return [];
+        let target = v13CaseKey(caseObj);
+        return getEmbeddedProblemCases().filter(problem => {
+            let linked = typeof findVolumeCaseForProblem === 'function' ? findVolumeCaseForProblem(problem) : null;
+            return linked && v13CaseKey(linked) === target;
+        });
+    }
+
+    function v13TimelineDocumentSummary(doc) {
+        let recommendation = v13RecommendationLabel(doc), narrative = doc.narrative?.originalRedacted || '';
+        if (doc.type === '3mensio_planning') return recommendation + ((doc.extraction?.warnings || []).length ? `\nPlanning warning: ${(doc.extraction.warnings || []).join(' · ')}`:'');
+        return narrative || recommendation || 'Document indexed; narrative not available.';
+    }
+
+    function v13TimelineProfessionalMarkup(caseObj) {
+        if (!caseObj) return '';
+        let people = (value,role) => typeof v12ProfessionalPeopleLinks === 'function' ? v12ProfessionalPeopleLinks(value,role) : escapeHtml(value || 'Not available');
+        let proctor = typeof formatProctorDisplay === 'function' ? formatProctorDisplay(caseObj.proctor) : caseObj.proctor;
+        let submitter = typeof v12CaseProfessionalLinks === 'function' ? v12CaseProfessionalLinks(caseObj,'submitter') : 'Not available in source';
+        return `<div class="timeline-professionals"><strong>Procedure team &amp; report contacts</strong><div><span>Implanter</span>${people(caseObj.implanter,'Implanter')}</div><div><span>Clinical specialist</span>${people(caseObj.specialist,'Specialist')}</div><div><span>Proctor</span>${people(proctor,'Proctor')}</div><div><span>Report submitted by</span>${submitter}</div></div>`;
+    }
+
+    function v13ReportProfessionalMarkup(doc) {
+        let raw = String(doc?.professionals?.submittedBy || '').trim();
+        if (!raw) return '';
+        let emails = [...new Set((raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || []).map(value => value.toLowerCase()))];
+        let name = raw.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'').replace(/[<>()[\]|]+/g,' ').replace(/\s+/g,' ').trim();
+        let nameMarkup = name && typeof v12ProfessionalPeopleLinks === 'function' ? v12ProfessionalPeopleLinks(name,'Report submitter / Clinical specialist') : (name ? escapeHtml(name):'');
+        let emailMarkup = emails.map(email => `<a class="contact-email" href="mailto:${v13EscapeAttribute(email)}">${escapeHtml(email)}</a>`).join(' · ');
+        return `<div class="timeline-professionals"><strong>Report source contact</strong><div style="grid-column:1/-1;"><span>Submitted / created by</span>${[nameMarkup,emailMarkup].filter(Boolean).join(' · ')}</div></div>`;
+    }
+
+    function v13TimelineEvents(caseObj,focusDoc=null) {
+        let docs = caseObj ? v13DocsForCase(caseObj) : (focusDoc ? [focusDoc] : []);
+        if (focusDoc && !docs.some(doc => doc.documentId === focusDoc.documentId)) docs.push(focusDoc);
+        let events = docs.map(doc => ({
+            date:doc.reportDate || doc.createdAt?.slice(0,10) || '',
+            order:doc.type === '3mensio_planning' ? 1 : doc.type === 'engineering_review' ? 4 : 3,
+            kind:doc.type === 'engineering_review' ? 'engineering':'report',
+            title:V13_REPORT_TYPE_LABELS[doc.type] || 'Report',
+            body:v13TimelineDocumentSummary(doc),documentId:doc.documentId,contactsHtml:v13ReportProfessionalMarkup(doc),
+            source:doc.source?.webUrl ? 'Original available in SharePoint':'Metadata only'
+        }));
+        if (caseObj) {
+            let o = caseObj.outcome || {};
+            let procedureBody = [
+                `Final implanted device: ${v13ImplantedDevice(caseObj) || 'Not available'}`,
+                `Outcome: ${o.classification ? (OUTCOME_CATEGORY_META[o.classification.category]?.label || o.classification.category || 'Unknown'):'Not available'}`,
+                `Final PVL: ${o.pvl ? (OUTCOME_PVL_META[o.pvl.finalGrade] || o.pvl.finalGrade || 'Unknown'):'Not available'}`,
+                `Post mean gradient: ${o.hemodynamics?.postMeanGradientMmHg === null || o.hemodynamics?.postMeanGradientMmHg === undefined ? 'Not available':`${o.hemodynamics.postMeanGradientMmHg} mmHg`}`,
+                `Procedure comment: ${v12OutcomeCommentDisplay(caseObj)?.original || 'Not available'}`
+            ].join('\n');
+            events.push({date:v13CaseDateISO(caseObj),order:2,kind:'procedure',title:'Procedure outcome',body:procedureBody,source:'Procedural Outcomes / Forms',contactsHtml:v13TimelineProfessionalMarkup(caseObj)});
+            v13ClinicalProblemsForCase(caseObj).forEach(problem => events.push({
+                date:v13NormalizeDate(problem.date || '') || v13CaseDateISO(caseObj),order:3,kind:'problem',title:`Clinical Excellence · ${problem.severityLabel || 'Problem report'}`,
+                body:problem.commentOriginal || problem.comment || 'Clinical problem narrative unavailable.',source:problem.source || 'Clinical Excellence registry'
+            }));
+        }
+        return events.sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')) || a.order-b.order);
+    }
+
+    function v13TimelineEventMarkup(event) {
+        let doc = event.documentId ? v13ReportDocumentById(event.documentId) : null;
+        let open = Boolean(doc && v13ValidateSharePointUrl(doc.source?.webUrl || '').valid);
+        let privacyReady = !doc || !v13RequiresNarrativePrivacyReview(doc.type) || doc.extraction?.privacyReviewStatus === 'reviewed';
+        let languageOptions = (typeof CLINICAL_I18N_LANGS !== 'undefined' ? CLINICAL_I18N_LANGS : [{code:'en',label:'🇺🇸 English'}]).map(lang => `<option value="${v13EscapeAttribute(lang.code)}">${escapeHtml(lang.label)}</option>`).join('');
+        let controls = '';
+        if (event.documentId) {
+            controls = `<div class="report-actions" style="margin-top:9px;"><button type="button" class="report-mini-btn primary" onclick="v13OpenReportLink('${v13EscapeAttribute(event.documentId)}')" ${open?'':'disabled'}>OPEN ORIGINAL</button><select id="timeline-lang-${v13EscapeAttribute(event.documentId)}" class="reports-control" style="width:auto;min-width:150px;min-height:29px;">${languageOptions}</select><button type="button" class="report-mini-btn" onclick="v13TranslateTimelineDocument('${v13EscapeAttribute(event.documentId)}')" ${privacyReady?'':'disabled'}>${privacyReady?'TRANSLATE NARRATIVE':'PRIVACY REVIEW REQUIRED'}</button></div><div id="timeline-translation-${v13EscapeAttribute(event.documentId)}" class="timeline-event-body" style="display:none;background:#F8FAFC;border-radius:7px;padding:8px;margin-top:8px;"></div>`;
+        } else if (event.body) {
+            let textKey = `timeline-text-${++v13TimelineTextSequence}`;
+            v13TimelineTextRefs.set(textKey,{text:String(event.body || ''),translations:{}});
+            controls = `<div class="report-actions" style="margin-top:9px;"><select id="${textKey}-lang" class="reports-control" style="width:auto;min-width:150px;min-height:29px;">${languageOptions}</select><button type="button" class="report-mini-btn" onclick="v13TranslateTimelineText('${textKey}')">TRANSLATE COMMENT</button></div><div id="${textKey}-translation" class="timeline-event-body" style="display:none;background:#F8FAFC;border-radius:7px;padding:8px;margin-top:8px;"></div>`;
+        }
+        return `<div class="timeline-event ${escapeHtml(event.kind || '')}"><div class="timeline-event-head"><div><div class="timeline-event-title">${escapeHtml(event.title)}</div><span class="report-muted">${escapeHtml(event.source || '')}</span></div><div class="timeline-event-date">${escapeHtml(event.date || 'Date unavailable')}</div></div><div class="timeline-event-body">${escapeHtml(event.body || '')}</div>${event.contactsHtml || ''}${controls}</div>`;
+    }
+
+    function v13TimelineMarkup(caseObj,focusDoc=null) {
+        v13TimelineTextRefs = new Map();
+        let docs = caseObj ? v13DocsForCase(caseObj) : (focusDoc ? [focusDoc] : []);
+        let planning = docs.find(doc => doc.type === '3mensio_planning') || null;
+        let implanted = v13ImplantedDevice(caseObj) || 'Pending / not available';
+        let comparison = planning ? v13DocumentComparison(planning,caseObj) : {label:'Not assessable'};
+        let heroTitle = caseObj ? outcomeCaseIdentifier(caseObj) : 'Report available · implant not found in current database';
+        let heroSub = caseObj ? `${FLAGS[caseObj.country] || '🌍'} ${caseObj.country || ''} · ${caseObj.hospital || ''} · ${v13CaseDateISO(caseObj)}` : 'No matching procedure exists in the app’s current local database.';
+        return `<div class="timeline-case-hero"><div style="font-size:8px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;opacity:.8;">LATAM case evidence</div><h2>${escapeHtml(heroTitle)}</h2><div style="font-size:10px;line-height:1.55;">${escapeHtml(heroSub)}</div></div><div class="timeline-comparison"><div><span>Recommended options</span><strong>${escapeHtml(planning ? v13RecommendationLabel(planning):'Not available')}</strong></div><div><span>Implanted valve</span><strong>${escapeHtml(implanted)}</strong></div><div><span>Comparison</span><strong>${escapeHtml(comparison.label || 'Not assessable')}</strong></div></div><div class="timeline-list">${v13TimelineEvents(caseObj,focusDoc).map(v13TimelineEventMarkup).join('') || '<div class="reports-empty">No evidence events available.</div>'}</div>`;
+    }
+
+    function v13OpenTimelineByDocument(documentId) {
+        let doc = v13ReportDocumentById(documentId); if (!doc) return;
+        v13ActiveTimelineDocumentId = documentId;
+        let caseObj = v13DocumentCase(doc), overlay = document.getElementById('report-timeline-overlay'), body = document.getElementById('report-timeline-body');
+        if (!overlay || !body) return;
+        body.innerHTML = v13TimelineMarkup(caseObj,doc); overlay.classList.add('active');
+    }
+
+    function v13RegisterBridgeCase(caseObj) {
+        let key = `case-${++v13BridgeSequence}`; v13BridgeCaseRefs.set(key,v13CaseRef(caseObj));
+        if (v13BridgeCaseRefs.size > 500) v13BridgeCaseRefs = new Map([...v13BridgeCaseRefs].slice(-250));
+        return key;
+    }
+
+    function v13OpenTimelineForBridge(key) {
+        let ref = v13BridgeCaseRefs.get(key), caseObj = v13ResolveCaseRef(ref);
+        if (!caseObj) { alert('The linked procedure is not currently available in the active local database.'); return; }
+        let overlay = document.getElementById('report-timeline-overlay'), body = document.getElementById('report-timeline-body');
+        if (!overlay || !body) return;
+        body.innerHTML = v13TimelineMarkup(caseObj,null); overlay.classList.add('active');
+    }
+
+    function v13CloseTimeline() { document.getElementById('report-timeline-overlay')?.classList.remove('active'); v13ActiveTimelineDocumentId = ''; }
+
+    function v13TranslationChunks(value,maxChars=V13_TRANSLATION_CHUNK_CHARS) {
+        let remaining = String(value || '').trim(), chunks = [];
+        while (remaining) {
+            if (remaining.length <= maxChars) { chunks.push(remaining); break; }
+            let windowText = remaining.slice(0,maxChars + 1), minimum = Math.floor(maxChars * .55);
+            let cuts = [windowText.lastIndexOf('\n\n'),windowText.lastIndexOf('\n'),windowText.lastIndexOf('. '),windowText.lastIndexOf(' ')];
+            let cut = cuts.find(position => position >= minimum);
+            if (!Number.isInteger(cut) || cut < minimum) cut = maxChars;
+            let consume = cut + (windowText.slice(cut,cut+2) === '. ' ? 1:0);
+            let piece = remaining.slice(0,consume).trim();
+            if (piece) chunks.push(piece);
+            remaining = remaining.slice(Math.max(consume,1)).trim();
+        }
+        return chunks;
+    }
+
+    async function v13TranslateInChunks(value,target,onProgress=()=>{}) {
+        let chunks = v13TranslationChunks(value), translated = [];
+        for (let index=0; index<chunks.length; index++) {
+            onProgress(index+1,chunks.length);
+            translated.push(await translateClinicalText(chunks[index],target));
+        }
+        return translated.join('\n\n');
+    }
+
+    async function v13TranslateTimelineDocument(documentId) {
+        let doc = v13ReportDocumentById(documentId), box = document.getElementById(`timeline-translation-${documentId}`);
+        if (!doc || !box) return;
+        if (v13RequiresNarrativePrivacyReview(doc.type) && doc.extraction?.privacyReviewStatus !== 'reviewed') {
+            alert('This engineering/other narrative must pass the privacy review before translation. Re-import the PDF and review the redacted text.'); return;
+        }
+        let source = doc.narrative?.originalRedacted || v13TimelineDocumentSummary(doc), target = document.getElementById(`timeline-lang-${documentId}`)?.value || 'en';
+        if (!source) return;
+        box.style.display = 'block';
+        if (doc.narrative?.translations?.[target]) { box.textContent = doc.narrative.translations[target]; return; }
+        let languageLabel = (typeof CLINICAL_I18N_LANGS !== 'undefined' ? CLINICAL_I18N_LANGS : []).find(lang => lang.code === target)?.label || target;
+        box.innerHTML = `<em>Translating redacted narrative to ${escapeHtml(languageLabel)}…</em>`;
+        try {
+            let translated = await v13TranslateInChunks(v12SanitizeForTranslation(source),target,(part,total) => {
+                box.innerHTML = `<em>Translating redacted narrative to ${escapeHtml(languageLabel)} · part ${part}/${total}…</em>`;
+            });
+            if (!doc.narrative) doc.narrative = {};
+            if (!doc.narrative.translations) doc.narrative.translations = {};
+            doc.narrative.translations[target] = translated; doc.updatedAt = v13Now();
+            await v13WriteReportState(); box.textContent = translated;
+        } catch (err) { box.innerHTML = '<span style="color:#991B1B;">Translation unavailable. Check the network and try again.</span>'; }
+    }
+
+    async function v13TranslateTimelineText(textKey) {
+        let item = v13TimelineTextRefs.get(textKey), box = document.getElementById(`${textKey}-translation`), select = document.getElementById(`${textKey}-lang`);
+        if (!item || !box) return;
+        let target = select?.value || 'en';
+        let locallyRedacted = typeof v13RedactDocumentText === 'function' ? v13RedactDocumentText(item.text || '',[]) : String(item.text || '');
+        let source = v12SanitizeForTranslation(locallyRedacted);
+        if (!source) return;
+        box.style.display = 'block';
+        if (item.translations?.[target]) { box.textContent = item.translations[target]; return; }
+        let languageLabel = (typeof CLINICAL_I18N_LANGS !== 'undefined' ? CLINICAL_I18N_LANGS : []).find(lang => lang.code === target)?.label || target;
+        box.innerHTML = `<em>Translating sanitized comment to ${escapeHtml(languageLabel)}…</em>`;
+        try {
+            let translated = await v13TranslateInChunks(source,target,(part,total) => {
+                box.innerHTML = `<em>Translating sanitized comment to ${escapeHtml(languageLabel)} · part ${part}/${total}…</em>`;
+            });
+            item.translations[target] = translated; box.textContent = translated;
+        } catch (err) { box.innerHTML = '<span style="color:#991B1B;">Translation unavailable. Check the network and try again.</span>'; }
+    }
+
+    function v13CaseReportBridgeMarkup(caseObj,context='outcome') {
+        let resolved = v13ResolveCaseRef(v13CaseRef(caseObj)) || caseObj;
+        let docs = v13DocsForCase(resolved), planning = docs.filter(doc => doc.type === '3mensio_planning'), engineering = docs.filter(doc => doc.type === 'engineering_review');
+        let key = v13RegisterBridgeCase(resolved), reportText = docs.length ? `${docs.length} linked report${docs.length === 1 ? '':'s'}`:'No linked report yet';
+        let detail = [];
+        if (planning.length) detail.push(`Planning: ${v13RecommendationLabel(planning[0])}`);
+        if (engineering.length) detail.push(`${engineering.length} Engineering / HQ review${engineering.length === 1 ? '':'s'}`);
+        if (!detail.length) detail.push('Import a PDF or tracking-list link in Reports & Case Timeline.');
+        return `<div class="case-report-bridge" data-v13-report-bridge="${escapeHtml(context)}"><div class="case-report-bridge-head"><div><h3>Reports &amp; Case Timeline</h3><p><strong>${escapeHtml(reportText)}</strong> · ${escapeHtml(detail.join(' · '))}</p></div><button type="button" class="upload-btn" onclick="event.stopPropagation();v13OpenTimelineForBridge('${key}')">OPEN TIMELINE</button></div></div>`;
+    }
+
+    function v13AppendReportsToOutcomeDrawer(caseObj) {
+        let content = document.getElementById('outcome-drawer-content'); if (!content || !caseObj) return;
+        content.querySelector('[data-v13-report-bridge="outcome"]')?.remove();
+        content.insertAdjacentHTML('beforeend',v13CaseReportBridgeMarkup(caseObj,'outcome'));
+    }
+
+    function v13AppendReportsToClinicalModal(caseObj) {
+        let list = document.getElementById('modal-detail-list'); if (!list || !caseObj) return;
+        list.querySelector('[data-v13-report-bridge="clinical"]')?.remove();
+        list.insertAdjacentHTML('afterbegin',v13CaseReportBridgeMarkup(caseObj,'clinical'));
+    }
+
+    function v13ExportReportsExcel() {
+        if (typeof XLSX === 'undefined') { alert('The Excel export library is unavailable.'); return; }
+        let rows = v13FilteredReportDocuments().map(doc => {
+            let caseObj = v13DocumentCase(doc), comparison = v13DocumentComparison(doc,caseObj);
+            return {
+                'Case ID':caseObj ? outcomeCaseIdentifier(caseObj) : 'Implant not found in current database',
+                'Report Type':V13_REPORT_TYPE_LABELS[doc.type] || doc.type,
+                'Report Number':doc.reportNumber,'Report Date':doc.reportDate,'Country':v13DocumentCountry(doc),
+                'Match Status':V13_REPORT_MATCH_LABELS[doc.match?.status] || doc.match?.status,
+                'Recommended Options':(doc.recommendation?.options || []).join(' / '),
+                'Sizing / Strategy':(doc.recommendation?.strategies || []).join(' · '),
+                'Implanted Device':v13ImplantedDevice(caseObj),'Recommendation vs Implant':comparison.label,
+                'Document Warning':(doc.extraction?.warnings || []).join(' · '),
+                'Original Available':v13ValidateSharePointUrl(doc.source?.webUrl || '').valid ? 'Yes':'No',
+                'App Version':APP_META.version,'App Build':APP_META.build
+            };
+        });
+        let wb = XLSX.utils.book_new(), ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{'Status':'No report records match the active filters.'}]);
+        if (rows.length && typeof v12ApplyNumericFormats === 'function') v12ApplyNumericFormats(ws,Object.keys(rows[0]),rows);
+        if (typeof v12BrandWorksheet === 'function') v12BrandWorksheet(ws,{headerRows:[0],freeze:{xSplit:2,ySplit:1,topLeftCell:'C2'}});
+        XLSX.utils.book_append_sheet(wb,ws,'Sanitized Report Index');
+        XLSX.writeFile(wb,`VenusMedtech_LATAM_Report_Index_Sanitized_v${APP_META.version}.xlsx`,{bookType:'xlsx',compression:true,cellStyles:true});
+    }
+
+    async function v13LoadReportRegistry() {
+        let loaded = await v13ReadReportState();
+        if (loaded && Number(loaded.schema) === V13_REPORT_SCHEMA && Array.isArray(loaded.documents)) {
+            let normalized = window.V13ReportsCore?.normalizeDocumentState
+                ? V13ReportsCore.normalizeDocumentState(loaded,{forExport:false})
+                : loaded;
+            v13ReportState = Object.assign(v13ReportState,normalized);
+            v13ReportState.documents = v13SanitizeLoadedDocuments(v13ReportState.documents);
+        }
+        await v13ReconcileDocuments({persistIfChanged:true});
+        v13RenderReports();
+    }
+
+    // Runtime bridges are installed after the final v1.2 declarations.
+    const V13_BASE_SWITCH_TAB = switchTab;
+    switchTab = function(tabId,e) {
+        V13_BASE_SWITCH_TAB(tabId,e);
+        if (e?.currentTarget) {
+            document.querySelectorAll('.tab-btn').forEach(button => button.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+        }
+        if (tabId === 'tab-reports') { v13ReconcileDocuments({persistIfChanged:true}).then(() => v13RenderReports()); }
+    };
+
+    const V13_BASE_PROCESS_DATA = processData;
+    processData = function(...args) {
+        let result = V13_BASE_PROCESS_DATA.apply(this,args);
+        if (activeTabId === 'tab-reports') v13RenderReports();
+        return result;
+    };
+
+    const V13_BASE_OPEN_OUTCOME_DRAWER = openOutcomeDrawer;
+    openOutcomeDrawer = function(idx) {
+        let caseObj = outcomesFilteredRows?.[idx] || null;
+        let result = V13_BASE_OPEN_OUTCOME_DRAWER.call(this,idx);
+        if (caseObj) v13AppendReportsToOutcomeDrawer(caseObj);
+        return result;
+    };
+
+    const V13_BASE_OPEN_CLINICAL_DRILLDOWN = openClinicalEventDrilldown;
+    openClinicalEventDrilldown = function(idx) {
+        let caseObj = clinicalRenderedCases?.[idx]?.c || null;
+        let result = V13_BASE_OPEN_CLINICAL_DRILLDOWN.call(this,idx);
+        if (caseObj) setTimeout(() => v13AppendReportsToClinicalModal(caseObj),0);
+        return result;
+    };
+
+    const V13_BASE_PERSIST_OUTCOMES = v12PersistAndRefreshOutcomes;
+    v12PersistAndRefreshOutcomes = async function(...args) {
+        let result = await V13_BASE_PERSIST_OUTCOMES.apply(this,args);
+        await v13ReconcileDocuments({persistIfChanged:true});
+        v13RenderReports();
+        return result;
+    };
+
+    const V13_BASE_EXPORT_CURRENT_TAB = exportCurrentTab;
+    exportCurrentTab = function(...args) {
+        if (activeTabId === 'tab-reports') return v13ExportReportsExcel();
+        return V13_BASE_EXPORT_CURRENT_TAB.apply(this,args);
+    };
+
+    document.addEventListener('DOMContentLoaded',() => {
+        document.getElementById('reports-pdf-input')?.addEventListener('change',event => v13HandlePdfFiles(event.target.files));
+        document.getElementById('reports-tracking-input')?.addEventListener('change',event => v13HandleTrackingFile(event.target.files));
+        document.getElementById('reports-restore-input')?.addEventListener('change',event => v13RestoreReportBackup(event.target.files));
+        setTimeout(() => v13LoadReportRegistry(),120);
+        setTimeout(() => v13ReconcileDocuments({persistIfChanged:true}).then(() => v13RenderReports()),1200);
+    });
 
 
     initAccessGate();
