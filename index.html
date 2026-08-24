@@ -90,8 +90,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 <script>
 // Inlined for GitHub Pages — regenerate via scripts/inline-builtin-implants.mjs
 const APP_META = Object.freeze({
-  version: "1.4.0",
-  build: "2026.08.24-R19",
+  version: "1.5.0",
+  build: "2026.08.24-R20",
   generatedDate: "2026-08-24",
   dataSchemaVersion: 4,
   outcomesSchemaVersion: "1.4.0",
@@ -22206,6 +22206,2267 @@ if (typeof window !== "undefined") {
     window.v14SearchCaseIndex=v14SearchCaseIndex;
     window.v14OpenTimelineForCase=v14OpenTimelineForCase;
 
++    // =====================================================================
+    // v1.5.0 ROBUST REPORT RECONCILIATION
+    // Scalable local PDF import, review-first case association and versioned
+    // planning evidence. Readable patient names and PDF binaries remain
+    // transient and are never written to the local report registry.
+    // =====================================================================
+    (() => {
+        'use strict';
+
+        const V15_REPORT_PARSER_VERSION = 'reports-1.5.0';
+        const V15_MATCH_VERSION = 'case-identity-3.0.0';
+        const V15_PREVIEW_PAGE_SIZE = 20;
+        const V15_REPORT_PAGE_LIMIT = 30;
+        const V15_STRONG_MARGIN = 15;
+        let v15Preview = null;
+        let v15BulkState = {active:false,paused:false,cancelled:false,resume:[]};
+
+        function v15Unique(values) {
+            return [...new Set((values || []).flat(Infinity).map(value => String(value || '').trim()).filter(Boolean))];
+        }
+
+        function v15Yield() {
+            return new Promise(resolve => setTimeout(resolve,0));
+        }
+
+        function v15IsoFromRaw(value) {
+            if (value instanceof Date && Number.isFinite(value.getTime())) {
+                return `${String(value.getFullYear()).padStart(4,'0')}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
+            }
+            let raw = String(value || '').trim();
+            if (!raw) return '';
+            let iso = raw.match(/^((?:19|20)\d{2})[-/.](\d{1,2})[-/.](\d{1,2})/);
+            if (iso) return `${iso[1]}-${String(iso[2]).padStart(2,'0')}-${String(iso[3]).padStart(2,'0')}`;
+            let dmy = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.]((?:19|20)\d{2})/);
+            if (dmy) return `${dmy[3]}-${String(dmy[2]).padStart(2,'0')}-${String(dmy[1]).padStart(2,'0')}`;
+            return '';
+        }
+
+        const V15_BASE_CASE_DATE_ISO = v13CaseDateISO;
+        v13CaseDateISO = function(caseObj) {
+            let candidates = [
+                caseObj?.outcome?.date,caseObj?.outcome?.procedureDate,caseObj?._procedureDate,
+                caseObj?.date,caseObj?.procedureDate
+            ];
+            for (let candidate of candidates) {
+                let iso = v15IsoFromRaw(candidate);
+                if (iso) return iso;
+            }
+            let fallback = V15_BASE_CASE_DATE_ISO(caseObj);
+            return v15IsoFromRaw(fallback) || fallback || '';
+        };
+
+        const V15_BASE_PATIENT_TOKEN_RECORDS = v14PatientTokenRecords;
+        v14PatientTokenRecords = async function(patientName,qualityScale=1) {
+            let base = await V15_BASE_PATIENT_TOKEN_RECORDS(patientName,qualityScale);
+            let normalized = V14IdentityCore.normalize(patientName || '');
+            let tokens = normalized.split(' ').filter(token => token && !/^(?:dr|dra|sr|sra|mr|mrs|ms)$/.test(token));
+            let extras = [];
+            if (tokens.length >= 3 && tokens.length <= 8) {
+                for (let index=0; index<tokens.length; index++) {
+                    let shortened = tokens.filter((_,tokenIndex) => tokenIndex !== index);
+                    if (shortened.length < 2 || shortened.some(token => token.length < 2)) continue;
+                    let quality = (tokens.length >= 4 ? .86:.82) * Number(qualityScale || 0);
+                    let variants = [shortened,shortened.slice().reverse()];
+                    for (let at=1; at<shortened.length; at++) variants.push(shortened.slice(at).concat(shortened.slice(0,at)));
+                    for (let variant of variants) {
+                        let value = variant.join(' ');
+                        let hash = await v12Sha256Text(V14IdentityCore.PATIENT_HASH_NAMESPACE + value);
+                        extras.push({hash,quality:Math.max(0,Math.min(1,quality)),kind:'one_token_omission'});
+                    }
+                }
+            }
+            return v14MergeTokenRecords(base,extras);
+        };
+        window.v14PatientTokenRecords = v14PatientTokenRecords;
+
+        const V15_BASE_MATCH_EVIDENCE = v14MatchEvidence;
+        v14MatchEvidence = function(evidence,patientQuality) {
+            let result = V15_BASE_MATCH_EVIDENCE(evidence,patientQuality);
+            let ranking = result?.ranking || {}, candidates = ranking.candidates || [];
+            let top = candidates[0] || null, second = candidates[1] || null;
+            let margin = top ? top.score - (second ? second.score:0):0;
+            let severeConflict = Boolean(top?.contradictions?.some(item => Number(item.points || 0) >= 55));
+            let reviewClass = 'no_current_case';
+            if (ranking.status === 'linked') reviewClass = 'strong';
+            else if (ranking.status === 'ambiguous' && top && top.score >= 75 && margin >= V15_STRONG_MARGIN && !severeConflict) reviewClass = 'probable';
+            else if (ranking.status === 'ambiguous') reviewClass = 'ambiguous';
+            let proposal = Object.assign({},result.proposedMatch || {},{
+                matchVersion:V15_MATCH_VERSION,reviewClass,margin,
+                reasonCode:reviewClass === 'no_current_case' ? 'NO_CURRENT_PROCEDURE_CANDIDATE':reviewClass.toUpperCase()
+            });
+            if (reviewClass === 'probable' && result.leadingCandidateKey) proposal.leadingCandidateKey = result.leadingCandidateKey;
+            result.proposedMatch = proposal;
+            return result;
+        };
+        window.v14MatchEvidence = v14MatchEvidence;
+
+        function v15CollectRecommendationOptions(text,parsed) {
+            let options = v15Unique(parsed?.recommendation?.options || []), families = [];
+            let source = String(text || '').replace(/[、，]/g,',');
+            let add = (option,family) => {
+                if (option && !options.includes(option)) options.push(option);
+                if (family && !families.includes(family)) families.push(family);
+            };
+            let match;
+            for (let expression of [
+                {re:/\bPowerX\s*[- ]?\s*(1[8-9]|2\d|3\d|4[0-2])\b/gi,prefix:'PowerX',family:'Venus PowerX'},
+                {re:/\bAB\s*[- ]?\s*(1[8-9]|2\d|3\d|4[0-2])\b/gi,prefix:'AB',family:'Venus Vitae'},
+                {re:/\bPX\s*[- ]?\s*(1[8-9]|2\d|3\d|4[0-2])\b/gi,prefix:'PX',family:'Venus PowerX'}
+            ]) {
+                while ((match=expression.re.exec(source))) add(`${expression.prefix}${Number(match[1])}`,expression.family);
+            }
+            let relevantLines = source.split(/\n+/).filter(line => /recommend|option|consider|backup|venus\s*[- ]?a/i.test(line));
+            relevantLines.forEach(line => {
+                let lPattern = /\bL\s*[- ]?\s*(1[8-9]|2\d|3\d|4[0-2])\b/gi;
+                while ((match=lPattern.exec(line))) add(`L${Number(match[1])}`,'Venus-A');
+            });
+            if (/\bVitae\b/i.test(source) && !families.includes('Venus Vitae')) families.push('Venus Vitae');
+            if (/\bPowerX\b/i.test(source) && !families.includes('Venus PowerX')) families.push('Venus PowerX');
+            return {options,families};
+        }
+
+        const V15_BASE_PARSE_REPORT_TEXT = v13ParseReportText;
+        v13ParseReportText = function(text,meta={}) {
+            let parsed = V15_BASE_PARSE_REPORT_TEXT(text,meta || {});
+            let expanded = v15CollectRecommendationOptions(text,parsed);
+            parsed.recommendation = Object.assign({},parsed.recommendation || {},{
+                options:expanded.options,
+                families:expanded.families,
+                parserVersion:V15_REPORT_PARSER_VERSION
+            });
+            if (!parsed.recommendation.valveFamily && expanded.families.length === 1) parsed.recommendation.valveFamily = expanded.families[0];
+            return parsed;
+        };
+
+        v13ReadPdfText = async function(file,onProgress=()=>{}) {
+            if (!window.pdfjsLib?.getDocument) throw new Error('PDF reader is unavailable. Check the network and reload the app.');
+            if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+            let loadingTask = null, pdf = null;
+            try {
+                let buffer = await file.arrayBuffer();
+                let sha256 = await v12Sha256Buffer(buffer);
+                loadingTask = pdfjsLib.getDocument({data:new Uint8Array(buffer)});
+                pdf = await loadingTask.promise;
+                let pageTexts = [], initialPages = Math.min(pdf.numPages,2);
+                for (let pageNo=1; pageNo<=initialPages; pageNo++) {
+                    onProgress(`Reading text layer · page ${pageNo}/${pdf.numPages}`);
+                    let page = await pdf.getPage(pageNo);
+                    pageTexts.push(v13PdfItemText(await page.getTextContent()));
+                    if (typeof page.cleanup === 'function') page.cleanup();
+                }
+                let probe = v13ParseReportText(pageTexts.join('\n\n'),{pageCount:pdf.numPages,fileName:file.name,mode:'text'});
+                let pageLimit = probe?.type === '3mensio_planning' ? Math.min(pdf.numPages,3):Math.min(pdf.numPages,V15_REPORT_PAGE_LIMIT);
+                for (let pageNo=initialPages+1; pageNo<=pageLimit && pageTexts.join('\n').length<V13_REPORT_MAX_TEXT; pageNo++) {
+                    onProgress(`Reading text layer · page ${pageNo}/${pdf.numPages}`);
+                    let page = await pdf.getPage(pageNo);
+                    pageTexts.push(v13PdfItemText(await page.getTextContent()));
+                    if (typeof page.cleanup === 'function') page.cleanup();
+                }
+                let combined = pageTexts.join('\n\n'), text = combined.slice(0,V13_REPORT_MAX_TEXT);
+                let extractionMode = 'text', pagesRead = pageTexts.length;
+                let extractionIncomplete = pagesRead < pdf.numPages || combined.length > V13_REPORT_MAX_TEXT;
+                let usable = text.replace(/\s/g,'').length >= 120;
+                let identityProbe = v13ParseReportText(text,{pageCount:pdf.numPages,fileName:file.name,mode:'text'});
+                let hasIdentity = Boolean(identityProbe?.transient?.patientName || identityProbe?.matchHints?.officialCaseId || identityProbe?.matchHints?.serial || V14IdentityCore.patientNameHintFromFilename(file.name));
+                if (!usable || !hasIdentity) {
+                    try {
+                        onProgress(usable ? 'Identity anchors not found · trying targeted OCR':'No usable text layer · starting local OCR');
+                        let ocr = await v13OcrPdfPages(pdf,onProgress);
+                        let ocrProbe = v13ParseReportText(ocr.text,{pageCount:pdf.numPages,fileName:file.name,mode:'ocr'});
+                        if (!usable || ocrProbe?.transient?.patientName || ocrProbe?.matchHints?.officialCaseId || ocrProbe?.matchHints?.serial) {
+                            text = ocr.text; pagesRead = ocr.pagesRead; extractionMode = 'ocr'; extractionIncomplete = ocr.extractionIncomplete;
+                        }
+                    } catch (error) {
+                        if (!usable) throw error;
+                    }
+                }
+                return {text,sha256,pageCount:pdf.numPages,pagesRead,extractionMode,extractionIncomplete};
+            } finally {
+                try { if (pdf && typeof pdf.cleanup === 'function') pdf.cleanup(); } catch (error) { /* best effort */ }
+                try { if (pdf && typeof pdf.destroy === 'function') await pdf.destroy(); } catch (error) { /* best effort */ }
+            }
+        };
+
+        const V15_BASE_BUILD_PDF_DRAFT = v13BuildPdfDraft;
+        v13BuildPdfDraft = async function(file,onProgress=()=>{}) {
+            let item = await V15_BASE_BUILD_PDF_DRAFT(file,onProgress);
+            let doc = item.doc || {};
+            let exactExisting = (v13ReportState.documents || []).find(existing => existing.source?.fileSha256 && existing.source.fileSha256 === doc.source?.fileSha256);
+            doc.extraction = Object.assign({},doc.extraction || {},{parserVersion:V15_REPORT_PARSER_VERSION,matchVersion:V15_MATCH_VERSION});
+            doc.match = Object.assign({},doc.match || {},{matchVersion:V15_MATCH_VERSION});
+            if (!doc.match.reviewClass) {
+                doc.match.reviewClass = doc.match.status === 'linked' ? 'strong':doc.match.status === 'ambiguous' ? 'ambiguous':doc.match.status === 'pending_review' ? 'strong':'no_current_case';
+            }
+            if (exactExisting?.extraction?.parserVersion === V15_REPORT_PARSER_VERSION && exactExisting?.extraction?.matchVersion === V15_MATCH_VERSION) {
+                item.duplicate = true; item.reprocessExisting = false;
+            } else if (exactExisting) {
+                item.duplicate = false; item.reprocessExisting = true;
+            }
+            if (doc.patientToken) {
+                let groupKey = await v12Sha256Text(`venus-latam-report-revision-v1|${doc.patientToken}|${doc.type || 'other'}`);
+                doc.revision = Object.assign({},doc.revision || {},{groupKey,parserVersion:V15_REPORT_PARSER_VERSION});
+            }
+            item.doc = doc;
+            return item;
+        };
+
+        function v15InstallProgressControls() {
+            let card = document.querySelector('#reports-progress .reports-progress-card');
+            if (!card || document.getElementById('v15-progress-tools')) return;
+            card.insertAdjacentHTML('beforeend',`<div id="v15-progress-tools" class="v15-progress-tools"><div class="v15-progress-track"><span id="v15-progress-bar"></span></div><div id="v15-progress-count" class="v15-progress-count"></div><div class="v15-progress-actions"><button type="button" class="upload-btn" id="v15-progress-pause" onclick="v15TogglePauseImport()">PAUSE</button><button type="button" class="upload-btn danger" onclick="v15CancelImport()">CANCEL</button></div></div>`);
+        }
+
+        function v15UpdateProgress(index,total,detail='') {
+            v15InstallProgressControls();
+            let percent = total ? Math.max(0,Math.min(100,index/total*100)):0;
+            let bar = document.getElementById('v15-progress-bar'), count = document.getElementById('v15-progress-count');
+            if (bar) bar.style.width = `${percent}%`;
+            if (count) count.textContent = `${index} of ${total} reports analyzed${detail ? ` · ${detail}`:''}`;
+        }
+
+        async function v15WaitForResume() {
+            if (!v15BulkState.paused) return;
+            await new Promise(resolve => v15BulkState.resume.push(resolve));
+        }
+
+        function v15TogglePauseImport() {
+            if (!v15BulkState.active) return;
+            v15BulkState.paused = !v15BulkState.paused;
+            let button = document.getElementById('v15-progress-pause');
+            if (button) button.textContent = v15BulkState.paused ? 'RESUME':'PAUSE';
+            if (!v15BulkState.paused) {
+                let waiters = v15BulkState.resume.splice(0);
+                waiters.forEach(resolve => resolve());
+            }
+        }
+
+        function v15CancelImport() {
+            if (!v15BulkState.active) return;
+            v15BulkState.cancelled = true; v15BulkState.paused = false;
+            let waiters = v15BulkState.resume.splice(0);
+            waiters.forEach(resolve => resolve());
+        }
+
+        function v15AnnotateRevisions(drafts) {
+            let existingCounts = new Map();
+            (v13ReportState.documents || []).forEach(doc => {
+                let key = doc.revision?.groupKey;
+                if (key) existingCounts.set(key,(existingCounts.get(key) || 0)+1);
+            });
+            let batchCounts = new Map();
+            drafts.forEach(item => {
+                let key = item.doc?.revision?.groupKey;
+                if (key) batchCounts.set(key,(batchCounts.get(key) || 0)+1);
+            });
+            drafts.forEach(item => {
+                let key = item.doc?.revision?.groupKey;
+                if (!key) return;
+                let total = (existingCounts.get(key) || 0)+(batchCounts.get(key) || 0);
+                item.doc.revision.isRevision = total > 1;
+                item.doc.revision.groupSizeAtImport = total;
+            });
+        }
+
+        v13HandlePdfFiles = async function(files) {
+            let selected = [...(files || [])].filter(file => /\.pdf$/i.test(file.name || '') || file.type === 'application/pdf');
+            let input = document.getElementById('reports-pdf-input'); if (input) input.value = '';
+            if (!selected.length) return;
+            v15BulkState = {active:true,paused:false,cancelled:false,resume:[]};
+            v13SetProgress(true,'Reading reports locally…',`Preparing ${selected.length} PDF report${selected.length === 1 ? '':'s'} in a memory-safe queue.`);
+            v15UpdateProgress(0,selected.length,'starting');
+            let drafts = [], failures = [];
+            try {
+                for (let index=0; index<selected.length; index++) {
+                    await v15WaitForResume();
+                    if (v15BulkState.cancelled) break;
+                    try {
+                        let draft = await v13BuildPdfDraft(selected[index],detail => {
+                            v13SetProgress(true,`Report ${index+1} of ${selected.length}`,detail);
+                            v15UpdateProgress(index,selected.length,'reading current PDF');
+                        });
+                        drafts.push(draft);
+                    } catch (error) {
+                        console.error('Report extraction failed',error);
+                        failures.push({index:index+1,error:error.message || String(error)});
+                    }
+                    v15UpdateProgress(index+1,selected.length,`${drafts.length} readable · ${failures.length} failed`);
+                    await v15Yield();
+                }
+            } finally {
+                v15BulkState.active = false; v15BulkState.paused = false;
+                v13SetProgress(false);
+            }
+            v15AnnotateRevisions(drafts);
+            let status = document.getElementById('reports-pdf-status');
+            if (v15BulkState.cancelled) {
+                if (status) status.textContent = `Import stopped safely · ${drafts.length} report(s) analyzed · ${failures.length} failed.`;
+            } else if (status) status.textContent = `${drafts.length} report(s) ready for scalable preview${failures.length ? ` · ${failures.length} failed`:''}.`;
+            if (!drafts.length) {
+                if (!v15BulkState.cancelled) alert(`No report could be read.${failures[0] ? `\n\n${failures[0].error}`:''}`);
+                return;
+            }
+            v13OpenPdfPreview(drafts,failures);
+        };
+
+        function v15ItemClass(item) {
+            if (item.duplicate) return 'duplicate';
+            let reviewClass = item.matchClassification || item.doc?.match?.classification || item.doc?.match?.reviewClass;
+            if (reviewClass) return reviewClass;
+            if (item.doc?.match?.status === 'linked') return 'strong';
+            if (item.doc?.match?.status === 'ambiguous') return 'ambiguous';
+            if (item.doc?.match?.status === 'pending_review') return 'strong';
+            return 'no_current_case';
+        }
+
+        function v15ItemCandidates(item) {
+            let direct = Array.isArray(item.matchCandidates) ? item.matchCandidates:[];
+            if (direct.length) return direct.slice(0,3);
+            return (item.doc?.match?.candidateRefs || []).slice(0,3).map(candidate => ({
+                caseKey:candidate.caseKey,caseRef:candidate.caseRef,score:candidate.score,
+                evidence:(candidate.evidence || []).map(code => code),contradictions:candidate.contradictions || []
+            }));
+        }
+
+        function v15CaseIdentityByKey(key) {
+            if (!v14CaseIndex.length) v14BuildGlobalCaseIndex();
+            return v14CaseIndex.find(identity => identity.key === key) || null;
+        }
+
+        function v15CandidateLabel(candidate) {
+            let key = candidate.caseKey || candidate.caseRef && v13RefKey(candidate.caseRef) || '';
+            let identity = v15CaseIdentityByKey(key), caseObj = candidate.case || identity?.caseObj || (candidate.caseRef ? v13ResolveCaseRef(candidate.caseRef):null);
+            if (!identity && caseObj) identity = v14CaseIdentity(caseObj);
+            if (!identity) return {key,label:'Candidate unavailable in the current procedure index',meta:''};
+            return {
+                key:identity.key,
+                label:`${identity.displayId} · ${identity.procedureDate || 'date unavailable'}`,
+                meta:`${FLAGS[identity.country] || '🌍'} ${identity.country || 'Country unavailable'} · ${identity.hospital || 'Hospital unavailable'}${identity.serial ? ` · SN ${identity.serial}`:''}`
+            };
+        }
+
+        function v15Decision(index) {
+            if (!v15Preview.decisions.has(index)) v15Preview.decisions.set(index,{caseKey:'',explicitNoMatch:false,link:'',privacyReviewed:false,narrative:''});
+            return v15Preview.decisions.get(index);
+        }
+
+        function v15SetPreviewDecision(index,caseKey='',explicitNoMatch=false) {
+            let decision = v15Decision(index);
+            decision.caseKey = caseKey || ''; decision.explicitNoMatch = Boolean(explicitNoMatch);
+            v15RenderPreviewPage();
+        }
+
+        function v15SetPreviewLink(index,value) { v15Decision(index).link = String(value || '').trim(); }
+        function v15SetPreviewNarrative(index,value) { v15Decision(index).narrative = String(value || ''); }
+        function v15SetPreviewPrivacy(index,value) { v15Decision(index).privacyReviewed = Boolean(value); }
+
+        function v15ConfirmAllStrong() {
+            (v15Preview?.drafts || []).forEach((item,index) => {
+                if (v15ItemClass(item) !== 'strong' || item.duplicate) return;
+                let key = item.suggestedCaseKey || item.doc?.match?.suggestedCaseKey || item.doc?.match?.leadingCandidateKey || v15ItemCandidates(item)[0]?.caseKey || '';
+                if (key) { let decision=v15Decision(index); decision.caseKey=key; decision.explicitNoMatch=false; }
+            });
+            v15RenderPreviewPage();
+        }
+
+        function v15SetPreviewFilter(value) {
+            if (!v15Preview) return;
+            v15Preview.filter = String(value || ''); v15Preview.page = 0; v15RenderPreviewPage();
+        }
+
+        function v15PreviewIndices() {
+            if (!v15Preview) return [];
+            return v15Preview.drafts.map((_,index)=>index).filter(index => !v15Preview.filter || v15ItemClass(v15Preview.drafts[index]) === v15Preview.filter);
+        }
+
+        function v15ChangePreviewPage(delta) {
+            if (!v15Preview) return;
+            let pages = Math.max(1,Math.ceil(v15PreviewIndices().length/V15_PREVIEW_PAGE_SIZE));
+            v15Preview.page = Math.max(0,Math.min(pages-1,v15Preview.page+Number(delta || 0)));
+            v15RenderPreviewPage();
+        }
+
+        function v15ToggleManualSearch(index) {
+            let box = document.getElementById(`v15-search-box-${index}`);
+            if (box) { box.hidden = !box.hidden; if (!box.hidden) box.querySelector('input')?.focus(); }
+        }
+
+        let v15ManualSearchSequence = 0;
+        async function v15SearchPreviewCase(index,query) {
+            let sequence = ++v15ManualSearchSequence, target = document.getElementById(`v15-search-results-${index}`);
+            if (!target) return;
+            let text = String(query || '').trim();
+            if (!text) { target.innerHTML=''; return; }
+            target.innerHTML='<span class="report-muted">Searching private case identity…</span>';
+            let tokens = await v14PatientTokenRecords(text), quality = v14CasesFromPatientTokens(tokens);
+            let results = v14SearchCaseIndex(text,10,new Set(quality.keys()));
+            if (sequence !== v15ManualSearchSequence || !document.getElementById(`v15-search-results-${index}`)) return;
+            target.innerHTML = results.map(identity => `<button type="button" class="v15-search-result" onclick="v15SetPreviewDecision(${index},'${v13EscapeAttribute(identity.key)}',false)"><strong>${escapeHtml(identity.displayId)}</strong><span>${escapeHtml(`${identity.procedureDate} · ${identity.country} · ${identity.hospital || 'Hospital unavailable'}${identity.serial ? ` · SN ${identity.serial}`:''}`)}</span></button>`).join('') || '<span class="report-muted">No procedure found. The query was not stored.</span>';
+        }
+
+        function v15CandidateMarkup(item,index) {
+            let decision = v15Decision(index), candidates = v15ItemCandidates(item);
+            let candidateMarkup = candidates.map((candidate,candidateIndex) => {
+                let label = v15CandidateLabel(candidate), selected = decision.caseKey && decision.caseKey === label.key;
+                let evidence = candidate.evidence || candidate.evidenceCodes || [];
+                return `<button type="button" class="v15-candidate ${selected?'selected':''}" onclick="v15SetPreviewDecision(${index},'${v13EscapeAttribute(label.key)}',false)"><span class="v15-candidate-rank">${candidateIndex===0?'LEADING':'ALTERNATIVE'} · SCORE ${Number(candidate.score || 0)}</span><strong>${escapeHtml(label.label)}</strong><span>${escapeHtml(label.meta)}</span><small>${escapeHtml(evidence.slice(0,4).join(' + ') || 'Contextual candidate')}</small></button>`;
+            }).join('');
+            return `<div class="v15-candidates">${candidateMarkup || '<span class="report-muted">No supported procedure candidate in the current index.</span>'}</div><div class="v15-row-actions"><button type="button" class="report-mini-btn" onclick="v15SetPreviewDecision(${index},'',false)">KEEP FOR REVIEW</button><button type="button" class="report-mini-btn" onclick="v15SetPreviewDecision(${index},'',true)">NO CURRENT CASE</button><button type="button" class="report-mini-btn" onclick="v15ToggleManualSearch(${index})">SEARCH ANOTHER</button></div><div id="v15-search-box-${index}" class="v15-manual-search" hidden><input class="reports-control" type="search" autocomplete="off" placeholder="Patient, Case ID, serial, country, hospital or professional…" oninput="v15SearchPreviewCase(${index},this.value)"><div id="v15-search-results-${index}" class="v15-search-results"></div></div>`;
+        }
+
+        function v15PreviewRow(item,index) {
+            let doc = item.doc || {}, kind = v15ItemClass(item), decision = v15Decision(index);
+            let statusLabel = ({strong:'Strong suggestion · confirmation required',probable:'Probable candidate · review required',ambiguous:'Ambiguous candidates · review required',no_current_case:'No current procedure candidate',duplicate:'Exact PDF already indexed'})[kind] || 'Review required';
+            let statusClass = kind === 'strong' ? 'report-linked':kind === 'duplicate' ? 'report-source':kind === 'no_current_case' ? 'report-unmatched':'report-ambiguous';
+            let warning = (doc.extraction?.warnings || [])[0] || '';
+            let link = decision.link || doc.source?.webUrl || '';
+            let privacy = v13RequiresNarrativePrivacyReview(doc.type) && doc.extraction?.privacyReviewStatus !== 'reviewed';
+            let revision = doc.revision?.isRevision ? '<span class="report-pill report-source">REVISION GROUP</span>':'';
+            return `<article class="v15-preview-row"><div class="v15-preview-head"><div><span class="report-pill ${statusClass}">${escapeHtml(statusLabel)}</span>${revision}<h3>${escapeHtml(V13_REPORT_TYPE_LABELS[doc.type] || doc.type || 'Report')}</h3><span class="report-muted">${escapeHtml(doc.reportNumber ? `Report ${doc.reportNumber}`:'Report number unavailable')} · ${escapeHtml(doc.reportDate || 'Date unavailable')} · ${doc.extraction?.pagesRead || '—'}/${doc.extraction?.pageCount || '—'} page(s) indexed</span></div><div class="v15-decision-state">${decision.caseKey ? 'CASE CONFIRMED':decision.explicitNoMatch ? 'NO CURRENT CASE CONFIRMED':'NOT YET CONFIRMED'}</div></div><div class="v15-preview-grid"><div><span class="v15-label">Extracted recommendation</span><strong>${escapeHtml(v13RecommendationLabel(doc))}</strong>${warning?`<div class="report-warning">${escapeHtml(warning)}</div>`:''}<label class="v15-label" for="v15-link-${index}">Optional direct SharePoint PDF link</label><input id="v15-link-${index}" class="reports-control" type="url" autocomplete="off" placeholder="https://…sharepoint.com/…" value="${v13EscapeAttribute(link)}" oninput="v15SetPreviewLink(${index},this.value)" ${item.duplicate?'disabled':''}>${privacy?`<details class="v15-privacy"><summary>Privacy review required before applying this narrative</summary><textarea class="reports-control" rows="6" oninput="v15SetPreviewNarrative(${index},this.value)">${escapeHtml(decision.narrative || doc.narrative?.originalRedacted || '')}</textarea><label><input type="checkbox" ${decision.privacyReviewed?'checked':''} onchange="v15SetPreviewPrivacy(${index},this.checked)"> I reviewed and removed any remaining direct patient identifiers.</label></details>`:''}</div><div><span class="v15-label">Procedure candidates</span>${item.duplicate?'<span class="report-muted">The existing indexed record and its manual decision will be preserved.</span>':v15CandidateMarkup(item,index)}</div></div></article>`;
+        }
+
+        function v15RenderPreviewPage() {
+            if (!v15Preview) return;
+            let body = document.getElementById('report-preview-body'); if (!body) return;
+            let indices = v15PreviewIndices(), pages = Math.max(1,Math.ceil(indices.length/V15_PREVIEW_PAGE_SIZE));
+            v15Preview.page = Math.min(v15Preview.page,pages-1);
+            let pageIndices = indices.slice(v15Preview.page*V15_PREVIEW_PAGE_SIZE,(v15Preview.page+1)*V15_PREVIEW_PAGE_SIZE);
+            let counts = {strong:0,probable:0,ambiguous:0,no_current_case:0,duplicate:0};
+            v15Preview.drafts.forEach(item => { let key=v15ItemClass(item); counts[key]=(counts[key] || 0)+1; });
+            let confirmed = [...v15Preview.decisions.values()].filter(decision => decision.caseKey).length;
+            body.innerHTML = `<div class="report-preview-summary v15-summary"><div class="report-preview-stat"><span>Readable</span><strong>${v15Preview.drafts.length}</strong></div><div class="report-preview-stat"><span>Strong</span><strong>${counts.strong}</strong></div><div class="report-preview-stat"><span>Probable / ambiguous</span><strong>${counts.probable+counts.ambiguous}</strong></div><div class="report-preview-stat"><span>No current case</span><strong>${counts.no_current_case}</strong></div><div class="report-preview-stat"><span>Duplicates</span><strong>${counts.duplicate}</strong></div><div class="report-preview-stat"><span>Confirmed now</span><strong>${confirmed}</strong></div></div><div class="v15-preview-toolbar"><select class="reports-control" onchange="v15SetPreviewFilter(this.value)"><option value="" ${!v15Preview.filter?'selected':''}>All reports</option><option value="strong" ${v15Preview.filter==='strong'?'selected':''}>Strong suggestions</option><option value="probable" ${v15Preview.filter==='probable'?'selected':''}>Probable</option><option value="ambiguous" ${v15Preview.filter==='ambiguous'?'selected':''}>Ambiguous</option><option value="no_current_case" ${v15Preview.filter==='no_current_case'?'selected':''}>No current candidate</option><option value="duplicate" ${v15Preview.filter==='duplicate'?'selected':''}>Duplicates</option></select><button type="button" class="upload-btn" onclick="v15ConfirmAllStrong()">CONFIRM ALL STRONG (${counts.strong})</button><span>${indices.length} in view · page ${v15Preview.page+1}/${pages}</span><div><button type="button" class="report-mini-btn" onclick="v15ChangePreviewPage(-1)" ${v15Preview.page<=0?'disabled':''}>← PREVIOUS</button><button type="button" class="report-mini-btn" onclick="v15ChangePreviewPage(1)" ${v15Preview.page>=pages-1?'disabled':''}>NEXT →</button></div></div><div class="reports-privacy-note"><strong>Review-first rule.</strong> A strong match is still only a suggestion until you confirm it. Unconfirmed reports are indexed for later reconciliation; they are never silently linked. “No current case” refers only to the procedure index now loaded.</div><div class="v15-preview-list">${pageIndices.map(index => v15PreviewRow(v15Preview.drafts[index],index)).join('') || '<div class="reports-empty"><strong>No reports in this view</strong>Change the preview filter.</div>'}</div>${v15Preview.failures.length?`<div class="report-warning">${v15Preview.failures.length} PDF(s) failed to read. First error: ${escapeHtml(v15Preview.failures[0].error)}</div>`:''}<div class="report-preview-footer v15-sticky-footer"><button type="button" class="upload-btn" onclick="v13CloseReportPreview()">CANCEL</button><button type="button" class="upload-btn export-btn" onclick="v13ApplyPdfPreview()">APPLY INDEXED REPORTS</button></div>`;
+        }
+
+        v13OpenPdfPreview = function(drafts,failures=[]) {
+            v13PendingPreview = {kind:'pdf',drafts,failures};
+            v15Preview = {drafts,failures,page:0,filter:'',decisions:new Map()};
+            let overlay = document.getElementById('report-import-preview-overlay');
+            if (!overlay) return;
+            let title = document.getElementById('report-preview-title'), subtitle = document.getElementById('report-preview-subtitle');
+            if (title) title.textContent = 'Scalable PDF report review';
+            if (subtitle) subtitle.textContent = `${drafts.length} readable report(s) · paginated review · patient identity remains private and transient.`;
+            v15RenderPreviewPage(); overlay.classList.add('active');
+        };
+
+        const V15_BASE_CLOSE_PREVIEW = v13CloseReportPreview;
+        v13CloseReportPreview = function() {
+            v15Preview = null;
+            return V15_BASE_CLOSE_PREVIEW();
+        };
+
+        async function v15RefreshRevisionSequence(documents) {
+            let groups = new Map();
+            documents.forEach(doc => {
+                let key = doc.revision?.groupKey;
+                if (!key) return;
+                if (!groups.has(key)) groups.set(key,[]);
+                groups.get(key).push(doc);
+            });
+            groups.forEach(group => {
+                group.sort((a,b) => String(a.reportDate || a.createdAt || '').localeCompare(String(b.reportDate || b.createdAt || '')) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+                group.forEach((doc,index) => { doc.revision = Object.assign({},doc.revision || {},{sequence:index+1,total:group.length,isRevision:group.length>1}); });
+            });
+        }
+
+        v13ApplyPdfPreview = async function() {
+            if (v13PendingPreview?.kind !== 'pdf' || !v15Preview) return;
+            let drafts = v15Preview.drafts || [], caseMap = v13CaseOptionMap(), prepared = [], skipped = 0;
+            for (let index=0; index<drafts.length; index++) {
+                let item = drafts[index];
+                if (item.duplicate) { skipped++; continue; }
+                let doc = v13Clone(item.doc), decision = v15Decision(index), selectedCase = decision.caseKey ? caseMap.get(decision.caseKey):null;
+                if (decision.caseKey && !selectedCase) {
+                    alert(`One selected procedure is no longer available in the current index. Search and confirm it again.`); return;
+                }
+                if (v13RequiresNarrativePrivacyReview(doc.type) && doc.extraction?.privacyReviewStatus !== 'reviewed') {
+                    if (!decision.privacyReviewed) {
+                        alert(`A non-planning report still requires narrative privacy review. Open its preview section, review the redacted text and confirm the checkbox.`); return;
+                    }
+                    doc.narrative.originalRedacted = v13RedactDocumentText(decision.narrative || doc.narrative?.originalRedacted || '',[item.transientPatientName || '']).slice(0,V13_REPORT_MAX_NARRATIVE);
+                    doc.narrative.sourceLanguage = v12DetectLanguage(doc.narrative.originalRedacted);
+                    doc.extraction.privacyReviewStatus = 'reviewed'; doc.extraction.privacyReviewedAt = v13Now();
+                }
+                if (selectedCase) {
+                    let proposedKey = item.suggestedCaseKey || doc.match?.suggestedCaseKey || doc.match?.leadingCandidateKey || '';
+                    doc.match = Object.assign({},doc.match || {},{
+                        status:'linked',method:decision.caseKey === proposedKey ? 'multi_signal_v3_reviewed':'manual',confidence:'high',
+                        caseRef:v13CaseRef(selectedCase),candidateCount:1,classification:'confirmed',reviewClass:'confirmed',requiresConfirmation:false,matchVersion:V15_MATCH_VERSION
+                    });
+                    doc.country = {value:selectedCase.country || doc.country?.value || '',source:'linked_case',confidence:'high'};
+                } else if (decision.explicitNoMatch) {
+                    doc.match = Object.assign({},doc.match || {},{status:'unmatched',method:'reviewed_no_current_match',confidence:'none',caseRef:null,classification:'no_current_case',reviewClass:'no_current_case',requiresConfirmation:false,matchVersion:V15_MATCH_VERSION});
+                } else if (!v14ProtectedMatch(doc.match?.method)) {
+                    let itemClass = v15ItemClass(item);
+                    if (itemClass === 'strong') {
+                        let suggestedCaseKey = item.suggestedCaseKey || doc.match?.suggestedCaseKey || doc.match?.leadingCandidateKey || v15ItemCandidates(item)[0]?.caseKey || '';
+                        doc.match = Object.assign({},doc.match || {},{status:'pending_review',caseRef:null,suggestedCaseKey,leadingCandidateKey:suggestedCaseKey,classification:'strong',reviewClass:'strong',requiresConfirmation:true,matchVersion:V15_MATCH_VERSION});
+                    } else if (itemClass === 'probable') {
+                        let suggestedCaseKey = item.suggestedCaseKey || doc.match?.suggestedCaseKey || doc.match?.leadingCandidateKey || v15ItemCandidates(item)[0]?.caseKey || '';
+                        doc.match = Object.assign({},doc.match || {},{status:'ambiguous',caseRef:null,suggestedCaseKey,leadingCandidateKey:suggestedCaseKey,classification:'probable',reviewClass:'probable',requiresConfirmation:true,matchVersion:V15_MATCH_VERSION});
+                    } else if (itemClass === 'ambiguous') {
+                        doc.match = Object.assign({},doc.match || {},{status:'ambiguous',caseRef:null,classification:'ambiguous',reviewClass:'ambiguous',requiresConfirmation:true,matchVersion:V15_MATCH_VERSION});
+                    } else if (doc.match?.status === 'unmatched' || itemClass === 'no_current_case') {
+                        doc.match = Object.assign({},doc.match || {},{status:'unmatched',method:'unmatched_pending_reconciliation',caseRef:null,classification:'no_current_case',reviewClass:'no_current_case',requiresConfirmation:true,matchVersion:V15_MATCH_VERSION});
+                    }
+                }
+                let link = String(decision.link || doc.source?.webUrl || '').trim();
+                if (link) {
+                    let validation = v13ValidateSharePointUrl(link);
+                    if (!validation.valid) { alert(v13SharePointValidationMessage(validation)); return; }
+                    doc.source = Object.assign({},doc.source || {},{provider:'sharepoint',webUrl:validation.url,linkUpdatedAt:v13Now()});
+                }
+                delete doc.patientName; delete doc.privatePatientName; delete doc.filename; delete doc.sourceFilename; delete doc.transient;
+                prepared.push({doc,mergeDocumentId:item.mergeDocumentId || ''});
+            }
+            let before = v13SnapshotForUndo('pdf_import_v15'), nextDocuments = v13Clone(v13ReportState.documents || []), applied = 0;
+            prepared.forEach(item => {
+                if (item.mergeDocumentId) nextDocuments = nextDocuments.filter(existing => existing.documentId !== item.mergeDocumentId);
+                nextDocuments = nextDocuments.filter(existing => existing.documentId !== item.doc.documentId);
+                nextDocuments.push(item.doc); applied++;
+            });
+            await v15RefreshRevisionSequence(nextDocuments);
+            v13ReportState.documents = nextDocuments;
+            await v13CommitReportMutation('pdf_import_v15',before,{applied,duplicatesSkipped:skipped,parserVersion:V15_REPORT_PARSER_VERSION,matchVersion:V15_MATCH_VERSION});
+            document.getElementById('report-import-preview-overlay')?.classList.remove('active');
+            v13PendingPreview = null; v15Preview = null;
+            let status = document.getElementById('reports-pdf-status');
+            if (status) status.textContent = `${applied} report(s) indexed · ${skipped} exact duplicate(s) skipped · unconfirmed suggestions remain reviewable.`;
+        };
+
+        function v15DocumentEvidence(doc) {
+            return v14DocumentEvidence(doc);
+        }
+
+        v13ReconcileDocuments = async function({persistIfChanged=true,forceReviewNoMatch=false}={}) {
+            let changed = 0; v14BuildGlobalCaseIndex();
+            for (let doc of v13ReportState.documents || []) {
+                if (v14ProtectedMatch(doc.match?.method,{forceReviewNoMatch})) continue;
+                let evidence = v15DocumentEvidence(doc);
+                let stored = Array.isArray(doc.patientIdentityTokens) ? doc.patientIdentityTokens.filter(item => item?.hash).map(item => ({hash:item.hash,quality:Number(item.quality || 0),kind:item.kind || 'stored'})):[];
+                let tokens = stored.length ? stored:evidence.patientTokens.map((hash,index) => ({hash,quality:index===0?1:.48,kind:index===0?'legacy_canonical':'legacy_alias'}));
+                let result = v14MatchEvidence(evidence,v14CasesFromPatientTokens(tokens));
+                let next = result.proposedMatch;
+                if (next.status === 'linked') {
+                    let suggested = result.suggestedCaseKey || next.leadingCandidateKey || result.candidates?.[0]?.caseKey || '';
+                    next = Object.assign({},next,{status:'pending_review',caseRef:null,suggestedCaseKey:suggested,leadingCandidateKey:suggested,reviewClass:'strong',requiresConfirmation:true});
+                } else if (next.status === 'unmatched') {
+                    next = Object.assign({},next,{method:'unmatched_pending_reconciliation',reviewClass:'no_current_case',requiresConfirmation:true});
+                }
+                let before = JSON.stringify(doc.match || {}), after = JSON.stringify(next);
+                if (before !== after) { doc.match=next; doc.updatedAt=v13Now(); doc.extraction=Object.assign({},doc.extraction || {},{matchVersion:V15_MATCH_VERSION}); changed++; }
+            }
+            if (changed && persistIfChanged) {
+                v13ReportState.audit.push({action:'multi_signal_reconciliation_v15',at:v13Now(),details:{reviewedOrUpdated:changed,matchVersion:V15_MATCH_VERSION},appVersion:APP_META.version,build:APP_META.build});
+                await v13WriteReportState();
+            }
+            return changed;
+        };
+
+        async function v15ReevaluateUnconfirmed() {
+            v13SetProgress(true,'Re-evaluating report associations…','Manual links and deliberate manual unlinks remain protected.');
+            try {
+                let changed = await v13ReconcileDocuments({persistIfChanged:true,forceReviewNoMatch:true});
+                v13RenderReports();
+                let status = document.getElementById('reports-pdf-status');
+                if (status) status.textContent = `${changed} unconfirmed report association(s) re-evaluated against ${v14CaseIndex.length} current procedures.`;
+            } finally { v13SetProgress(false); }
+        }
+
+        function v15ReviewDocument(documentId) {
+            let doc = v13ReportDocumentById(documentId); if (!doc) return;
+            let candidates = (doc.match?.candidateRefs || []).map(candidate => ({caseKey:candidate.caseKey,caseRef:candidate.caseRef,score:candidate.score,evidence:candidate.evidence || [],contradictions:candidate.contradictions || []}));
+            let item = {doc:v13Clone(doc),duplicate:false,reprocessExisting:true,mergeDocumentId:'',suggestedCaseKey:doc.match?.suggestedCaseKey || doc.match?.leadingCandidateKey || '',suggestedMethod:doc.match?.method || 'multi_signal_v3',matchCandidates:candidates,matchClassification:doc.match?.classification || doc.match?.reviewClass || '',transientPatientName:''};
+            v13OpenPdfPreview([item],[]);
+        }
+
+        v13ReportMatchPill = function(status,match=null) {
+            let resolved = match || {}, reviewClass = resolved.classification || resolved.reviewClass || '';
+            let label = '', cls = 'report-pending';
+            if (status === 'linked') { label='Linked to implant'; cls='report-linked'; }
+            else if (reviewClass === 'probable') { label='Probable candidate · review'; cls='report-ambiguous'; }
+            else if (reviewClass === 'strong' || status === 'pending_review') { label='Strong suggestion · confirm'; cls='report-pending'; }
+            else if (status === 'ambiguous') { label='Ambiguous match · review'; cls='report-ambiguous'; }
+            else { label='No current procedure candidate'; cls='report-unmatched'; }
+            return `<span class="report-pill ${cls}">${escapeHtml(label)}</span>`;
+        };
+
+        v13RenderReportKPIs = function(scopeDocs) {
+            let container=document.getElementById('reports-kpi-grid'); if(!container)return;
+            let counts={total:scopeDocs.length,linked:0,strong:0,review:0,unmatched:0};
+            scopeDocs.forEach(doc=>{
+                if(doc.match?.status==='linked')counts.linked++;
+                else if(doc.match?.classification==='probable'||doc.match?.reviewClass==='probable'||doc.match?.status==='ambiguous')counts.review++;
+                else if(doc.match?.classification==='strong'||doc.match?.reviewClass==='strong'||doc.match?.status==='pending_review')counts.strong++;
+                else counts.unmatched++;
+            });
+            let card=(status,label,value,sub,cls='')=>`<button type="button" class="reports-kpi ${cls} ${v13ReportQuickFilter===status?'active':''}" onclick="v13SetReportQuickFilter('${status}')"><div class="label">${escapeHtml(label)}</div><div class="value">${value}</div><div class="sub">${escapeHtml(sub)}</div></button>`;
+            container.innerHTML=`${card('','Indexed reports',counts.total,'PDF and metadata-only records')}${card('linked','Linked to implant',counts.linked,'Confirmed case timeline')}${card('pending_review','Strong suggestions',counts.strong,'Confirmation still required','warning')}${card('ambiguous','Review required',counts.review,'Probable or ambiguous candidates','review')}`;
+        };
+
+        v13RenderReportTable = function(documents) {
+            let tbody=document.querySelector('#reports-table tbody');if(!tbody)return;
+            let sorted=[...documents].sort((a,b)=>String(b.reportDate||b.updatedAt||'').localeCompare(String(a.reportDate||a.updatedAt||'')));
+            if(!sorted.length){tbody.innerHTML='<tr><td colspan="9"><div class="reports-empty"><div class="empty-icon">🗂️</div><strong>No reports in the selected scope</strong>Import PDFs or change the active filters.</div></td></tr>';return;}
+            tbody.innerHTML=sorted.map(doc=>{
+                let caseObj=v13DocumentCase(doc),suggestedKey=doc.match?.suggestedCaseKey||doc.match?.leadingCandidateKey||doc.match?.candidateRefs?.[0]?.caseKey||'',suggested=v15CaseIdentityByKey(suggestedKey);
+                let caseId=caseObj?outcomeCaseIdentifier(caseObj):suggested?((doc.match?.classification==='strong'||doc.match?.reviewClass==='strong')?`Suggested: ${suggested.displayId}`:`Leading candidate: ${suggested.displayId}`):'No current procedure candidate';
+                let context=caseObj?`${v13CaseDateISO(caseObj)} · ${caseObj.hospital||''}`:suggested?`${suggested.procedureDate} · ${suggested.hospital||''}`:'Report remains available for future reconciliation';
+                let country=v13DocumentCountry(doc),comparison=v13DocumentComparison(doc,caseObj),warning=(doc.extraction?.warnings||[])[0]||'',open=Boolean(v13ValidateSharePointUrl(doc.source?.webUrl||'').valid);
+                let sourceText=doc.extraction?.mode==='metadata_only'?'Tracking-list metadata':`${doc.extraction?.mode==='ocr'?'OCR':'PDF text'} · ${doc.extraction?.pagesRead||doc.extraction?.pageCount||'—'}/${doc.extraction?.pageCount||'—'} page(s)`;
+                let revision=doc.revision?.isRevision?`<span class="report-muted">Revision ${doc.revision.sequence||'—'} of ${doc.revision.total||doc.revision.groupSizeAtImport||'—'}</span>`:'';
+                return `<tr><td><span class="report-case-id">${escapeHtml(caseId)}</span><span class="report-muted">${escapeHtml(context)}</span><div style="margin-top:6px;">${v13ReportMatchPill(doc.match?.status,doc.match)}</div></td><td>${v13ReportTypePill(doc.type)}<strong style="display:block;margin-top:6px;color:var(--v-deep-blue);">${escapeHtml(doc.reportNumber?`Report ${doc.reportNumber}`:'Report number unavailable')}</strong><span class="report-muted">${escapeHtml(doc.reportDate||'Date unavailable')}</span>${revision}</td><td><strong>${FLAGS[country]||'🌍'} ${escapeHtml(country||'Country unavailable')}</strong><span class="report-muted">${escapeHtml(doc.country?.source==='linked_case'?'Confirmed by linked procedure':doc.country?.source==='filename'?'Country inferred from filename · low confidence':'Document context')}</span></td><td>${escapeHtml(v13RecommendationLabel(doc))}</td><td><strong>${escapeHtml(v13ImplantedDevice(caseObj)||'Pending / not available')}</strong><span class="report-muted">${caseObj?.outcome?.finalDevice?.serial?`SN ${escapeHtml(caseObj.outcome.finalDevice.serial)}`:'No confirmed implanted-device record'}</span></td><td><span class="report-pill ${comparison.status==='within_recommendation'?'report-linked':comparison.status==='outside_recommendation'?'report-review':'report-source'}">${escapeHtml(comparison.label)}</span></td><td>${warning?`<div class="report-warning">${escapeHtml(warning)}<span class="report-muted">Planning warning · not an adverse event</span></div>`:'No document warning extracted'}</td><td><span class="report-pill report-source">${escapeHtml(sourceText)}</span><span class="report-muted">${open?'Private SharePoint link saved':'Original link not yet saved'}</span></td><td><div class="report-actions"><button type="button" class="report-mini-btn primary" onclick="event.stopPropagation();v13OpenReportLink('${v13EscapeAttribute(doc.documentId)}')" ${open?'':'disabled'}>OPEN REPORT</button>${caseObj?`<button type="button" class="report-mini-btn" onclick="event.stopPropagation();v13OpenTimelineByDocument('${v13EscapeAttribute(doc.documentId)}')">TIMELINE</button>`:''}${!caseObj?`<button type="button" class="report-mini-btn primary" onclick="event.stopPropagation();v15ReviewDocument('${v13EscapeAttribute(doc.documentId)}')">REVIEW MATCH</button>`:''}<button type="button" class="report-mini-btn" onclick="event.stopPropagation();v13OpenRelinkPreview('${v13EscapeAttribute(doc.documentId)}')">LINK / RELINK</button><button type="button" class="report-mini-btn" onclick="event.stopPropagation();v13EditReportLink('${v13EscapeAttribute(doc.documentId)}')">${open?'UPDATE':'ADD'} LINK</button><button type="button" class="report-mini-btn danger" onclick="event.stopPropagation();v13DeleteReport('${v13EscapeAttribute(doc.documentId)}')">REMOVE</button></div></td></tr>`;
+            }).join('');
+        };
+
+        function v15InstallUI() {
+            if (!document.getElementById('v15-runtime-style')) {
+                let style=document.createElement('style');style.id='v15-runtime-style';style.textContent=`
+                    .report-preview-modal{width:min(1180px,96vw)!important;max-width:1180px!important}.v15-summary{grid-template-columns:repeat(6,minmax(0,1fr))}.v15-preview-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:4;padding:10px;margin:0 0 12px;border:1px solid #DDE3F0;border-radius:10px;background:#F8FAFC}.v15-preview-toolbar>select{width:auto;min-width:190px}.v15-preview-toolbar>span{margin-left:auto;color:#64748B;font-size:9px}.v15-preview-list{display:grid;gap:12px}.v15-preview-row{padding:14px;border:1px solid #DDE3F0;border-radius:11px;background:#fff;box-shadow:0 7px 18px rgba(23,20,52,.05)}.v15-preview-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.v15-preview-head h3{margin:7px 0 3px;color:var(--v-deep-blue);font-size:13px}.v15-preview-head .report-pill{margin-right:5px}.v15-decision-state{padding:6px 8px;border-radius:6px;background:#F1F5F9;color:#475569;font-size:8px;font-weight:900;letter-spacing:.4px}.v15-preview-grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(430px,1.4fr);gap:16px;margin-top:12px}.v15-label{display:block;margin:10px 0 5px;color:#64748B;font-size:8px;font-weight:900;letter-spacing:.4px;text-transform:uppercase}.v15-candidates{display:grid;gap:7px}.v15-candidate{display:flex;flex-direction:column;gap:3px;width:100%;padding:9px 10px;border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:var(--v-deep-blue);text-align:left;cursor:pointer}.v15-candidate:hover,.v15-candidate.selected{border-color:var(--v-blue);box-shadow:0 0 0 2px rgba(30,92,183,.12)}.v15-candidate.selected{background:#EEF6FF}.v15-candidate-rank{color:var(--v-blue);font-size:7px;font-weight:900;letter-spacing:.4px}.v15-candidate strong{font-size:10px}.v15-candidate span:not(.v15-candidate-rank),.v15-candidate small{color:#64748B;font-size:8px}.v15-row-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.v15-manual-search{margin-top:8px;padding:9px;border:1px solid #DDE3F0;border-radius:8px;background:#F8FAFC}.v15-search-results{display:grid;gap:5px;margin-top:6px}.v15-search-result{display:flex;flex-direction:column;gap:2px;padding:7px;border:1px solid #CBD5E1;border-radius:7px;background:#fff;text-align:left;cursor:pointer}.v15-search-result span{color:#64748B;font-size:8px}.v15-privacy{margin-top:10px;padding:8px;border:1px solid #FDE68A;border-radius:8px;background:#FFFBEB}.v15-privacy summary{cursor:pointer;color:#713F12;font-size:9px;font-weight:800}.v15-sticky-footer{position:sticky;bottom:0;z-index:5;margin-top:14px;padding:10px;background:rgba(255,255,255,.96);border-top:1px solid #E2E8F0}.v15-progress-tools{margin-top:14px}.v15-progress-track{height:7px;overflow:hidden;border-radius:99px;background:#E2E8F0}.v15-progress-track span{display:block!important;width:0;height:100%;margin:0!important;background:var(--v-blue);transition:width .2s ease}.v15-progress-count{margin-top:6px;color:#64748B;font-size:9px}.v15-progress-actions{display:flex;justify-content:center;gap:7px;margin-top:10px}.reports-progress:not(.active) #v15-progress-tools{display:none}@media(max-width:900px){.v15-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.v15-preview-grid{grid-template-columns:1fr}.v15-preview-toolbar>span{margin-left:0}}
+                `;document.head.appendChild(style);
+            }
+            v15InstallProgressControls();
+            let pdfActions=document.querySelector('#reports-pdf-input')?.closest('.reports-import-card')?.querySelector('.reports-action-row');
+            if(pdfActions&&!document.getElementById('v15-reevaluate-btn'))pdfActions.insertAdjacentHTML('beforeend','<button type="button" class="upload-btn" id="v15-reevaluate-btn" onclick="v15ReevaluateUnconfirmed()">⟳ RE-EVALUATE UNCONFIRMED</button>');
+            let matchFilter=document.getElementById('reports-match-filter');
+            if(matchFilter){let unmatched=[...matchFilter.options].find(option=>option.value==='unmatched');if(unmatched)unmatched.textContent='No current procedure candidate';let pending=[...matchFilter.options].find(option=>option.value==='pending_review');if(pending)pending.textContent='Strong suggestion · confirm';}
+            let status=document.getElementById('reports-procedure-status');
+            if(status&&/Embedded 2026/.test(status.textContent||''))status.textContent=`PDF ready · ${v14CaseIndex.length || v13LatamCases().length} current procedures · private aliases active`;
+        }
+
+        document.addEventListener('DOMContentLoaded',()=>{
+            setTimeout(()=>{v14BuildGlobalCaseIndex();v15InstallUI();v13ReconcileDocuments({persistIfChanged:true}).then(()=>v13RenderReports());},420);
+        });
+
+        window.v15TogglePauseImport=v15TogglePauseImport;
+        window.v15CancelImport=v15CancelImport;
+        window.v15SetPreviewDecision=v15SetPreviewDecision;
+        window.v15SetPreviewLink=v15SetPreviewLink;
+        window.v15SetPreviewNarrative=v15SetPreviewNarrative;
+        window.v15SetPreviewPrivacy=v15SetPreviewPrivacy;
+        window.v15ConfirmAllStrong=v15ConfirmAllStrong;
+        window.v15SetPreviewFilter=v15SetPreviewFilter;
+        window.v15ChangePreviewPage=v15ChangePreviewPage;
+        window.v15ToggleManualSearch=v15ToggleManualSearch;
+        window.v15SearchPreviewCase=v15SearchPreviewCase;
+        window.v15ReevaluateUnconfirmed=v15ReevaluateUnconfirmed;
+        window.v15ReviewDocument=v15ReviewDocument;
+        window.V15_REPORT_RUNTIME={parserVersion:V15_REPORT_PARSER_VERSION,matchVersion:V15_MATCH_VERSION,previewPageSize:V15_PREVIEW_PAGE_SIZE};
+    })();
+
+/*
+ * Venus Medtech LATAM Intelligence OS
+ * v1.5 matching override (drop-in classic-script module)
+ *
+ * Load this file after the v1.4.0 application script. It does not persist a
+ * readable patient name. Names exist only in the transient PDF-import draft;
+ * the document registry receives SHA-256 identity probes and evidence codes.
+ */
+(function installVenusV15MatchingModule(root) {
+    'use strict';
+
+    const V15_MATCH_VERSION = 'case-identity-3.0.0';
+    const V15_MATCH_METHOD = 'v15_multi_signal';
+    const V15_PATIENT_NAMESPACE = 'venus-latam-patient-v1|';
+    const V15_PARTICLES = new Set(['da','das','de','del','della','do','dos','e','el','la','las','los','y']);
+    const V15_TITLES = new Set(['dr','dra','doctor','doctora','mr','mrs','ms','sr','sra','prof','professor','profesora']);
+    const V15_HOSPITAL_STOP = new Set([
+        'hospital','hosp','clinica','clinic','clinical','sanatorio','instituto','institute','centro','center','centre',
+        'medico','medica','medical','cardiologia','cardiology','cardiologico','cardiologica','fundacion','foundation',
+        'universitario','university','regional','municipal','general','nacional','national','saude','salud',
+        'de','del','do','da','dos','das','la','las','los','el','y','e','the','of'
+    ]);
+
+    let V15_BASE_BUILD_PDF_DRAFT = null;
+    let V15_BASE_RECONCILE_DOCUMENTS = null;
+    let v15Installed = false;
+
+    function v15Clone(value) {
+        if (value === undefined) return undefined;
+        if (typeof structuredClone === 'function') {
+            try { return structuredClone(value); } catch (error) { /* JSON fallback */ }
+        }
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function v15Core() {
+        return root.V14IdentityCore || (typeof V14IdentityCore !== 'undefined' ? V14IdentityCore : null);
+    }
+
+    function v15Normalize(value) {
+        const core = v15Core();
+        if (core?.normalize) return core.normalize(value || '');
+        return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+            .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+    }
+
+    function v15NormalizeCompact(value) { return v15Normalize(value).replace(/[^a-z0-9]/g,''); }
+
+    function v15Unique(values) {
+        return [...new Set((values || []).flat(Infinity).map(value => String(value || '').trim()).filter(Boolean))];
+    }
+
+    function v15PatientMaterialTokens(value) {
+        return v15Normalize(value).split(' ').filter(token => token && !V15_TITLES.has(token) && !V15_PARTICLES.has(token));
+    }
+
+    function v15ProtectedMatch(matchOrMethod,{forceReviewNoMatch=false}={}) {
+        const method = String(typeof matchOrMethod === 'object' ? matchOrMethod?.method : matchOrMethod || '').trim();
+        if(method === 'reviewed_no_current_match') return !forceReviewNoMatch;
+        return method === 'manual' || method === 'manual_unlink' || /_reviewed$/.test(method);
+    }
+
+    async function v15Sha256Text(value) {
+        if (typeof v12Sha256Text === 'function') return v12Sha256Text(value);
+        if (!root.crypto?.subtle?.digest) throw new Error('Secure SHA-256 is unavailable in this browser context.');
+        const bytes = new TextEncoder().encode(String(value));
+        const digest = await root.crypto.subtle.digest('SHA-256',bytes);
+        return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2,'0')).join('');
+    }
+
+    function v15FullNameVariants(value) {
+        const core = v15Core();
+        if (core?.patientNameVariants) return core.patientNameVariants(value || '');
+        const normalized = v15Normalize(value);
+        return normalized ? [{value:normalized,kind:'canonical',quality:1}] : [];
+    }
+
+    function v15VariantRelation(kind) {
+        const value = String(kind || '');
+        if (/single_long_token/.test(value)) return 'partial_token';
+        if (/edge_pair/.test(value)) return 'one_token_delta';
+        return 'exact_token_set';
+    }
+
+    /**
+     * Build privacy-safe patient identity probes.
+     *
+     * In addition to the v1.4 complete-name permutations, generate every
+     * one-material-token deletion when the PDF name has at least three tokens.
+     * A deleted-token probe is never sufficient by itself; the ranker requires
+     * independent procedural context before it can become a probable suggestion.
+     */
+    async function v15PatientProbeRecords(patientName,{qualityScale=1}={}) {
+        const scale = Math.max(0,Math.min(1,Number(qualityScale || 0)));
+        const records = [];
+        const addVariants = async (name,relation,ceiling,sourceKind) => {
+            for (const variant of v15FullNameVariants(name)) {
+                if (relation === 'one_token_delta' && /(?:edge_pair|single_long_token)/.test(variant.kind || '')) continue;
+                const hash = await v15Sha256Text(V15_PATIENT_NAMESPACE + variant.value);
+                records.push({
+                    hash,
+                    quality:Math.max(0,Math.min(1,Number(variant.quality || 0) * Number(ceiling || 0) * scale)),
+                    kind:sourceKind ? `${sourceKind}:${variant.kind || 'variant'}` : String(variant.kind || 'variant'),
+                    relation:relation || v15VariantRelation(variant.kind)
+                });
+            }
+        };
+
+        await addVariants(patientName,'',1,'');
+        const material = v15PatientMaterialTokens(patientName);
+        if (material.length >= 3 && material.length <= 12) {
+            const ceiling = material.length === 3 ? .80 : material.length === 4 ? .88 : .90;
+            for (let index=0; index<material.length; index++) {
+                const reduced = material.filter((token,tokenIndex) => tokenIndex !== index).join(' ');
+                await addVariants(reduced,'one_token_delta',ceiling,'drop_one');
+            }
+        }
+
+        const relationRank = {exact_token_set:3,one_token_delta:2,partial_token:1};
+        const byHash = new Map();
+        records.forEach(record => {
+            const prior = byHash.get(record.hash);
+            if (!prior || prior.quality < record.quality ||
+                (prior.quality === record.quality && (relationRank[record.relation] || 0) > (relationRank[prior.relation] || 0))) {
+                byHash.set(record.hash,record);
+            }
+        });
+        return [...byHash.values()];
+    }
+
+    function v15ResolveCaseRef(ref) {
+        const resolver = typeof v13ResolveCaseRef === 'function' ? v13ResolveCaseRef : root.v13ResolveCaseRef;
+        return typeof resolver === 'function' ? resolver(ref) : null;
+    }
+
+    function v15CaseKey(caseObj) {
+        if (!caseObj) return '';
+        if (typeof v13CaseKey === 'function') return v13CaseKey(caseObj);
+        if (typeof root.v13CaseKey === 'function') return root.v13CaseKey(caseObj);
+        return '';
+    }
+
+    function v15CaseRef(caseObj) {
+        if (!caseObj) return null;
+        if (typeof v13CaseRef === 'function') return v13CaseRef(caseObj);
+        if (typeof root.v13CaseRef === 'function') return root.v13CaseRef(caseObj);
+        return null;
+    }
+
+    function v15RefKey(ref) {
+        if (!ref) return '';
+        if (typeof v13RefKey === 'function') return v13RefKey(ref);
+        if (typeof root.v13RefKey === 'function') return root.v13RefKey(ref);
+        return '';
+    }
+
+    function v15PatientLookup() {
+        if (typeof v12PatientLookup !== 'undefined' && v12PatientLookup) return v12PatientLookup;
+        return root.v12PatientLookup || {};
+    }
+
+    /** Resolve probe hashes to cases without exposing the readable name. */
+    function v15CasesFromPatientProbes(probeRecords) {
+        const lookup = v15PatientLookup();
+        const relationRank = {exact_token_set:3,one_token_delta:2,partial_token:1};
+        const byCase = new Map();
+        (probeRecords || []).forEach(probe => {
+            (lookup?.[probe.hash] || []).forEach(ref => {
+                const caseObj = v15ResolveCaseRef({
+                    formsId:String(ref.formsId || ''),
+                    formsIds:[String(ref.formsId || '')],
+                    workbookCaseId:String(ref.caseId || ''),
+                    procedureDate:String(ref.date || '')
+                });
+                if (!caseObj) return;
+                const key = v15CaseKey(caseObj);
+                if (!key) return;
+                const aliasQuality = Number.isFinite(Number(ref.aliasQuality)) ? Number(ref.aliasQuality) : 1;
+                const effectiveQuality = Math.min(Number(probe.quality || 0),aliasQuality);
+                const refRelation = v15VariantRelation(ref.aliasKind || '');
+                let relation = probe.relation || 'partial_token';
+                if ((relationRank[refRelation] || 0) < (relationRank[relation] || 0)) relation = refRelation;
+                if (effectiveQuality < .60) relation = 'partial_token';
+                const prior = byCase.get(key);
+                const candidate = {caseObj,key,quality:effectiveQuality,relation,probeKind:probe.kind || '',aliasKind:ref.aliasKind || ''};
+                if (!prior || prior.quality < candidate.quality ||
+                    (prior.quality === candidate.quality && (relationRank[candidate.relation] || 0) > (relationRank[prior.relation] || 0))) {
+                    byCase.set(key,candidate);
+                }
+            });
+        });
+        return byCase;
+    }
+
+    function v15TokenSet(value,stopWords=new Set()) {
+        return new Set(v15Normalize(value).split(' ').filter(token => token && !stopWords.has(token)));
+    }
+
+    function v15SetIntersectionSize(left,right) {
+        let count=0;
+        left.forEach(token => { if (right.has(token)) count++; });
+        return count;
+    }
+
+    function v15HospitalKey(value) {
+        const tokens = [...v15TokenSet(value,V15_HOSPITAL_STOP)];
+        return tokens.join(' ');
+    }
+
+    function v15HospitalSimilarity(left,right) {
+        const a = new Set(v15HospitalKey(left).split(' ').filter(Boolean));
+        const b = new Set(v15HospitalKey(right).split(' ').filter(Boolean));
+        if (!a.size || !b.size) return 0;
+        if ([...a].join(' ') === [...b].join(' ')) return 1;
+        const overlap = v15SetIntersectionSize(a,b);
+        const containment = overlap / Math.min(a.size,b.size);
+        const dice = (2*overlap)/(a.size+b.size);
+        if (containment === 1) return Math.max(.92,dice);
+        return Math.max(dice,overlap/Math.max(a.size,b.size));
+    }
+
+    function v15Levenshtein(left,right) {
+        const a=String(left || ''),b=String(right || '');
+        if (a===b) return 0;
+        if (!a.length) return b.length;
+        if (!b.length) return a.length;
+        const prior=Array.from({length:b.length+1},(_,index)=>index),current=new Array(b.length+1);
+        for (let i=1;i<=a.length;i++) {
+            current[0]=i;
+            for (let j=1;j<=b.length;j++) current[j]=Math.min(current[j-1]+1,prior[j]+1,prior[j-1]+(a[i-1]===b[j-1]?0:1));
+            for (let j=0;j<=b.length;j++) prior[j]=current[j];
+        }
+        return prior[b.length];
+    }
+
+    function v15TokenSimilarity(left,right) {
+        const a=v15Normalize(left),b=v15Normalize(right);
+        if (!a || !b) return 0;
+        if (a===b) return 1;
+        return 1-v15Levenshtein(a,b)/Math.max(a.length,b.length);
+    }
+
+    function v15PersonTokens(value) {
+        return v15Normalize(value).split(' ').filter(token => token && !V15_TITLES.has(token) && !V15_PARTICLES.has(token));
+    }
+
+    function v15PersonSimilarity(left,right) {
+        const a=v15PersonTokens(left),b=v15PersonTokens(right);
+        if (!a.length || !b.length) return 0;
+        const used=new Set();
+        let matched=0,exact=0;
+        for (const token of a) {
+            let bestIndex=-1,best=0;
+            b.forEach((candidate,index) => {
+                if (used.has(index)) return;
+                const similarity=v15TokenSimilarity(token,candidate);
+                if (similarity>best) { best=similarity;bestIndex=index; }
+            });
+            if (bestIndex>=0 && best>=.76) {
+                used.add(bestIndex);matched+=best;
+                if (best===1) exact++;
+            }
+        }
+        const coverage=matched/Math.max(a.length,b.length);
+        return exact ? Math.min(1,coverage+.04) : coverage;
+    }
+
+    function v15NormalizeCountry(value) {
+        const core=v15Core();
+        return core?.normalizeCountry ? core.normalizeCountry(value || '') : String(value || '').trim();
+    }
+
+    function v15ProductFamily(value) {
+        const core=v15Core();
+        return core?.productFamilyKey ? core.productFamilyKey(value || '') : v15NormalizeCompact(value);
+    }
+
+    function v15IsoDate(value) {
+        if (typeof v13NormalizeDate === 'function') return v13NormalizeDate(value || '');
+        const raw=String(value || '').trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+    }
+
+    function v15DaysBetween(leftIso,rightIso) {
+        const core=v15Core();
+        if (core?.daysBetween) return core.daysBetween(leftIso,rightIso);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(leftIso || '') || !/^\d{4}-\d{2}-\d{2}$/.test(rightIso || '')) return null;
+        return Math.round((Date.parse(`${rightIso}T00:00:00Z`)-Date.parse(`${leftIso}T00:00:00Z`))/86400000);
+    }
+
+    function v15Exact(left,right,{compact=false}={}) {
+        const normalize=compact ? v15NormalizeCompact:v15Normalize;
+        const a=normalize(left),b=normalize(right);
+        return Boolean(a && b && a===b);
+    }
+
+    function v15CaseIndex() {
+        if (typeof root.v14BuildGlobalCaseIndex === 'function') return root.v14BuildGlobalCaseIndex() || [];
+        if (typeof v14BuildGlobalCaseIndex === 'function') return v14BuildGlobalCaseIndex() || [];
+        return [];
+    }
+
+    function v15ReportDocuments() {
+        if (typeof v13ReportState !== 'undefined' && Array.isArray(v13ReportState?.documents)) return v13ReportState.documents;
+        return Array.isArray(root.v13ReportState?.documents) ? root.v13ReportState.documents : [];
+    }
+
+    function v15NormalizeReportNumber(value) {
+        if (typeof v13NormalizeReportNumber === 'function') return v13NormalizeReportNumber(value || '');
+        return v15NormalizeCompact(value);
+    }
+
+    /** A report number becomes a direct anchor only after a confirmed linked record exists. */
+    function v15ConfirmedReportNumberCaseKeys(reportNumber) {
+        const normalized=v15NormalizeReportNumber(reportNumber);
+        if (!normalized) return new Set();
+        const keys=new Set();
+        v15ReportDocuments().forEach(doc => {
+            if (v15NormalizeReportNumber(doc.reportNumber)!==normalized || doc.match?.status!=='linked' || !doc.match?.caseRef || !v15ProtectedMatch(doc.match)) return;
+            const caseObj=v15ResolveCaseRef(doc.match.caseRef);
+            const key=v15CaseKey(caseObj);
+            if (key) keys.add(key);
+        });
+        return keys;
+    }
+
+    function v15EvidenceFromDocument(doc) {
+        let evidence={};
+        if (typeof v14DocumentEvidence === 'function') evidence=v14DocumentEvidence(doc) || {};
+        else {
+            const context=doc?.identityContext || {},hints=doc?.matchHints || {};
+            evidence={
+                formsId:hints.formsId || '',formsIds:hints.formsIds || [],officialCaseId:hints.officialCaseId || '',sourceCaseId:hints.sourceCaseId || '',
+                serial:hints.serial || '',deliverySerial:hints.deliverySerial || '',procedureDate:v15IsoDate(hints.procedureDate || ''),
+                reportDate:v15IsoDate(doc?.reportDate || ''),country:context.country || doc?.country?.value || '',countryConfidence:context.countryConfidence || doc?.country?.confidence || '',
+                hospital:context.hospital || '',distributor:context.distributor || '',
+                professionals:v15Unique([context.physician,context.specialist,context.proctor,context.createdBy]),professionalEmails:v15Unique(context.professionalEmails || []),
+                product:doc?.recommendation?.valveFamily || '',deviceCandidates:[]
+            };
+        }
+        evidence.reportNumber=doc?.reportNumber || '';
+        evidence.patientSource=doc?.identityContext?.patientSource || evidence.patientSource || 'unknown';
+        return evidence;
+    }
+
+    function v15DirectAnchorSets(evidence,index,reportNumberKeys) {
+        const sets=[];
+        const add=(label,keys) => { const set=new Set(keys); if(set.size)sets.push({label,set}); };
+        const forms=v15Unique([...(evidence.formsIds || []),evidence.formsId || '']);
+        if(forms.length) add('Forms ID',index.filter(identity=>forms.some(id=>(identity.formsIds || []).map(String).includes(String(id)))).map(identity=>identity.key));
+        if(evidence.officialCaseId) add('Official Case ID',index.filter(identity=>v15Exact(evidence.officialCaseId,identity.officialCaseId)).map(identity=>identity.key));
+        if(evidence.sourceCaseId) add('Internal case ID',index.filter(identity=>v15Exact(evidence.sourceCaseId,identity.sourceCaseId)).map(identity=>identity.key));
+        if(evidence.serial) add('Valve serial',index.filter(identity=>v15Exact(evidence.serial,identity.serial,{compact:true})).map(identity=>identity.key));
+        if(reportNumberKeys?.size) add('Confirmed report number',[...reportNumberKeys]);
+        return sets;
+    }
+
+    function v15AnchorIntersection(anchorSets) {
+        if (!anchorSets.length) return {conflict:false,intersection:new Set(),labels:[]};
+        let intersection=new Set(anchorSets[0].set);
+        anchorSets.slice(1).forEach(anchor=>{intersection=new Set([...intersection].filter(key=>anchor.set.has(key)));});
+        return {conflict:anchorSets.length>=2&&!intersection.size,intersection,labels:anchorSets.map(anchor=>anchor.label)};
+    }
+
+    function v15ScoreCandidate(evidence,identity,patientEvidence,reportNumberKeys) {
+        let score=0;
+        const signals=[],contradictions=[];
+        const add=(code,label,points,group='context')=>{score+=points;signals.push({code,label,points,group});};
+        const subtract=(code,label,points)=>{score-=points;contradictions.push({code,label,points});};
+        const forms=v15Unique([...(evidence.formsIds || []),evidence.formsId || '']);
+
+        if(forms.length) {
+            if(forms.some(id=>(identity.formsIds || []).map(String).includes(String(id)))) add('FORMS_ID_EXACT','Forms ID exact',150,'direct');
+            else if((identity.formsIds || []).length) subtract('FORMS_ID_CONFLICT','Different Forms ID',120);
+        }
+        if(evidence.officialCaseId) {
+            if(v15Exact(evidence.officialCaseId,identity.officialCaseId)) add('OFFICIAL_CASE_ID_EXACT','Official Case ID exact',130,'direct');
+            else if(identity.officialCaseId) subtract('OFFICIAL_CASE_ID_CONFLICT','Different official Case ID',70);
+        }
+        if(evidence.sourceCaseId) {
+            if(v15Exact(evidence.sourceCaseId,identity.sourceCaseId)) add('SOURCE_CASE_ID_EXACT','Internal case ID exact',135,'direct');
+            else if(identity.sourceCaseId) subtract('SOURCE_CASE_ID_CONFLICT','Different internal Case ID',70);
+        }
+        if(evidence.serial) {
+            if(v15Exact(evidence.serial,identity.serial,{compact:true})) add('VALVE_SERIAL_EXACT','Valve serial exact',125,'direct');
+            else if(identity.serial) subtract('VALVE_SERIAL_CONFLICT','Different valve serial',90);
+        }
+        if(evidence.deliverySerial && v15Exact(evidence.deliverySerial,identity.deliverySerial,{compact:true})) add('DELIVERY_SERIAL_EXACT','Delivery-system lot exact',55,'direct');
+        if(reportNumberKeys?.has(identity.key)) add('REPORT_NUMBER_CONFIRMED_CASE','Report number already confirmed for this case',140,'direct');
+
+        if(patientEvidence?.quality>0) {
+            const relation=patientEvidence.relation || 'partial_token';
+            if(relation==='exact_token_set' && patientEvidence.quality>=.85) add('PATIENT_NAME_EXACT_SET','Private full patient token set',Math.round(96*patientEvidence.quality),'patient');
+            else if(relation==='one_token_delta' && patientEvidence.quality>=.70) add('PATIENT_NAME_ONE_TOKEN_DELTA','Private patient identity with one token difference',Math.round(86*patientEvidence.quality),'patient');
+            else add('PATIENT_NAME_PARTIAL','Partial private patient identity',Math.round(38*patientEvidence.quality),'patient');
+        }
+
+        if(evidence.procedureDate && identity.procedureDate) {
+            const delta=Math.abs(v15DaysBetween(evidence.procedureDate,identity.procedureDate) ?? 9999);
+            if(delta===0)add('PROCEDURE_DATE_EXACT','Procedure date exact',32,'date');
+            else if(delta<=2)add('PROCEDURE_DATE_NEAR','Procedure date within 2 days',22,'date');
+            else subtract('PROCEDURE_DATE_CONFLICT','Procedure date differs',28);
+        } else if(evidence.reportDate && identity.procedureDate) {
+            const lead=v15DaysBetween(evidence.reportDate,identity.procedureDate);
+            if(lead!==null&&lead>=0&&lead<=14)add('REPORT_DATE_WINDOW_14D','Planning report within 14 days before procedure',10,'date');
+            else if(lead!==null&&lead>=15&&lead<=45)add('REPORT_DATE_WINDOW_45D','Planning report within 45 days before procedure',7,'date');
+            else if(lead!==null&&lead>=46&&lead<=120)add('REPORT_DATE_WINDOW_120D','Planning report within 120 days before procedure',4,'date');
+            else if(lead!==null&&lead>=121&&lead<=180)add('REPORT_DATE_WINDOW_180D','Planning report plausibly precedes procedure',2,'date');
+            else if(lead!==null&&lead>=-30&&lead<0)add('REPORT_DATE_AFTER_PROCEDURE','Report date close to procedure',2,'date');
+        }
+
+        if(evidence.country) {
+            if(v15Exact(v15NormalizeCountry(evidence.country),v15NormalizeCountry(identity.country))) add('COUNTRY_MATCH','Country match',evidence.countryConfidence==='low'?6:12,'country');
+            else if(identity.country) subtract('COUNTRY_CONFLICT','Different country',25);
+        }
+        if(evidence.hospital) {
+            const similarity=v15HospitalSimilarity(evidence.hospital,identity.hospital);
+            if(similarity>=.92)add('HOSPITAL_ALIAS_EXACT','Hospital exact after alias normalization',28,'hospital');
+            else if(similarity>=.65)add('HOSPITAL_SIMILAR','Hospital name similar',Math.round(12+similarity*10),'hospital');
+        }
+        if(evidence.distributor) {
+            const similarity=v15HospitalSimilarity(evidence.distributor,identity.distributor);
+            if(similarity>=.70)add('DISTRIBUTOR_MATCH','Distributor match',8,'organization');
+        }
+
+        const evidencePeople=v15Unique([...(evidence.professionals || []),evidence.physician || '',evidence.createdBy || '']);
+        let professionalHits=0;
+        evidencePeople.forEach(person=>{
+            if(professionalHits>=2)return;
+            const best=Math.max(0,...(identity.professionals || []).map(candidate=>v15PersonSimilarity(person,candidate)));
+            if(best>=.80){add('PROFESSIONAL_MATCH','Procedure professional match',14,'professional');professionalHits++;}
+            else if(best>=.65){add('PROFESSIONAL_SIMILAR','Procedure professional name similar',8,'professional');professionalHits++;}
+        });
+        const emails=(evidence.professionalEmails || []).map(email=>String(email).toLowerCase());
+        if(emails.some(email=>(identity.professionalEmails || []).map(value=>String(value).toLowerCase()).includes(email))) add('PROFESSIONAL_EMAIL_EXACT','Professional email exact',18,'professional');
+
+        const candidates=Array.isArray(evidence.deviceCandidates)?evidence.deviceCandidates.filter(Boolean):[];
+        if(candidates.length) {
+            const identityFamily=v15ProductFamily(identity.product),identitySize=v15NormalizeCompact(identity.size);
+            let family=false,size=false,both=false;
+            candidates.forEach(candidate=>{
+                const f=Boolean(identityFamily&&v15ProductFamily(candidate.product)===identityFamily);
+                const s=Boolean(identitySize&&v15NormalizeCompact(candidate.size)===identitySize);
+                family=family||f;size=size||s;both=both||(f&&s);
+            });
+            if(both)add('DEVICE_OPTION_MATCH','Recommended valve family and size match',14,'device');
+            else if(family)add('PRODUCT_MATCH','Valve family match',8,'device');
+            else if(size)add('VALVE_SIZE_MATCH','Valve size match',4,'device');
+        } else if(evidence.product && v15ProductFamily(evidence.product)===v15ProductFamily(identity.product)) {
+            add('PRODUCT_MATCH','Valve family match',8,'device');
+        }
+
+        const groups=new Set(signals.map(signal=>signal.group));
+        const direct=signals.some(signal=>signal.group==='direct'&&signal.points>=120);
+        const coreContext=['date','hospital','professional'].filter(group=>groups.has(group));
+        const independentContext=['date','country','hospital','professional','organization','device'].filter(group=>groups.has(group));
+        return {score,signals,contradictions,groups:[...groups],direct,coreContext,independentContext,patientEvidence:patientEvidence || null};
+    }
+
+    /**
+     * Rank all current 2026 LATAM cases and classify the leading hypothesis.
+     * `probable` is a preselected suggestion, never a confirmed link.
+     */
+    function v15RankReportCandidates(evidence,patientByCase=new Map(),identities=v15CaseIndex()) {
+        const index=Array.isArray(identities)?identities:[];
+        const reportNumberKeys=v15ConfirmedReportNumberCaseKeys(evidence?.reportNumber || '');
+        const anchors=v15DirectAnchorSets(evidence || {},index,reportNumberKeys);
+        const anchorResult=v15AnchorIntersection(anchors);
+        const ranked=index.map(identity=>{
+            const scored=v15ScoreCandidate(evidence || {},identity,patientByCase.get(identity.key) || null,reportNumberKeys);
+            return Object.assign({identity},scored);
+        }).filter(item=>item.score>0||item.signals.length||item.contradictions.length)
+            .sort((a,b)=>b.score-a.score||b.signals.length-a.signals.length||String(a.identity.displayId).localeCompare(String(b.identity.displayId)));
+        const top=ranked[0] || null,second=ranked[1] || null;
+        const margin=top ? top.score-(second?.score || 0):0;
+
+        let classification='no_current_case',reason='No sufficiently supported current procedure candidate.';
+        if(anchorResult.conflict) {
+            classification='ambiguous';
+            reason=`Conflicting strong identifiers (${anchorResult.labels.join(' × ')}) point to different procedures.`;
+        } else if(top && top.score>=45) {
+            const patient=top.patientEvidence || {};
+            const exactPatient=patient.relation==='exact_token_set'&&patient.quality>=.85;
+            const oneTokenDelta=patient.relation==='one_token_delta'&&patient.quality>=.70;
+            const coreContext=top.coreContext.length;
+            const independentContext=top.independentContext.length;
+            const severeConflict=top.contradictions.some(item=>item.points>=70);
+            const anchorUnique=anchorResult.intersection.size===1&&anchorResult.intersection.has(top.identity.key);
+
+            if(!severeConflict && top.direct && (anchorUnique || anchors.length===1) && top.score>=110 && margin>=18) {
+                classification='strong';
+                reason='A unique direct identifier supports this procedure.';
+            } else if(!severeConflict && exactPatient && coreContext>=1 && independentContext>=2 && top.score>=110 && margin>=18) {
+                classification='strong';
+                reason='Full private patient identity is independently corroborated by procedure context.';
+            } else if(!severeConflict && exactPatient && coreContext>=1 && top.score>=85 && margin>=15) {
+                classification='probable';
+                reason='Full private patient identity has one independent procedural corroboration.';
+            } else if(!severeConflict && oneTokenDelta && coreContext>=1 && independentContext>=2 && top.score>=85 && margin>=18) {
+                classification='probable';
+                reason='A one-token patient-name difference is corroborated by multiple independent procedure signals.';
+            } else {
+                classification='ambiguous';
+                reason=margin<15?'Leading candidates are too close.':'The leading candidate lacks the independent evidence required for a safe suggestion.';
+            }
+        }
+
+        const suggestionAllowed=(classification==='strong'||classification==='probable')&&top&&!anchorResult.conflict;
+        const mapped=ranked.slice(0,8).map(candidate=>({
+            case:candidate.identity.caseObj,
+            caseRef:v15CaseRef(candidate.identity.caseObj),
+            caseKey:candidate.identity.key,
+            displayId:candidate.identity.displayId || '',
+            score:candidate.score,
+            patientRelation:candidate.patientEvidence?.relation || '',
+            patientQuality:Number(candidate.patientEvidence?.quality || 0),
+            evidenceCodes:candidate.signals.map(signal=>signal.code),
+            evidence:candidate.signals.map(signal=>signal.label),
+            contradictions:candidate.contradictions.map(item=>item.label)
+        }));
+        const mappedTop=mapped[0] || null;
+        const confidence=classification==='strong'?.96:classification==='probable'?.80:classification==='ambiguous'?.45:0;
+        return {
+            classification,status:suggestionAllowed?'linked':classification==='no_current_case'?'unmatched':'ambiguous',
+            confidence,method:V15_MATCH_METHOD,matchVersion:V15_MATCH_VERSION,reason,margin,
+            identifierConflict:anchorResult.conflict,anchors:anchorResult.labels,candidates:mapped,
+            suggestedCaseKey:suggestionAllowed?mappedTop.caseKey:'',leadingCandidateKey:mappedTop?.caseKey || '',
+            proposal:{
+                status:suggestionAllowed?'linked':classification==='no_current_case'?'unmatched':'ambiguous',
+                classification,method:V15_MATCH_METHOD,confidence,
+                caseRef:suggestionAllowed?mappedTop.caseRef:null,
+                candidateCount:mapped.length,suggestedCaseKey:suggestionAllowed?mappedTop.caseKey:'',leadingCandidateKey:mappedTop?.caseKey || '',
+                score:mappedTop?.score || 0,evidence:mappedTop?.evidenceCodes || [],
+                candidateRefs:mapped.map(item=>({caseRef:item.caseRef,caseKey:item.caseKey,score:item.score,patientRelation:item.patientRelation,patientQuality:item.patientQuality,evidence:item.evidenceCodes,contradictions:item.contradictions})),
+                reason,requiresConfirmation:true,matchVersion:V15_MATCH_VERSION
+            }
+        };
+    }
+
+    function v15FindExistingDocument(doc) {
+        const documents=v15ReportDocuments();
+        const sha=String(doc?.source?.fileSha256 || '');
+        return documents.find(item=>(sha&&item.source?.fileSha256===sha)||item.documentId===doc?.documentId) || null;
+    }
+
+    async function v15BuildPdfDraft(file,onProgress) {
+        if (typeof V15_BASE_BUILD_PDF_DRAFT!=='function') throw new Error('The v1.4 PDF draft reader is unavailable.');
+        const draft=await V15_BASE_BUILD_PDF_DRAFT(file,onProgress);
+        const doc=draft.doc || {};
+        const transientName=String(draft.transientPatientName || '').trim();
+        const sourceScale=doc.identityContext?.patientSource==='filename'?.86:1;
+        const probes=transientName?await v15PatientProbeRecords(transientName,{qualityScale:sourceScale}):(
+            Array.isArray(doc.patientIdentityTokens)?doc.patientIdentityTokens.map(item=>({hash:item.hash,quality:Number(item.quality || 0),kind:item.kind || 'stored',relation:item.relation || v15VariantRelation(item.kind)})):[]
+        );
+        const patientByCase=v15CasesFromPatientProbes(probes);
+        const result=v15RankReportCandidates(v15EvidenceFromDocument(doc),patientByCase);
+        const existing=v15FindExistingDocument(doc);
+
+        if(existing?.match&&v15ProtectedMatch(existing.match)) {
+            doc.match=v15Clone(existing.match);
+            draft.suggestedCaseKey=doc.match.status==='linked'&&doc.match.caseRef?v15RefKey(doc.match.caseRef):'';
+            draft.suggestedMethod=doc.match.method || 'manual';
+        } else {
+            doc.match=result.proposal;
+            draft.suggestedCaseKey=result.suggestedCaseKey;
+            draft.suggestedMethod=V15_MATCH_METHOD;
+        }
+
+        doc.patientTokens=v15Unique([doc.patientToken,...probes.map(item=>item.hash)]);
+        doc.patientIdentityTokens=probes.map(item=>({hash:item.hash,quality:item.quality,kind:item.kind,relation:item.relation}));
+        doc.extraction=Object.assign({},doc.extraction || {},{matchVersion:V15_MATCH_VERSION});
+        delete doc.patientName;delete doc.privatePatientName;delete doc.filename;delete doc.sourceFilename;delete doc.transient;
+
+        if(existing&&existing.extraction?.matchVersion!==V15_MATCH_VERSION) {
+            draft.duplicate=false;
+            draft.reprocessExisting=true;
+        }
+        draft.doc=doc;
+        draft.matchCandidates=result.candidates;
+        draft.matchClassification=result.classification;
+        // `transientPatientName` remains in the in-memory review draft solely for
+        // redaction. v13ApplyPdfPreview deletes it before persistence.
+        return draft;
+    }
+
+    async function v15ReconcileDocuments({persistIfChanged=true,forceReviewNoMatch=false}={}) {
+        const documents=v15ReportDocuments();
+        let changed=0;
+        for(const doc of documents) {
+            if(v15ProtectedMatch(doc.match,{forceReviewNoMatch}))continue;
+            const priorMatchVersion=String(doc.extraction?.matchVersion || '');
+            const probes=Array.isArray(doc.patientIdentityTokens)
+                ? doc.patientIdentityTokens.filter(item=>item?.hash).map(item=>({hash:String(item.hash),quality:Number(item.quality || 0),kind:item.kind || 'stored',relation:item.relation || v15VariantRelation(item.kind)}))
+                : v15Unique([doc.patientToken,...(doc.patientTokens || [])]).map((hash,index)=>({hash,quality:index===0?1:.48,kind:index===0?'legacy_canonical':'legacy_alias',relation:index===0?'exact_token_set':'partial_token'}));
+            const result=v15RankReportCandidates(v15EvidenceFromDocument(doc),v15CasesFromPatientProbes(probes));
+            const next=v15Clone(result.proposal);
+            // Reconciliation may surface a candidate, but only the review/apply or
+            // link/relink action can confirm it.
+            if(next.status==='linked') {
+                next.status=next.classification==='probable'?'ambiguous':'pending_review';
+                next.caseRef=null;
+            }
+            const before=JSON.stringify(doc.match || {}),after=JSON.stringify(next);
+            if(before!==after) {doc.match=next;doc.updatedAt=new Date().toISOString();changed++;}
+            doc.extraction=Object.assign({},doc.extraction || {},{matchVersion:V15_MATCH_VERSION});
+            if(before===after&&priorMatchVersion!==V15_MATCH_VERSION) {doc.updatedAt=new Date().toISOString();changed++;}
+        }
+        if(changed&&persistIfChanged&&typeof v13WriteReportState==='function') {
+            if(typeof v13ReportState!=='undefined'&&Array.isArray(v13ReportState.audit)) {
+                v13ReportState.audit.push({action:'v15_matching_reconciliation',at:new Date().toISOString(),details:{reviewedOrUpdated:changed,matchVersion:V15_MATCH_VERSION},appVersion:root.APP_META?.version || '',build:root.APP_META?.build || ''});
+            }
+            await v13WriteReportState();
+        }
+        return changed;
+    }
+
+    function v15InstallMatchingOverride() {
+        if(v15Installed)return true;
+        if(typeof v13BuildPdfDraft!=='function')return false;
+        V15_BASE_BUILD_PDF_DRAFT=v13BuildPdfDraft;
+        V15_BASE_RECONCILE_DOCUMENTS=typeof v13ReconcileDocuments==='function'?v13ReconcileDocuments:null;
+        v13BuildPdfDraft=v15BuildPdfDraft;
+        v13ReconcileDocuments=v15ReconcileDocuments;
+        v15Installed=true;
+        return true;
+    }
+
+    /**
+     * Ephemeral console self-test. Patient names are deliberately not embedded.
+     * Usage after loading the app and this module:
+     *
+     *   await v15RunMatchingSelfTest({
+     *     exactName: '<transient Vitale PDF name>',
+     *     oneTokenDeltaName: '<transient Vera PDF name>'
+     *   })
+     */
+    async function v15RunMatchingSelfTest({exactName='',oneTokenDeltaName=''}={}) {
+        if(!exactName||!oneTokenDeltaName)return {ok:false,reason:'Pass both transient names; readable patient names are not embedded or persisted by this module.'};
+        const vectors=[
+            {
+                label:'exact',name:exactName,expectedCaseKey:'forms:316',
+                evidence:{reportDate:'2026-06-22',country:'Argentina',countryConfidence:'document',hospital:'Sanatorio San Gerónimo',professionals:[],professionalEmails:[],deviceCandidates:[{product:'Venus Vitae',size:'26'}]}
+            },
+            {
+                label:'one_token_delta',name:oneTokenDeltaName,expectedCaseKey:'forms:233',
+                evidence:{reportDate:'2026-03-16',country:'Chile',countryConfidence:'document',hospital:'TORAX',professionals:['Christian Dauvergne'],professionalEmails:[],deviceCandidates:[{product:'Venus Vitae',size:'26'}]}
+            }
+        ];
+        const results=[];
+        for(const vector of vectors) {
+            const probes=await v15PatientProbeRecords(vector.name);
+            const ranked=v15RankReportCandidates(vector.evidence,v15CasesFromPatientProbes(probes));
+            results.push({label:vector.label,expectedCaseKey:vector.expectedCaseKey,classification:ranked.classification,suggestedCaseKey:ranked.suggestedCaseKey,leadingCandidateKey:ranked.leadingCandidateKey,score:ranked.proposal.score,ok:ranked.suggestedCaseKey===vector.expectedCaseKey});
+        }
+        return {ok:results.every(result=>result.ok),results};
+    }
+
+    root.V15_MATCH_VERSION=V15_MATCH_VERSION;
+    root.v15ProtectedMatch=v15ProtectedMatch;
+    root.v15PatientProbeRecords=v15PatientProbeRecords;
+    root.v15CasesFromPatientProbes=v15CasesFromPatientProbes;
+    root.v15HospitalSimilarity=v15HospitalSimilarity;
+    root.v15PersonSimilarity=v15PersonSimilarity;
+    root.v15EvidenceFromDocument=v15EvidenceFromDocument;
+    root.v15RankReportCandidates=v15RankReportCandidates;
+    root.v15BuildPdfDraft=v15BuildPdfDraft;
+    root.v15ReconcileDocuments=v15ReconcileDocuments;
+    root.v15InstallMatchingOverride=v15InstallMatchingOverride;
+    root.v15RunMatchingSelfTest=v15RunMatchingSelfTest;
+
+    if(!v15InstallMatchingOverride()&&root.addEventListener) {
+        root.addEventListener('DOMContentLoaded',()=>setTimeout(v15InstallMatchingOverride,0),{once:true});
+    }
+})(typeof window!=='undefined'?window:globalThis);
+
++/*
+ * VenusMedtech LATAM Intelligence OS - report parser override
+ * Parser version: 1.5.0
+ *
+ * Integration:
+ *   V15ReportsParserOverride.install(window);
+ *
+ * The module is intentionally standalone. It can be loaded after the v1.4.0
+ * application code or required from Node for QA. It never persists a source
+ * filename or a readable patient name. Filename-derived patient hints exist
+ * only while a draft is being matched and reviewed.
+ */
+(function attachV15ReportsParserOverride(root, factory) {
+    const api = factory();
+    if (root) root.V15ReportsParserOverride = api;
+    if (typeof module === 'object' && module && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function buildV15ReportsParserOverride() {
+    'use strict';
+
+    const VERSION = '1.5.0';
+    const MAX_TEXT_DEFAULT = 120000;
+    const MAX_NON_PLANNING_PAGES_DEFAULT = 12;
+    const COUNTRY_ALIASES = Object.freeze({
+        argentina: 'Argentina', bolivia: 'Bolivia', brasil: 'Brazil', brazil: 'Brazil',
+        chile: 'Chile', colombia: 'Colombia', ecuador: 'Ecuador', mexico: 'Mexico',
+        panama: 'Panama', paraguay: 'Paraguay', peru: 'Peru', uruguay: 'Uruguay',
+        venezuela: 'Venezuela'
+    });
+    const HOSPITAL_ALIASES = Object.freeze({
+        torax: 'TORAX',
+        'sanatorio mendez': 'Sanatorio Mendez',
+        'sanatorio san geronimo': 'Sanatorio San Geronimo'
+    });
+    const HEADER_LABELS = Object.freeze([
+        'Creation Date', 'Created Date', 'Report Date', 'Received Date', 'Reviewed Date',
+        'Created By', 'Reviewed By', 'Submitted By', 'Author', 'Physician', 'Doctor',
+        'Hospital', 'Hospital Name', 'City', 'Country', 'Name', 'Patient', 'Patient Name',
+        'Height', 'Weight', 'Gender', 'Sex', 'Year Of Birth', 'BMI', 'NYHA', 'EuroSCORE II',
+        'STS Score', 'Comments', 'Distributor', 'Clinical Specialist', 'Specialist', 'Proctor'
+    ]);
+    const readCache = typeof WeakMap === 'function' ? new WeakMap() : null;
+
+    function clean(value) {
+        return value === null || value === undefined ? '' : String(value)
+            .replace(/\u00a0/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, ' ').trim();
+    }
+
+    function normalizeText(value) {
+        return clean(value).replace(/\r\n?/g, '\n')
+            .replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n')
+            .replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    function normalize(value) {
+        return clean(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function unique(values) {
+        return [...new Set((values || []).filter(value => value !== null && value !== undefined && value !== ''))];
+    }
+
+    function clone(value) {
+        if (typeof structuredClone === 'function') return structuredClone(value);
+        return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+    }
+
+    function escapeRegExp(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function validDateParts(year, month, day) {
+        const y = Number(year), m = Number(month), d = Number(day);
+        if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+        if (y < 1900 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) return false;
+        const probe = new Date(Date.UTC(y, m - 1, d));
+        return probe.getUTCFullYear() === y && probe.getUTCMonth() === m - 1 && probe.getUTCDate() === d;
+    }
+
+    function isoDate(year, month, day) {
+        if (!validDateParts(year, month, day)) return '';
+        return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function normalizeDate(value) {
+        const raw = clean(value);
+        if (!raw) return '';
+        let match = raw.match(/\b((?:19|20)\d{2})[/.\-](\d{1,2})[/.\-](\d{1,2})\b/);
+        if (match) return isoDate(match[1], match[2], match[3]);
+        match = raw.match(/\b(\d{1,2})[/.\-](\d{1,2})[/.\-]((?:19|20)\d{2})\b/);
+        if (match) return isoDate(match[3], match[2], match[1]);
+        return '';
+    }
+
+    function daysBetween(left, right) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(left || '') || !/^\d{4}-\d{2}-\d{2}$/.test(right || '')) return null;
+        return Math.round((Date.parse(`${right}T00:00:00Z`) - Date.parse(`${left}T00:00:00Z`)) / 86400000);
+    }
+
+    function normalizeCountry(value) {
+        const key = normalize(value);
+        return COUNTRY_ALIASES[key] || '';
+    }
+
+    function countryFromFilename(fileName) {
+        const key = normalize(fileName);
+        for (const [token, country] of Object.entries(COUNTRY_ALIASES)) {
+            if (new RegExp(`(?:^| )${escapeRegExp(token)}(?: |$)`).test(key)) {
+                return { value: country, source: 'filename_hint', confidence: 'low' };
+            }
+        }
+        return { value: '', source: 'unknown', confidence: 'none' };
+    }
+
+    function normalizeHospital(value) {
+        const raw = clean(value).replace(/\s+/g, ' ').replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '');
+        const key = normalize(raw);
+        if (!raw || !key || /^\d+$/.test(key) || /^(?:na|n a|none|unknown|hospital|admin|administrator)$/.test(key)) return '';
+        if (COUNTRY_ALIASES[key]) return '';
+        return HOSPITAL_ALIASES[key] || raw;
+    }
+
+    function normalizeProfessional(value) {
+        const raw = clean(value).replace(/\s+/g, ' ').replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '');
+        const key = normalize(raw);
+        if (!raw || /^\d+$/.test(key) || /^(?:admin|administrator|administrador|administrador admin admin|unknown|na|n a)$/.test(key)) return '';
+        return raw;
+    }
+
+    function nextHeaderPattern() {
+        return HEADER_LABELS.map(escapeRegExp).sort((a, b) => b.length - a.length).join('|');
+    }
+
+    function sameLineLabelValue(text, labels, maxLength) {
+        const labelPattern = (labels || []).map(label => `(?:${label})`).join('|');
+        const stopPattern = nextHeaderPattern();
+        const expression = new RegExp(`(?:^|\\s)(?:${labelPattern})\\s*:\\s*`, 'i');
+        for (const sourceLine of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
+            const line = clean(sourceLine);
+            const match = expression.exec(line);
+            if (!match) continue;
+            let tail = line.slice(match.index + match[0].length, match.index + match[0].length + (maxLength || 180));
+            const next = new RegExp(`\\s+(?:${stopPattern})\\s*:`, 'i').exec(tail);
+            if (next) tail = tail.slice(0, next.index);
+            const value = clean(tail).replace(/[.;,\s]+$/g, '');
+            if (value) return value;
+        }
+        return '';
+    }
+
+    function labelledDate(text, labels) {
+        const labelPattern = (labels || []).map(label => `(?:${label})`).join('|');
+        const expression = new RegExp(`(?:${labelPattern})\\s*:\\s*((?:19|20)\\d{2}[/.\\-]\\d{1,2}[/.\\-]\\d{1,2}|\\d{1,2}[/.\\-]\\d{1,2}[/.\\-](?:19|20)\\d{2})`, 'i');
+        const match = String(text || '').match(expression);
+        return normalizeDate(match ? match[1] : '');
+    }
+
+    function extractReportDates(text) {
+        const source = normalizeText(text);
+        const creationDate = labelledDate(source, ['Creation Date', 'Created Date', 'Report Date']);
+        const receivedDate = labelledDate(source, ['Received Date']);
+        const reviewedDate = labelledDate(source, ['Reviewed Date', 'Review Date']);
+        const scanMatch = source.match(/\b(?:CT\s+scan\s+time|CT\s+date|Imaging\s+Date|Imaging\s+Dataset\(s\)\s+Reviewed)\s*:?\s*((?:19|20)\d{2}[/.\-]\d{1,2}[/.\-]\d{1,2}|\d{1,2}[/.\-]\d{1,2}[/.\-](?:19|20)\d{2})/i);
+        const narrativeMatch = source.match(/(?:^|\n)\s*(\d{1,2}[/.\-]\d{1,2}[/.\-](?:19|20)\d{2})\s+(?:PD|MD|Comments?|Plan)\b/i);
+        const scanDate = normalizeDate(scanMatch ? scanMatch[1] : '');
+        const narrativeDate = normalizeDate(narrativeMatch ? narrativeMatch[1] : '');
+        let primaryDate = reviewedDate || receivedDate || creationDate || narrativeDate || '';
+        let primarySource = reviewedDate ? 'reviewed_date' : receivedDate ? 'received_date' : creationDate ? 'creation_date' : narrativeDate ? 'narrative_date' : 'unknown';
+        const gap = creationDate && reviewedDate ? Math.abs(daysBetween(reviewedDate, creationDate)) : null;
+        return { creationDate, receivedDate, reviewedDate, scanDate, narrativeDate, primaryDate, primarySource, dateGapDays: gap };
+    }
+
+    function cleanPatientName(value) {
+        const candidate = clean(value)
+            .replace(/\s+(?:Height|NYHA|Gender|Sex|Weight|BMI|EuroSCORE|STS\s*Score|Year\s+Of\s+Birth)\s*:.*$/i, '')
+            .replace(/[、，]/g, ',').replace(/\s+/g, ' ')
+            .replace(/^[,;:\-\s]+|[,;:\-\s]+$/g, '').trim();
+        if (!candidate || candidate.length > 120 || /\d/.test(candidate)) return '';
+        const words = candidate.replace(/[,;]+/g, ' ').split(/\s+/).filter(Boolean);
+        if (words.length < 2 || words.length > 12) return '';
+        if (!words.every(word => /^[A-Za-zÀ-ÖØ-öø-ÿ'’.\-]+$/.test(word))) return '';
+        return candidate.replace(/[,;]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function extractDocumentPatientName(text) {
+        const source = String(text || '').replace(/\r\n?/g, '\n');
+        const patientStart = source.search(/Patient\s+Information/i);
+        const scoped = patientStart >= 0 ? source.slice(patientStart, patientStart + 1800) : source.slice(0, 2500);
+        const lines = scoped.split('\n');
+        const labelExpression = /\b(?:(?:Patient\s+)?Name|Paciente|Nombre)\s*:\s*/i;
+        const stopExpression = /\b(?:Height|NYHA|Gender|Sex|Weight|BMI|EuroSCORE|STS\s*Score|Year\s+Of\s+Birth|Comments?)\s*:/i;
+        for (let index = 0; index < lines.length; index += 1) {
+            const label = labelExpression.exec(lines[index]);
+            if (!label) continue;
+            let tail = lines[index].slice(label.index + label[0].length);
+            const sameLineStop = stopExpression.exec(tail);
+            if (sameLineStop) tail = tail.slice(0, sameLineStop.index);
+            const pieces = [];
+            if (clean(tail)) pieces.push(clean(tail));
+            for (let next = index + 1; next < Math.min(lines.length, index + 5); next += 1) {
+                let continuation = clean(lines[next]);
+                if (!continuation) continue;
+                const stop = stopExpression.exec(continuation);
+                if (stop && stop.index === 0) break;
+                if (stop) continuation = continuation.slice(0, stop.index);
+                continuation = clean(continuation);
+                if (!continuation || /\b(?:Report\s+Details|Patient\s+Information|Aortic\s+Valve)\b/i.test(continuation)) break;
+                if (!cleanPatientName(continuation) && !/^[A-Za-zÀ-ÖØ-öø-ÿ'’.,;\-]+(?:\s+[A-Za-zÀ-ÖØ-öø-ÿ'’.,;\-]+){0,4}$/.test(continuation)) break;
+                pieces.push(continuation);
+                if (stop) break;
+            }
+            const candidate = cleanPatientName(pieces.join(' '));
+            if (candidate) return candidate;
+        }
+        return '';
+    }
+
+    function patientNameHintFromFilename(fileName) {
+        let candidate = clean(fileName).replace(/\.pdf$/i, '')
+            .replace(/^\d{8}(?:[ _-]?\d{6})?[ _-]+/, '')
+            .replace(/^(?:argentina|bolivia|brasil|brazil|chile|colombia|ecuador|mexico|méxico|panama|panamá|paraguay|peru|perú|uruguay|venezuela)[ _-]+/i, '')
+            .replace(/(?:[ _-]+(?:new|copy|final|rev(?:ision)?\s*\d*|v\s*\d+))$/i, '')
+            .replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
+        const generic = normalize(candidate);
+        if (!candidate || /\b(?:venus|solaci|livecase|report|planning|template|proforma|case id)\b/.test(generic) || /\d{5,}/.test(candidate)) return '';
+        return cleanPatientName(candidate);
+    }
+
+    function detectReportFamily(text) {
+        const source = normalizeText(text);
+        if (/3mensio\s+Structural\s+Heart\s+10\.4/i.test(source)) return '3mensio_10_4';
+        if (/3mensio\s+Structural\s+Heart\s+10\.2/i.test(source)) return '3mensio_10_2';
+        if (/3mensio\s+Structural\s+Heart|Patient\s+Information[\s\S]{0,1000}Aortic\s+Valve/i.test(source)) return '3mensio';
+        if (/PRE[- ]IMPLANTATION\s+PLANNING/i.test(source) && /Venus\s*[- ]?P\b|RVOT|MPA/i.test(source)) return 'venus_p_preimplantation';
+        return 'other';
+    }
+
+    function detectFamily(value) {
+        const key = normalize(value).replace(/\s+/g, '');
+        if (/powerx|^px/.test(key)) return 'Venus PowerX';
+        if (/vitae|^ab/.test(key)) return 'Venus Vitae';
+        if (/pvalve|venusp/.test(key)) return 'Venus P-Valve';
+        if (/venusapro|apro/.test(key)) return 'VenusA-Pro';
+        if (/venusaplus|aplus/.test(key)) return 'VenusA-Plus';
+        if (/venusa|^l\d*/.test(key)) return 'Venus-A';
+        return '';
+    }
+
+    function roleForOption(section, matchIndex, matchEnd, ordinal) {
+        const before = section.slice(Math.max(0, matchIndex - 100), matchIndex).toLowerCase();
+        const after = section.slice(matchEnd, Math.min(section.length, matchEnd + 70)).toLowerCase();
+        const option = before.match(/option\s*([12])\s*:\s*[^:]{0,100}$/i);
+        if (option) return `option_${option[1]}`;
+        if (/(?:back\s*up|backup)\s*:?\s*$/.test(before) || /^\s*(?:as\s+)?(?:back\s*up|backup)\b/.test(after)) return 'backup';
+        if (/(?:first\s+recommendation|primary(?:\s+recommendation)?|recommend(?:ed)?)\s*:?\s*$/.test(before)) return 'primary';
+        return ordinal === 0 ? 'primary' : 'candidate';
+    }
+
+    function optionSentence(section, start, end) {
+        let left = section.lastIndexOf('.', start - 1);
+        let newline = section.lastIndexOf('\n', start - 1);
+        left = Math.max(left, newline, -1) + 1;
+        let rightPeriod = section.indexOf('.', end);
+        let rightNewline = section.indexOf('\n', end);
+        const rights = [rightPeriod, rightNewline].filter(value => value >= 0);
+        const right = rights.length ? Math.min(...rights) : Math.min(section.length, end + 180);
+        return clean(section.slice(left, right)).replace(/\s+/g, ' ').slice(0, 260);
+    }
+
+    function extractOptionsForFamily(section, family) {
+        const result = [];
+        const addMatches = (expression, labelFactory, forcedFamily) => {
+            let match, ordinal = result.length;
+            while ((match = expression.exec(section))) {
+                const label = labelFactory(match);
+                if (!label) continue;
+                const role = roleForOption(section, match.index, expression.lastIndex, ordinal++);
+                const item = {
+                    label,
+                    family: forcedFamily || family || detectFamily(label),
+                    role,
+                    note: optionSentence(section, match.index, expression.lastIndex)
+                };
+                const previous = result.find(existing => existing.label === item.label && existing.family === item.family);
+                if (!previous) result.push(item);
+                else if (previous.role === 'candidate' && item.role !== 'candidate') Object.assign(previous, item);
+            }
+        };
+        if (!family || family === 'Venus PowerX') addMatches(/\bPowerX\s*[- ]?\s*(\d{2})\b/gi, match => `PowerX${Number(match[1])}`, 'Venus PowerX');
+        if (!family || family === 'Venus Vitae') addMatches(/\b(?:Vitae\s*)?AB\s*[- ]?\s*(\d{2})\b/gi, match => `AB${Number(match[1])}`, 'Venus Vitae');
+        if (!family || family === 'Venus-A') addMatches(/\bL\s*[- ]?\s*(\d{2})\b/gi, match => `L${Number(match[1])}`, 'Venus-A');
+        if (!family || family === 'Venus P-Valve') {
+            addMatches(/\bVenus\s*[- ]?P\s+(\d{2})(?:\s*[-/]\s*(\d{2}))?/gi,
+                match => match[2] ? `Venus-P ${Number(match[1])}-${Number(match[2])}` : `Venus-P ${Number(match[1])}`, 'Venus P-Valve');
+            addMatches(/\b(\d{2})\s*[-/]\s*(\d{2})\b/gi,
+                match => `Venus-P ${Number(match[1])}-${Number(match[2])}`, 'Venus P-Valve');
+            addMatches(/\b(\d{2})\s*mm\s+length\b/gi,
+                match => `Venus-P ${Number(match[1])}mm length`, 'Venus P-Valve');
+        }
+        return result;
+    }
+
+    function recommendationSections(text) {
+        const source = normalizeText(text).replace(/[、，]/g, ',').replace(/[（]/g, '(').replace(/[）]/g, ')');
+        const sections = [];
+        const familyNarrative = /(?:^|\n)\s*For\s+(PowerX|Vitae|Venus\s*A(?:\s*[- ]?\s*(?:Pro|Plus))?|Venus\s*P(?:\s*[- ]?\s*Valve)?)\s*,?\s*([\s\S]{1,900}?)(?=(?:\n\s*For\s+(?:PowerX|Vitae|Venus\s*A|Venus\s*P)\b)|(?:\n\s*Aortic\s+Valve\b)|$)/gi;
+        let match;
+        while ((match = familyNarrative.exec(source))) {
+            const raw = clean(`For ${match[1]}, ${match[2]}`).replace(/\s+/g, ' ').replace(/[\s.]+$/g, '');
+            if (raw) sections.push({ family: detectFamily(match[1]), raw });
+        }
+        const venusA = source.match(/Venus\s*[- ]?A\s+valve\s+(?:first\s+)?recommendation\s*:\s*([\s\S]{1,400}?)(?=(?:\n\s*This\s+report)|(?:\n\s*Aortic\s+Valve)|$)/i);
+        if (venusA) sections.push({ family: 'Venus-A', raw: clean(`Venus-A valve recommendation: ${venusA[1]}`).replace(/\s+/g, ' ') });
+        const pulmonary = source.match(/Suitable\s+case\s+for\s+Venus\s*[- ]?P\s+([^.\n]{1,240})/i);
+        if (pulmonary) sections.push({ family: 'Venus P-Valve', raw: clean(`Suitable case for Venus-P ${pulmonary[1]}`).replace(/\s+/g, ' ') });
+        const deduped = [];
+        sections.forEach(section => {
+            const key = `${section.family}|${normalize(section.raw)}`;
+            if (!deduped.some(item => item.key === key)) deduped.push(Object.assign({ key }, section));
+        });
+        return deduped;
+    }
+
+    function detectStrategies(value) {
+        const key = normalize(value);
+        const strategies = [];
+        const tests = [
+            ['pre-dilatation', /pre dilat|predilat|pre balloon/],
+            ['post-dilatation', /post dilat|postdilat|post balloon/],
+            ['balloon sizing', /balloon sizing|sizing balloon|balloon test|test invasively/],
+            ['coronary protection/testing', /coronary protection|protect coronary|confirm coronary|coronary test/],
+            ['alternative access', /alternative access|left femoral|right femoral|rpa|lpa/]
+        ];
+        tests.forEach(([label, expression]) => { if (expression.test(key)) strategies.push(label); });
+        return strategies;
+    }
+
+    function parseMultipleRecommendations(text, fallback) {
+        const sections = recommendationSections(text);
+        const alternatives = [];
+        sections.forEach(section => {
+            const options = extractOptionsForFamily(section.raw, section.family);
+            alternatives.push({
+                family: section.family,
+                rawRedacted: section.raw,
+                options
+            });
+        });
+        let candidates = alternatives.flatMap(item => item.options);
+        const fallbackOptions = Array.isArray(fallback && fallback.options) ? fallback.options : [];
+        if (!candidates.length && fallbackOptions.length) {
+            candidates = fallbackOptions.map((label, index) => ({
+                label: clean(label), family: detectFamily(label) || clean(fallback.valveFamily),
+                role: index === 0 ? 'primary' : 'candidate', note: ''
+            })).filter(item => item.label);
+            const families = unique(candidates.map(item => item.family));
+            families.forEach(family => alternatives.push({
+                family,
+                rawRedacted: clean(fallback.rawRedacted || fallback.raw || ''),
+                options: candidates.filter(item => item.family === family)
+            }));
+        }
+        const options = unique(candidates.map(item => item.label));
+        const families = unique(candidates.map(item => item.family).filter(Boolean));
+        const rawRedacted = sections.length ? sections.map(item => item.raw).join('. ') : clean(fallback && (fallback.rawRedacted || fallback.raw));
+        const strategies = unique([...(fallback && fallback.strategies || []), ...detectStrategies(rawRedacted)]);
+        return {
+            rawRedacted,
+            valveFamily: families.length === 1 ? families[0] : '',
+            options,
+            strategies,
+            alternatives,
+            candidates,
+            primaryOptions: candidates.filter(item => item.role === 'primary' || item.role === 'option_1').map(item => item.label),
+            backupOptions: candidates.filter(item => item.role === 'backup' || item.role === 'option_2').map(item => item.label),
+            sourceLabel: sections.length > 1 ? 'Multi-family narrative recommendations' : clean(fallback && fallback.sourceLabel) || 'Narrative recommendation'
+        };
+    }
+
+    function safeHeaderContext(text, fileName) {
+        const documentCountry = normalizeCountry(sameLineLabelValue(text, ['Country', 'Pa[ií]s'], 80));
+        const filenameCountry = countryFromFilename(fileName);
+        const country = documentCountry || filenameCountry.value || '';
+        return {
+            country,
+            countryConfidence: documentCountry ? 'document' : filenameCountry.confidence,
+            countrySource: documentCountry ? 'document' : filenameCountry.source,
+            hospital: normalizeHospital(sameLineLabelValue(text, ['Hospital', 'Hospital Name'], 180)),
+            city: clean(sameLineLabelValue(text, ['City', 'Ciudad', 'Cidade'], 100)).replace(/[.;,\s]+$/g, ''),
+            physician: normalizeProfessional(sameLineLabelValue(text, ['Physician', 'Doctor', 'M[eé]dico', 'Operator', 'Implanter'], 160)),
+            createdBy: normalizeProfessional(sameLineLabelValue(text, ['Created By', 'Submitted By', 'Reviewed By', 'Author'], 160))
+        };
+    }
+
+    function enhanceParsed(baseParsed, text, meta) {
+        const parsed = clone(baseParsed || {});
+        const options = meta || {};
+        const documentPatientName = extractDocumentPatientName(text) || clean(parsed && parsed.transient && parsed.transient.patientName);
+        const filenameHint = documentPatientName ? '' : patientNameHintFromFilename(options.fileName || '');
+        const effectiveTransientName = documentPatientName || filenameHint;
+        const reportFamily = detectReportFamily(text);
+        const dates = extractReportDates(text);
+        const context = safeHeaderContext(text, options.fileName || '');
+        const recommendation = parseMultipleRecommendations(text, parsed.recommendation || {});
+
+        parsed.parserVersion = VERSION;
+        parsed.reportFamily = reportFamily;
+        parsed.transient = Object.assign({}, parsed.transient || {}, {
+            patientName: effectiveTransientName,
+            patientNameHint: filenameHint,
+            patientNameSource: documentPatientName ? 'document' : filenameHint ? 'filename_hint' : 'unknown'
+        });
+        if (dates.primaryDate) parsed.reportDate = dates.primaryDate;
+        parsed.recommendation = recommendation;
+        parsed.structuredFields = Object.assign({}, parsed.structuredFields || {}, {
+            reportDates: dates,
+            reportFamily
+        });
+        parsed.identityContext = Object.assign({}, parsed.identityContext || {}, context, {
+            patientSource: documentPatientName ? 'document' : filenameHint ? 'filename_hint' : 'unknown'
+        });
+        delete parsed.identityContext.patientName;
+        delete parsed.identityContext.patientNameHint;
+        parsed.extraction = Object.assign({}, parsed.extraction || {});
+        parsed.extraction.warnings = unique([...(parsed.extraction.warnings || []),
+            ...(dates.dateGapDays !== null && dates.dateGapDays > 30 ? [`Creation and review dates differ by ${dates.dateGapDays} days; review date is used as the planning episode date.`] : []),
+            ...(reportFamily === 'venus_p_preimplantation' && !documentPatientName ? ['Venus-P planning document has no patient identifier; manual linking is required.'] : [])
+        ]);
+        return parsed;
+    }
+
+    function itemFontSize(item) {
+        return Math.max(Math.abs(Number(item && item.transform && item.transform[3]) || 0), Number(item && item.height) || 0, 8);
+    }
+
+    function pageTextFromItems(content) {
+        const items = (content && content.items || []).map((item, index) => ({
+            str: String(item && item.str || ''),
+            x: Number(item && item.transform && item.transform[4]) || 0,
+            y: Number(item && item.transform && item.transform[5]) || 0,
+            width: Number(item && item.width) || 0,
+            fontSize: itemFontSize(item),
+            index
+        })).filter(item => item.str && !/^\s+$/.test(item.str));
+        const rows = [];
+        items.sort((left, right) => right.y - left.y || left.x - right.x || left.index - right.index);
+        items.forEach(item => {
+            let row = rows.find(candidate => Math.abs(candidate.y - item.y) <= Math.max(1.6, Math.min(candidate.fontSize, item.fontSize) * 0.28));
+            if (!row) {
+                row = { y: item.y, fontSize: item.fontSize, items: [] };
+                rows.push(row);
+            }
+            row.items.push(item);
+            row.y = (row.y * (row.items.length - 1) + item.y) / row.items.length;
+            row.fontSize = Math.max(row.fontSize, item.fontSize);
+        });
+        rows.sort((left, right) => right.y - left.y);
+        return rows.map(row => {
+            const sorted = row.items.sort((left, right) => left.x - right.x || left.index - right.index);
+            let output = '', previous = null;
+            sorted.forEach(item => {
+                if (previous && output && !/[\s\n]$/.test(output) && !/^[,.;:)]/.test(item.str)) {
+                    const gap = item.x - (previous.x + previous.width);
+                    if (gap > Math.max(0.8, Math.min(previous.fontSize, item.fontSize) * 0.14)) output += ' ';
+                }
+                output += item.str;
+                previous = item;
+            });
+            return output.trim();
+        }).filter(Boolean).join('\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    async function sha256Hex(buffer, runtime) {
+        if (runtime && typeof runtime.sha256Buffer === 'function') return runtime.sha256Buffer(buffer);
+        const cryptoObject = runtime && runtime.crypto || (typeof crypto !== 'undefined' ? crypto : null);
+        if (cryptoObject && cryptoObject.subtle) {
+            const digest = await cryptoObject.subtle.digest('SHA-256', buffer);
+            return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
+        }
+        let hash = 2166136261;
+        for (const value of new Uint8Array(buffer)) hash = Math.imul(hash ^ value, 16777619) >>> 0;
+        return hash.toString(16).padStart(8, '0').repeat(8);
+    }
+
+    async function pageText(pdf, pageNumber, onProgress) {
+        let page = null;
+        try {
+            onProgress(`Reading text layer - page ${pageNumber}/${pdf.numPages}`);
+            page = await pdf.getPage(pageNumber);
+            return pageTextFromItems(await page.getTextContent());
+        } finally {
+            try { if (page && typeof page.cleanup === 'function') page.cleanup(); } catch (error) { /* no-op */ }
+        }
+    }
+
+    async function readPdfText(file, onProgress, runtime) {
+        const progress = typeof onProgress === 'function' ? onProgress : function noop() {};
+        const env = runtime || {};
+        const pdfjs = env.pdfjsLib || (typeof globalThis !== 'undefined' ? globalThis.pdfjsLib : null);
+        if (!pdfjs || typeof pdfjs.getDocument !== 'function') throw new Error('PDF reader is unavailable.');
+        let pdf = null, loadingTask = null;
+        try {
+            const buffer = await file.arrayBuffer();
+            const sha256 = await sha256Hex(buffer, env);
+            loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
+            pdf = await loadingTask.promise;
+            const firstText = await pageText(pdf, 1, progress);
+            const firstFamily = detectReportFamily(firstText);
+            const firstRecommendations = parseMultipleRecommendations(firstText, {});
+            const firstPatient = extractDocumentPatientName(firstText);
+            const is3mensio = /^3mensio/.test(firstFamily);
+            const maxText = Number(env.maxText || MAX_TEXT_DEFAULT);
+            const maxNonPlanningPages = Math.max(1, Number(env.maxNonPlanningPages || MAX_NON_PLANNING_PAGES_DEFAULT));
+            const texts = [firstText];
+            let targetedRead = is3mensio;
+            let pageLimit = is3mensio ? 1 : Math.min(pdf.numPages, maxNonPlanningPages);
+            if (is3mensio && (!firstPatient || !firstRecommendations.options.length) && pdf.numPages > 1) pageLimit = 2;
+            for (let pageNumber = 2; pageNumber <= pageLimit && texts.join('\n').length < maxText; pageNumber += 1) {
+                texts.push(await pageText(pdf, pageNumber, progress));
+            }
+            let combined = texts.join('\n\n');
+            let extractionMode = 'text';
+            let pagesRead = texts.length;
+            let usable = combined.replace(/\s/g, '').length >= 120;
+            if (!usable && typeof env.ocrPdfPages === 'function') {
+                progress('No usable text layer - starting local OCR');
+                const ocr = await env.ocrPdfPages(pdf, progress, { maxPages: is3mensio ? 1 : pageLimit });
+                combined = clean(ocr && ocr.text);
+                pagesRead = Number(ocr && ocr.pagesRead || 0);
+                extractionMode = 'ocr';
+                targetedRead = is3mensio;
+                usable = combined.replace(/\s/g, '').length >= 120;
+            }
+            if (!usable) throw new Error('PDF has no usable text layer and OCR did not return usable text.');
+            const text = combined.slice(0, maxText);
+            const result = {
+                text,
+                sha256,
+                pageCount: pdf.numPages,
+                pagesRead,
+                extractionMode,
+                extractionIncomplete: targetedRead ? false : pagesRead < pdf.numPages || combined.length > maxText,
+                targetedRead,
+                indexScope: targetedRead ? 'planning_identity_and_recommendation' : 'document_text',
+                reportFamily: detectReportFamily(text)
+            };
+            if (readCache && file && typeof file === 'object') readCache.set(file, result);
+            return result;
+        } finally {
+            try {
+                if (pdf && typeof pdf.destroy === 'function') await pdf.destroy();
+                else if (loadingTask && typeof loadingTask.destroy === 'function') await loadingTask.destroy();
+            } catch (error) { /* resource cleanup must not mask the parsing result/error */ }
+        }
+    }
+
+    function sanitizePersistedDocument(document) {
+        const doc = clone(document || {});
+        delete doc.patientName;
+        delete doc.patientNameHint;
+        delete doc.filename;
+        delete doc.fileName;
+        delete doc.sourceFilename;
+        delete doc.transient;
+        if (doc.source) {
+            delete doc.source.filename;
+            delete doc.source.fileName;
+            delete doc.source.originalName;
+        }
+        if (doc.identityContext) {
+            delete doc.identityContext.patientName;
+            delete doc.identityContext.patientNameHint;
+            delete doc.identityContext.filename;
+            delete doc.identityContext.fileName;
+        }
+        if (doc.matchHints) {
+            delete doc.matchHints.patientName;
+            delete doc.matchHints.patientNameHint;
+            delete doc.matchHints.filename;
+            delete doc.matchHints.fileName;
+        }
+        return doc;
+    }
+
+    function strongPatientTokens(doc) {
+        const records = Array.isArray(doc && doc.patientIdentityTokens) ? doc.patientIdentityTokens : [];
+        const strong = records.filter(item => Number(item && item.quality || 0) >= 0.85).map(item => clean(item.hash));
+        if (!strong.length && clean(doc && doc.patientToken)) strong.push(clean(doc.patientToken));
+        return unique(strong);
+    }
+
+    function reportDatesForRevision(doc) {
+        const fields = doc && doc.extraction && doc.extraction.structuredFields || {};
+        const dates = fields.reportDates || {};
+        return {
+            creationDate: normalizeDate(dates.creationDate || ''),
+            receivedDate: normalizeDate(dates.receivedDate || ''),
+            reviewedDate: normalizeDate(dates.reviewedDate || ''),
+            reportDate: normalizeDate(doc && doc.reportDate || dates.primaryDate || '')
+        };
+    }
+
+    function samePlanningEpisode(left, right) {
+        if (!left || !right || clean(left.type) !== clean(right.type)) return false;
+        const leftTokens = new Set(strongPatientTokens(left));
+        if (!strongPatientTokens(right).some(token => leftTokens.has(token))) return false;
+        const a = reportDatesForRevision(left), b = reportDatesForRevision(right);
+        if (a.reviewedDate && b.reviewedDate && a.reviewedDate === b.reviewedDate) return true;
+        if (a.receivedDate && b.receivedDate && a.receivedDate === b.receivedDate) return true;
+        if (a.reportDate && b.reportDate && a.reportDate === b.reportDate) return true;
+        const dateA = a.creationDate || a.reportDate, dateB = b.creationDate || b.reportDate;
+        const gap = dateA && dateB ? Math.abs(daysBetween(dateA, dateB)) : null;
+        if (gap === null || gap > 7) return false;
+        const countryA = normalize(left.identityContext && left.identityContext.country || left.country && left.country.value || '');
+        const countryB = normalize(right.identityContext && right.identityContext.country || right.country && right.country.value || '');
+        const hospitalA = normalize(left.identityContext && left.identityContext.hospital || '');
+        const hospitalB = normalize(right.identityContext && right.identityContext.hospital || '');
+        return Boolean((countryA && countryA === countryB) || (hospitalA && hospitalA === hospitalB));
+    }
+
+    function recommendationSignature(doc) {
+        const recommendation = doc && doc.recommendation || {};
+        const alternatives = Array.isArray(recommendation.alternatives) ? recommendation.alternatives : [];
+        return normalize([
+            recommendation.valveFamily,
+            ...(recommendation.options || []),
+            ...alternatives.flatMap(item => [item.family, ...(item.options || []).map(option => `${option.label}:${option.role}`)])
+        ].join('|'));
+    }
+
+    function stableHash(value) {
+        let hash = 2166136261;
+        for (const character of String(value || '')) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619) >>> 0;
+        return hash.toString(16).padStart(8, '0');
+    }
+
+    function revisionSortValue(doc) {
+        const dates = reportDatesForRevision(doc);
+        return dates.creationDate || dates.reviewedDate || dates.receivedDate || dates.reportDate || clean(doc && doc.source && doc.source.importedAt);
+    }
+
+    function annotateRevisionDocuments(documents) {
+        const docs = documents || [];
+        const visited = new Set();
+        for (let index = 0; index < docs.length; index += 1) {
+            if (visited.has(index)) continue;
+            const seed = docs[index];
+            const seedSha = clean(seed && seed.source && seed.source.fileSha256);
+            if (!seedSha || !strongPatientTokens(seed).length) continue;
+            const groupIndexes = [index];
+            for (let other = index + 1; other < docs.length; other += 1) {
+                const candidate = docs[other];
+                const candidateSha = clean(candidate && candidate.source && candidate.source.fileSha256);
+                if (!candidateSha || candidateSha === seedSha) continue;
+                if (samePlanningEpisode(seed, candidate)) groupIndexes.push(other);
+            }
+            if (groupIndexes.length < 2) continue;
+            groupIndexes.forEach(item => visited.add(item));
+            const group = groupIndexes.map(item => docs[item]).sort((left, right) =>
+                revisionSortValue(left).localeCompare(revisionSortValue(right)) ||
+                clean(left.source && left.source.fileSha256).localeCompare(clean(right.source && right.source.fileSha256))
+            );
+            const episodeDate = reportDatesForRevision(group[0]).reviewedDate || reportDatesForRevision(group[0]).receivedDate || reportDatesForRevision(group[0]).reportDate;
+            const groupKey = `revision-${stableHash(`${strongPatientTokens(group[0]).sort().join('|')}|${group[0].type}|${episodeDate}`)}`;
+            group.forEach((doc, position) => {
+                const previous = position ? group[position - 1] : null;
+                doc.revision = {
+                    groupKey,
+                    revisionIndex: position + 1,
+                    revisionCount: group.length,
+                    relation: position ? 'revision' : 'original',
+                    isLatest: position === group.length - 1,
+                    supersedesDocumentId: previous && previous.documentId || '',
+                    recommendationChanged: Boolean(previous && recommendationSignature(previous) !== recommendationSignature(doc)),
+                    detectedBy: 'private_patient_token_and_planning_episode',
+                    preserveAllVersions: true
+                };
+            });
+        }
+        return docs;
+    }
+
+    function appDocuments(root) {
+        if (root && root.v13ReportState && Array.isArray(root.v13ReportState.documents)) return root.v13ReportState.documents;
+        try {
+            if (typeof v13ReportState !== 'undefined' && Array.isArray(v13ReportState.documents)) return v13ReportState.documents;
+        } catch (error) { /* not installed inside the application scope */ }
+        return [];
+    }
+
+    function prepareRevisionDrafts(drafts, existingDocuments) {
+        const draftList = (drafts || []).filter(item => item && item.doc);
+        const existingClones = (existingDocuments || []).map(clone);
+        const draftClones = draftList.map(item => clone(item.doc));
+        const combined = [...existingClones, ...draftClones];
+        annotateRevisionDocuments(combined);
+        const offset = existingClones.length;
+        draftList.forEach((draft, index) => {
+            const annotated = combined[offset + index];
+            draft.doc.revision = annotated.revision;
+        });
+
+        const byRevisionGroup = new Map();
+        draftList.forEach(draft => {
+            const key = draft.doc.revision && draft.doc.revision.groupKey;
+            if (!key) return;
+            if (!byRevisionGroup.has(key)) byRevisionGroup.set(key, []);
+            byRevisionGroup.get(key).push(draft);
+        });
+        byRevisionGroup.forEach(group => {
+            if (group.length < 2) return;
+            group.sort((left, right) => revisionSortValue(left.doc).localeCompare(revisionSortValue(right.doc)));
+            const mergeIds = unique(group.map(item => clean(item.mergeDocumentId)).filter(Boolean));
+            group.forEach(item => {
+                const sha = clean(item.doc.source && item.doc.source.fileSha256);
+                if (sha) item.doc.documentId = `report-${sha.slice(0, 24)}`;
+                item.mergeDocumentId = '';
+            });
+            const latest = group[group.length - 1];
+            if (mergeIds.length === 1) latest.mergeDocumentId = mergeIds[0];
+        });
+        // Document IDs may have changed above to prevent two PDF revisions from
+        // replacing each other. Recompute the relationships so supersedesDocumentId
+        // always points to the preserved prior PDF version, never to the metadata
+        // record that the latest revision may enrich/remove.
+        const finalCombined = [...existingClones.map(clone), ...draftList.map(item => clone(item.doc))];
+        annotateRevisionDocuments(finalCombined);
+        draftList.forEach((draft, index) => {
+            draft.doc.revision = finalCombined[existingClones.length + index].revision;
+        });
+        return drafts;
+    }
+
+    function install(root) {
+        if (!root || root.__v15ReportsParserOverrideInstalled) return root && root.V15ReportsParserOverrideInstallState;
+        const baseParse = root.v13ParseReportText;
+        const baseBuild = root.v13BuildPdfDraft;
+        const basePreview = root.v13OpenPdfPreview;
+        if (typeof baseParse !== 'function') throw new Error('v1.4.0 parser was not found; load this override after the application code.');
+
+        const parseOverride = function parseOverride(text, meta) {
+            const safeMeta = Object.assign({}, meta || {}, { fileName: '' });
+            const parsed = baseParse(text, safeMeta);
+            return enhanceParsed(parsed, text, meta || {});
+        };
+
+        const readOverride = async function readOverride(file, onProgress) {
+            const runtime = {
+                pdfjsLib: root.pdfjsLib,
+                crypto: root.crypto,
+                sha256Buffer: typeof root.v12Sha256Buffer === 'function' ? root.v12Sha256Buffer : null,
+                maxText: Number(root.V13_REPORT_MAX_TEXT || MAX_TEXT_DEFAULT),
+                maxNonPlanningPages: Number(root.V13_REPORT_MAX_OCR_PAGES || MAX_NON_PLANNING_PAGES_DEFAULT),
+                ocrPdfPages: typeof root.v13OcrPdfPages === 'function' ? root.v13OcrPdfPages : null
+            };
+            return readPdfText(file, onProgress, runtime);
+        };
+
+        root.v13ParseReportText = parseOverride;
+        root.v13ReadPdfText = readOverride;
+
+        if (typeof baseBuild === 'function') {
+            root.v13BuildPdfDraft = async function buildOverride(file, onProgress) {
+                const result = await baseBuild(file, onProgress);
+                const cached = readCache && readCache.get(file);
+                if (cached && result && result.doc) {
+                    const parsed = parseOverride(cached.text, {
+                        pageCount: cached.pageCount,
+                        fileName: file && file.name || '',
+                        mode: cached.extractionMode
+                    });
+                    result.doc.recommendation = clone(parsed.recommendation || result.doc.recommendation || {});
+                    result.doc.reportDate = normalizeDate(parsed.reportDate || result.doc.reportDate || '');
+                    result.doc.identityContext = clone(parsed.identityContext || result.doc.identityContext || {});
+                    result.doc.extraction = Object.assign({}, result.doc.extraction || {}, {
+                        parserVersion: `reports-${VERSION}`,
+                        targetedRead: Boolean(cached.targetedRead),
+                        indexScope: cached.indexScope,
+                        structuredFields: clone(parsed.structuredFields || result.doc.extraction && result.doc.extraction.structuredFields || {})
+                    });
+                    result.doc = sanitizePersistedDocument(result.doc);
+                    result.doc.documentId = clean(result.doc.documentId) || `report-${clean(cached.sha256).slice(0, 24)}`;
+                    const combined = [...appDocuments(root).map(clone), result.doc];
+                    annotateRevisionDocuments(combined);
+                    result.doc.revision = combined[combined.length - 1].revision;
+                }
+                return result;
+            };
+        }
+
+        if (typeof basePreview === 'function') {
+            root.v13OpenPdfPreview = function previewOverride(drafts, failures) {
+                prepareRevisionDrafts(drafts, appDocuments(root));
+                return basePreview(drafts, failures);
+            };
+        }
+
+        root.__v15ReportsParserOverrideInstalled = true;
+        root.V15ReportsParserOverrideInstallState = {
+            version: VERSION,
+            installed: true,
+            privacy: 'filenames and readable patient names remain transient'
+        };
+        return root.V15ReportsParserOverrideInstallState;
+    }
+
+    async function runSelfTests() {
+        const assert = (condition, message) => { if (!condition) throw new Error(message); };
+        const sample = [
+            'Report Details',
+            'Creation Date: 2026/6/22 Physician: Abud Marcelo',
+            'Received Date: 2026/2/19 Hospital: Sanatorio San Geronimo',
+            'Reviewed Date: 2026/2/22 Country: Argentina',
+            'Patient Information',
+            'Name: VITALE MIRTA Height: 1.65 m',
+            'Comments:',
+            'For PowerX, recommend PowerX26, PowerX29 as backup. Pre-dilation with 20/22 can be considered.',
+            'For Vitae,',
+            'Option 1: Vitae AB23 (risk of PVL) can be considered.',
+            'Option 2: Vitae AB26 (coronary risk) can be considered.',
+            'Aortic Valve',
+            'Page 1 of 18 3mensio Structural Heart 10.2 SP1'
+        ].join('\n');
+        const parsed = enhanceParsed({ transient: {}, recommendation: {}, extraction: { warnings: [] } }, sample, { fileName: 'VITALE MIRTA.pdf' });
+        assert(parsed.transient.patientName === 'VITALE MIRTA', 'document patient name was not extracted');
+        assert(parsed.transient.patientNameHint === '', 'filename hint must not replace a document name');
+        assert(parsed.reportDate === '2026-02-22', 'review date must be the primary planning episode date');
+        assert(parsed.identityContext.country === 'Argentina', 'country normalization failed');
+        assert(parsed.identityContext.hospital === 'Sanatorio San Geronimo', 'hospital normalization failed');
+        assert(parsed.recommendation.options.join('|') === 'PowerX26|PowerX29|AB23|AB26', 'multiple recommendation options were not preserved');
+        assert(parsed.recommendation.backupOptions.includes('PowerX29') && parsed.recommendation.backupOptions.includes('AB26'), 'backup/Option 2 roles were not preserved');
+        assert(parsed.recommendation.alternatives.length === 2, 'family alternatives were not grouped');
+
+        const noPatient = enhanceParsed({ transient: {}, recommendation: {}, extraction: { warnings: [] } }, 'PRE-IMPLANTATION PLANNING\nCASE ID Venus-P_ARGENTINA_MR_SOLACI livecase x\nSuitable case for Venus-P 24 or 26-25.', { fileName: 'Venus-P_ARGENTINA_MR_SOLACI livecase x V1.pdf' });
+        assert(!noPatient.transient.patientNameHint, 'generic SOLACI filename must not become a patient name');
+
+        const baseDoc = {
+            documentId: 'report-old', type: '3mensio_planning', reportDate: '2026-03-16',
+            patientToken: 'private-hash', patientIdentityTokens: [{ hash: 'private-hash', quality: 1, kind: 'canonical' }],
+            source: { fileSha256: 'a'.repeat(64) }, identityContext: { country: 'Chile', hospital: 'TORAX' },
+            extraction: { structuredFields: { reportDates: { creationDate: '2026-03-16', receivedDate: '2026-03-16', reviewedDate: '2026-03-16' } } },
+            recommendation: { options: ['PowerX26', 'AB26'] }
+        };
+        const revisionDoc = clone(baseDoc);
+        revisionDoc.documentId = 'report-new';
+        revisionDoc.source.fileSha256 = 'b'.repeat(64);
+        revisionDoc.extraction.structuredFields.reportDates.creationDate = '2026-03-18';
+        revisionDoc.recommendation.options = ['PowerX29', 'AB26'];
+        annotateRevisionDocuments([baseDoc, revisionDoc]);
+        assert(baseDoc.revision && revisionDoc.revision, 'revision group was not detected');
+        assert(revisionDoc.revision.supersedesDocumentId === 'report-old', 'revision relationship was not preserved');
+        assert(revisionDoc.revision.recommendationChanged, 'recommendation change was not detected');
+
+        const collidingOld = clone(baseDoc), collidingNew = clone(revisionDoc);
+        collidingOld.documentId = 'tracking-record';
+        collidingNew.documentId = 'tracking-record';
+        const revisionDrafts = [
+            { doc: collidingOld, mergeDocumentId: 'tracking-record' },
+            { doc: collidingNew, mergeDocumentId: 'tracking-record' }
+        ];
+        prepareRevisionDrafts(revisionDrafts, []);
+        assert(revisionDrafts[0].doc.documentId !== revisionDrafts[1].doc.documentId, 'batch revisions must receive distinct PDF document IDs');
+        assert(!revisionDrafts[0].mergeDocumentId && revisionDrafts[1].mergeDocumentId === 'tracking-record', 'only the latest batch revision may enrich the tracking record');
+        assert(revisionDrafts[1].doc.revision.supersedesDocumentId === revisionDrafts[0].doc.documentId, 'batch revision relationship must point to the preserved PDF ID');
+
+        let destroyed = 0, pagesRequested = 0, cleaned = 0;
+        const textItems = sample.split('\n').map((line, index) => ({ str: line, transform: [1, 0, 0, 10, 20, 800 - index * 12], width: line.length * 5, height: 10 }));
+        const fakePdf = {
+            numPages: 18,
+            async getPage() {
+                pagesRequested += 1;
+                return { async getTextContent() { return { items: textItems }; }, cleanup() { cleaned += 1; } };
+            },
+            async destroy() { destroyed += 1; }
+        };
+        const fakeRuntime = {
+            pdfjsLib: { getDocument() { return { promise: Promise.resolve(fakePdf) }; } },
+            sha256Buffer: async () => 'c'.repeat(64)
+        };
+        const fakeFile = { name: 'VITALE MIRTA.pdf', async arrayBuffer() { return new Uint8Array([1, 2, 3]).buffer; } };
+        const read = await readPdfText(fakeFile, function noop() {}, fakeRuntime);
+        assert(read.targetedRead && pagesRequested === 1, '3mensio reader should index page 1 only when identity and recommendation are complete');
+        assert(destroyed === 1 && cleaned === 1, 'PDF/page resources were not always released');
+
+        let destroyedAfterFailure = 0;
+        const failingPdf = { numPages: 2, async getPage() { throw new Error('synthetic page error'); }, async destroy() { destroyedAfterFailure += 1; } };
+        let failedAsExpected = false;
+        try {
+            await readPdfText(fakeFile, function noop() {}, {
+                pdfjsLib: { getDocument() { return { promise: Promise.resolve(failingPdf) }; } },
+                sha256Buffer: async () => 'd'.repeat(64)
+            });
+        } catch (error) { failedAsExpected = /synthetic page error/.test(String(error && error.message)); }
+        assert(failedAsExpected && destroyedAfterFailure === 1, 'pdf.destroy must run after a parsing failure');
+
+        const sanitized = sanitizePersistedDocument({
+            patientName: 'PRIVATE NAME', filename: 'PRIVATE NAME.pdf', transient: { patientNameHint: 'PRIVATE NAME' },
+            source: { fileName: 'PRIVATE NAME.pdf', fileSha256: 'hash' }, identityContext: { patientNameHint: 'PRIVATE NAME', country: 'Brazil' }
+        });
+        assert(!sanitized.patientName && !sanitized.filename && !sanitized.transient && !sanitized.source.fileName && !sanitized.identityContext.patientNameHint, 'persistence privacy scrub failed');
+        return { ok: true, version: VERSION, tests: 21 };
+    }
+
+    return Object.freeze({
+        VERSION,
+        normalizeDate,
+        normalizeCountry,
+        normalizeHospital,
+        extractReportDates,
+        extractDocumentPatientName,
+        patientNameHintFromFilename,
+        detectReportFamily,
+        pageTextFromItems,
+        parseMultipleRecommendations,
+        enhanceParsed,
+        readPdfText,
+        sanitizePersistedDocument,
+        samePlanningEpisode,
+        annotateRevisionDocuments,
+        prepareRevisionDrafts,
+        install,
+        runSelfTests
+    });
+});
+
+if (typeof module === 'object' && module && module.exports && typeof require === 'function' && require.main === module) {
+    module.exports.runSelfTests().then(result => {
+        process.stdout.write(`${JSON.stringify(result)}\n`);
+    }).catch(error => {
+        process.stderr.write(`${error && error.stack || error}\n`);
+        process.exitCode = 1;
+    });
+}
+
+    V15ReportsParserOverride.install(window);
 
     initAccessGate();
 </script>
