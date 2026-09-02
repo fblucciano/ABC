@@ -11,6 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="Venus LATAM">
     <meta name="theme-color" content="#171434">
     <meta name="application-name" content="Venus LATAM">
+    <meta name="referrer" content="no-referrer">
     
     <!-- BRAND FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +19,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     
     <!-- LIBRARIES -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="vendor/xlsx.full.min.js"></script>
     <script>
 !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t=t||self).PDFLib={})}(this,(function(t){"use strict";
 /*! *****************************************************************************
@@ -85,8 +86,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
  */function n(e){return e>=65&&e<=90||95===e||e>=97&&e<=122||e>=192&&e<=214||e>=216&&e<=246||e>=248&&e<=767||e>=880&&e<=893||e>=895&&e<=8191||e>=8204&&e<=8205||e>=8304&&e<=8591||e>=11264&&e<=12271||e>=12289&&e<=55295||e>=63744&&e<=64975||e>=65008&&e<=65533||e>=65536&&e<=983039}Object.defineProperty(r,"__esModule",{value:!0}),r.NC_NAME_START_CHAR="A-Z_a-z\xc0-\xd6\xd8-\xf6\xf8-\u02ff\u0370-\u037d\u037f-\u1fff\u200c-\u200d\u2070-\u218f\u2c00-\u2fef\u3001-\ud7ff\uf900-\ufdcf\ufdf0-\ufffd\ud800\udc00-\udb7f\udfff",r.NC_NAME_CHAR="-"+r.NC_NAME_START_CHAR+".0-9\xb7\u0300-\u036f\u203f-\u2040",r.NC_NAME_START_CHAR_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]$","u"),r.NC_NAME_CHAR_RE=new RegExp("^["+r.NC_NAME_CHAR+"]$","u"),r.NC_NAME_RE=new RegExp("^["+r.NC_NAME_START_CHAR+"]["+r.NC_NAME_CHAR+"]*$","u"),r.isNCNameStartChar=n,r.isNCNameChar=function(e){return n(e)||45===e||46===e||e>=48&&e<=57||183===e||e>=768&&e<=879||e>=8255&&e<=8256}},{}]},{},[15])(15)}));
 //# sourceMappingURL=exceljs.min.js.map
 </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="vendor/pdf.min.js"></script>
+    <script src="vendor/tesseract.min.js"></script>
 <script>
 // Inlined for GitHub Pages — regenerate via scripts/inline-builtin-implants.mjs
 const APP_META = {
@@ -111,9 +112,9 @@ if (typeof window !== 'undefined') {
     window.BUILTIN_IMPLANTS_2026 = BUILTIN_IMPLANTS_2026;
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.49.0/dist/apexcharts.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="vendor/apexcharts.min.js"></script>
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+    <script src="vendor/leaflet/leaflet.js"></script>
 
     <style>
         /* VENUS BRAND MANUAL VARIABLES */
@@ -755,7 +756,7 @@ if (typeof window !== 'undefined') {
     <label id="drop-zone" for="startup-file-input">
         <div style="font-size: 50px; margin-bottom: 15px;">✅</div>
         <div style="font-size: 22px; font-weight: bold; margin-bottom: 10px;">Ready — no upload required</div>
-        <div id="startup-baseline-summary" style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">466 unique LATAM implant cases pre-loaded · 40 LATAM clinical problem cases</div>
+        <div id="startup-baseline-summary" style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">Authenticated LATAM dataset loads after sign-in</div>
         <div style="font-size: 14px; opacity: 0.6; font-family: 'Space Mono', monospace;">Optional: upload a regional workbook to activate Europe, APAC and Middle East views for this session</div>
     </label>
 </div>
@@ -987,7 +988,7 @@ if (typeof window !== 'undefined') {
                 <div>
                     <label id="sop-target-usd-label" style="color: var(--v-yellow); font-size: 10px; margin-bottom: 4px; display:block;">Target Revenue ($ USD) - LATAM</label>
                     <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="number" id="sop-target-usd-input" value="6000000" class="tech-font table-input" style="width: 140px; padding: 8px; font-size: 15px;" onchange="updateSOPTargetUSD()">
+                        <input type="number" id="sop-target-usd-input" value="0" class="tech-font table-input" style="width: 140px; padding: 8px; font-size: 15px;" onchange="updateSOPTargetUSD()">
                         <button id="sop-unlock-btn" class="unlock-btn" onclick="unlockSOPCountryTarget()">🔓</button>
                     </div>
                 </div>
@@ -995,19 +996,19 @@ if (typeof window !== 'undefined') {
                 <div id="dynamic-price-inputs" style="border-left:1px solid rgba(255,255,255,0.15); padding-left:20px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
                     <div style="display: inline-block; margin-right: 10px;" id="price-wrap-a">
                         <label style="color: rgba(255,255,255,0.6); font-size: 9px; margin-bottom: 4px; display:block;">Venus A ($)</label>
-                        <input type="number" id="sop-price-a" value="5000" min="1" step="100" autocomplete="off" data-approved-default="5000" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
+                        <input type="number" id="sop-price-a" value="0" min="1" step="100" autocomplete="off" data-approved-default="0" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
                     </div>
                     <div style="display: inline-block; margin-right: 10px;" id="price-wrap-p">
                         <label style="color: rgba(255,255,255,0.6); font-size: 9px; margin-bottom: 4px; display:block;">Venus P ($)</label>
-                        <input type="number" id="sop-price-p" value="15000" min="1" step="100" autocomplete="off" data-approved-default="15000" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
+                        <input type="number" id="sop-price-p" value="0" min="1" step="100" autocomplete="off" data-approved-default="0" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
                     </div>
                     <div style="display: inline-block; margin-right: 10px;" id="price-wrap-x">
                         <label style="color: rgba(255,255,255,0.6); font-size: 9px; margin-bottom: 4px; display:block;">PowerX ($)</label>
-                        <input type="number" id="sop-price-x" value="10000" min="1" step="100" autocomplete="off" data-approved-default="10000" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
+                        <input type="number" id="sop-price-x" value="0" min="1" step="100" autocomplete="off" data-approved-default="0" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
                     </div>
                     <div style="display: inline-block;" id="price-wrap-v">
                         <label style="color: rgba(255,255,255,0.6); font-size: 9px; margin-bottom: 4px; display:block;">Vitae ($)</label>
-                        <input type="number" id="sop-price-v" value="10000" min="1" step="100" autocomplete="off" data-approved-default="10000" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
+                        <input type="number" id="sop-price-v" value="0" min="1" step="100" autocomplete="off" data-approved-default="0" class="tech-font table-input" style="width: 80px; padding: 6px;" oninput="renderSOP()">
                     </div>
                     <button id="sop-reset-prices-btn" type="button" class="sop-reset-prices-btn" onclick="resetSOPPricesToApprovedDefaults()" title="Restore the approved startup prices">↺ RESET PRICES</button>
                 </div>
@@ -1068,8 +1069,8 @@ if (typeof window !== 'undefined') {
     <div id="tab-clinical" class="tab-content">
         <h2>Clinical Excellence & Device Safety</h2>
         <div class="section-dash">—</div>
-        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>embedded LATAM master</strong> plus optional <strong>regional session uploads</strong> and an embedded LATAM Problem Report. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and on-demand translations (choose language).</p>
-        <div id="clinical-coverage-note" class="clinical-coverage-note">Clinical problem surveillance currently has an authoritative embedded source for <strong>LATAM only</strong>. Procedures imported from Europe, APAC or the Middle East are <strong>excluded from safety-rate denominators</strong> until an equivalent regional clinical-event source is provided.</div>
+        <p style="font-size: 13px; color: var(--v-text-mutated);">Post-market surveillance intelligence built on the <strong>authenticated LATAM dataset</strong> plus optional <strong>regional session uploads</strong> and the authenticated LATAM problem registry. Upload new complication files anytime — the engine merges by serial, date, matching narrative and team without duplicating. Each row shows the <strong>original report</strong>, <strong>English reference</strong>, and on-demand translations (choose language).</p>
+        <div id="clinical-coverage-note" class="clinical-coverage-note">Clinical problem surveillance currently has an authoritative authenticated source for <strong>LATAM only</strong>. Procedures imported from Europe, APAC or the Middle East are <strong>excluded from safety-rate denominators</strong> until an equivalent regional clinical-event source is provided.</div>
 
         <div class="ops-search-panel" style="margin-top:14px;">
             <div class="ops-search-head">
@@ -1119,7 +1120,7 @@ if (typeof window !== 'undefined') {
             <div>
                 <h2 style="margin-bottom:4px;">LATAM Procedural Outcomes</h2>
                 <div class="section-dash">—</div>
-                <p style="font-size:13px;color:var(--v-text-mutated);max-width:920px;line-height:1.6;">Structured Corelab follow-up for every LATAM procedure. Routine pre-/post-dilatation, balloon dimensions, final PVL and gradients are kept separate from adverse-event classification. Outcome status is derived only from documented structured evidence and never from the absence of a Problem Report.</p>
+                <p style="font-size:13px;color:var(--v-text-mutated);max-width:920px;line-height:1.6;">Structured Corelab follow-up for every LATAM procedure. Routine pre-/post-dilatation, balloon dimensions, final PVL and gradients are kept separate from adverse-event classification. Outcome status is derived only from documented structured evidence and never from the absence of a documented event.</p>
             </div>
             <div class="outcomes-export-actions" id="outcomes-export-actions" style="align-items:flex-end;">
                 <label style="display:flex;flex-direction:column;gap:4px;font-size:8px;font-weight:900;letter-spacing:.5px;color:var(--v-text-mutated);text-transform:uppercase;">Export scope
@@ -1138,7 +1139,7 @@ if (typeof window !== 'undefined') {
         <div id="outcomes-year-empty" class="outcomes-year-empty"><div class="empty-icon">🕰️</div><h3>No structured outcomes available for 2025</h3><p>The qualitative Corelab registry begins in 2026. Enable <strong>2026</strong> in Time Travel to restore H1, H2 and YTD outcome cards, comments and exports.</p></div>
         <div id="outcomes-2026-content">
         <div class="outcomes-import-panel">
-            <div class="outcomes-import-block"><div class="outcomes-import-title">Incremental outcome registry</div><div class="outcomes-import-copy">Upload the updated Microsoft Forms workbook. The app repairs the workbook range, previews changes, deduplicates safely and never lets a blank erase an existing clinical value.</div><div class="outcomes-import-actions"><input type="file" id="outcomes-import-file" accept=".xlsx,.xls" hidden><button type="button" class="upload-btn export-btn" onclick="document.getElementById('outcomes-import-file').click()">⬆ IMPORT / UPDATE OUTCOMES</button><button type="button" class="upload-btn" id="outcomes-undo-import" onclick="v12UndoLastOutcomeImport()">↶ UNDO LAST</button><button type="button" class="upload-btn" id="outcomes-clear-import" onclick="v12ClearImportedOutcomes()">CLEAR IMPORTED</button><button type="button" class="upload-btn" onclick="v12ExportOutcomeBackup()">⭳ INTERNAL BACKUP</button></div><div id="outcomes-import-status" class="outcomes-import-status">Loading embedded registry…</div></div>
+            <div class="outcomes-import-block"><div class="outcomes-import-title">Incremental outcome registry</div><div class="outcomes-import-copy">Upload the updated Microsoft Forms workbook. The app repairs the workbook range, previews changes, deduplicates safely and never lets a blank erase an existing clinical value.</div><div class="outcomes-import-actions"><input type="file" id="outcomes-import-file" accept=".xlsx,.xls" hidden><button type="button" class="upload-btn export-btn" onclick="document.getElementById('outcomes-import-file').click()">⬆ IMPORT / UPDATE OUTCOMES</button><button type="button" class="upload-btn" id="outcomes-undo-import" onclick="v12UndoLastOutcomeImport()">↶ UNDO LAST</button><button type="button" class="upload-btn" id="outcomes-clear-import" onclick="v12ClearImportedOutcomes()">CLEAR IMPORTED</button><button type="button" class="upload-btn" onclick="v12ExportOutcomeBackup()">⭳ INTERNAL BACKUP</button></div><div id="outcomes-import-status" class="outcomes-import-status">Loading authenticated registry…</div></div>
             <div class="outcomes-import-block private-lookup"><div class="outcomes-import-title">Private patient → Case ID lookup</div><div class="outcomes-import-copy">Type the exact patient name to retrieve the official case code. Only a one-way local hash is stored; the name is never displayed, translated or exported.</div><div class="private-lookup-row"><input id="patient-lookup-input" class="outcomes-control" type="search" autocomplete="off" placeholder="Exact patient name" onkeydown="if(event.key==='Enter'){event.preventDefault();v12LookupPatientCase();}"><button type="button" class="upload-btn" onclick="v12LookupPatientCase()">FIND CASE</button></div><div id="patient-lookup-result" class="private-lookup-result"></div></div>
         </div>
 
@@ -1153,7 +1154,7 @@ if (typeof window !== 'undefined') {
             </div>
             <div class="outcomes-toolbar-group search">
                 <label for="outcomes-search">Search case, hospital, person, valve or serial</label>
-                <input id="outcomes-search" class="outcomes-control" type="search" autocomplete="off" placeholder="e.g. LATAM Case 2026-23, hospital, physician, serial…" oninput="scheduleOutcomesRender()">
+                <input id="outcomes-search" class="outcomes-control" type="search" autocomplete="off" placeholder="Case ID, hospital, physician or serial…" oninput="scheduleOutcomesRender()">
             </div>
             <div class="outcomes-toolbar-group">
                 <label for="outcomes-country-filter">Country</label>
@@ -1311,14 +1312,14 @@ if (typeof window !== 'undefined') {
                 <div class="reports-action-row">
                     <button type="button" class="upload-btn export-btn" onclick="document.getElementById('reports-procedures-input').click()">↻ IMPORT LATEST PROCEDURES</button>
                 </div>
-                <div id="reports-procedure-status" class="reports-status-line">Embedded 2026 procedure identity is active.</div>
+                <div id="reports-procedure-status" class="reports-status-line">Authenticated procedure identity is loading.</div>
             </div>
         </div>
 
         <div id="reports-kpi-grid" class="reports-summary-grid"></div>
 
         <div class="reports-toolbar">
-            <div class="reports-control-group"><label for="reports-search">Global search · patient, Case ID, serial, country, distributor or clinical team</label><input id="reports-search" class="reports-control" type="search" autocomplete="off" placeholder="Patient, LATAM Case 2026-23, serial, physician, specialist, proctor or email…" oninput="v13ScheduleRenderReports()"></div>
+            <div class="reports-control-group"><label for="reports-search">Global search · patient, Case ID, serial, country, distributor or clinical team</label><input id="reports-search" class="reports-control" type="search" autocomplete="off" placeholder="Patient, Case ID, serial, physician, specialist, proctor or email…" oninput="v13ScheduleRenderReports()"></div>
             <div class="reports-control-group"><label for="reports-period-filter">Period</label><select id="reports-period-filter" class="reports-control" onchange="v13RenderReports()"><option value="">Active years · all periods</option><option value="H1">H1</option><option value="H2">H2</option></select></div>
             <div class="reports-control-group"><label for="reports-type-filter">Report type</label><select id="reports-type-filter" class="reports-control" onchange="v13RenderReports()"><option value="">All report types</option><option value="3mensio_planning">3mensio planning</option><option value="engineering_review">Engineering / HQ review</option><option value="other">Other report</option></select></div>
             <div class="reports-control-group"><label for="reports-match-filter">Case match</label><select id="reports-match-filter" class="reports-control" onchange="v13RenderReports()"><option value="">All match statuses</option><option value="linked">Linked to implant</option><option value="unmatched">Implant not found</option><option value="ambiguous">Ambiguous / review</option><option value="pending_review">Pending review</option></select></div>
@@ -1410,14 +1411,13 @@ if (typeof window !== 'undefined') {
 </div>
 
 <script>
-// Auto-generated from Consolidated LATAM Problem Report EN Interactive (1287.pdf)
-// 40 embedded problem cases: 38 reported + Panama Case 01 + Salvalus fatal follow-up
+// Procedure-problem records are supplied only by the authenticated feed.
 const BUILTIN_PROBLEM_CASES = [];
 if (typeof window !== 'undefined') window.BUILTIN_PROBLEM_CASES = BUILTIN_PROBLEM_CASES;
 </script>
-<!-- Generated, de-identified LATAM outcomes registry. A missing file is non-fatal. -->
+<!-- Authenticated LATAM outcomes are supplied at runtime. -->
 <script>
-// Embedded LATAM-only procedural outcomes registry — schema 1.3.0.
+// Runtime target for the authenticated LATAM-only procedural outcomes registry.
 const BUILTIN_LATAM_OUTCOMES_2026_META = {};
 const BUILTIN_LATAM_OUTCOMES_2026 = [];
 if (typeof window !== "undefined") {
@@ -1450,252 +1450,36 @@ if (typeof window !== "undefined") {
 
     const FLAGS = { "Brazil": "🇧🇷", "Argentina": "🇦🇷", "Chile": "🇨🇱", "Colombia": "🇨🇴", "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "Peru": "🇵🇪", "Uruguay": "🇺🇾", "Paraguay": "🇵🇾", "Panama": "🇵🇦", "Dominican Republic": "🇩🇴", "China": "🇨🇳", "Unknown": "🌍", "Venezuela": "🇻🇪", "Bolivia": "🇧🇴", "United Kingdom": "🇬🇧", "France": "🇫🇷", "Germany": "🇩🇪", "Belgium": "🇧🇪", "Netherlands": "🇳🇱", "Italy": "🇮🇹", "Poland": "🇵🇱", "Spain": "🇪🇸", "Greece": "🇬🇷", "Slovakia": "🇸🇰", "Hungary": "🇭🇺", "Romania": "🇷🇴", "Canada": "🇨🇦", "Denmark": "🇩🇰", "Czech Republic": "🇨🇿", "Ireland": "🇮🇪", "Switzerland": "🇨🇭", "Austria": "🇦🇹", "Thailand": "🇹🇭", "Vietnam": "🇻🇳", "Malaysia": "🇲🇾", "Pakistan": "🇵🇰", "Kazakhstan": "🇰🇿", "Australia": "🇦🇺", "India": "🇮🇳", "Bangladesh": "🇧🇩", "Turkey": "🇹🇷", "Egypt": "🇪🇬", "Saudi Arabia": "🇸🇦", "Bahrain": "🇧🇭", "Oman": "🇴🇲", "Qatar": "🇶🇦", "Lebanon": "🇱🇧", "Kuwait": "🇰🇼", "Jordan": "🇯🇴", "United Arab Emirates": "🇦🇪" };
     const COUNTRY_ISO = { "Brazil": "br", "Argentina": "ar", "Chile": "cl", "Colombia": "co", "Mexico": "mx", "Ecuador": "ec", "Peru": "pe", "Uruguay": "uy", "Paraguay": "py", "Panama": "pa", "Bolivia": "bo", "Venezuela": "ve", "Dominican Republic": "do", "China": "cn", "United Kingdom": "gb", "France": "fr", "Germany": "de", "Belgium": "be", "Netherlands": "nl", "Italy": "it", "Poland": "pl", "Spain": "es", "Greece": "gr", "Slovakia": "sk", "Hungary": "hu", "Romania": "ro", "Canada": "ca", "Denmark": "dk", "Czech Republic": "cz", "Ireland": "ie", "Switzerland": "ch", "Austria": "at", "Thailand": "th", "Vietnam": "vn", "Malaysia": "my", "Pakistan": "pk", "Kazakhstan": "kz", "Australia": "au", "India": "in", "Bangladesh": "bd", "Turkey": "tr", "Egypt": "eg", "Saudi Arabia": "sa", "Bahrain": "bh", "Oman": "om", "Qatar": "qa", "Lebanon": "lb", "Kuwait": "kw", "Jordan": "jo", "United Arab Emirates": "ae" };
-    const NATIONALITIES = { "Stephanie Bugeño Apablaza": "Chile", "Fabio Silva": "Brazil", "Ariane Sanchez": "Brazil", "Edgard Quintella": "Brazil", "Alice Moraes": "Brazil", "Marcio Montenegro": "Brazil", "Leonardo Dragone": "Brazil", "Henrique Ribeiro": "Brazil", "Alexis Vasiluk Knebel": "Brazil", "Alexis Knebel": "Brazil", "Ricardo Lisboa Cardozo": "Brazil", "Cesar Roberto Pintos": "Brazil", "Francisco": "Brazil", "Igor Salles": "Brazil", "Carlos Magno": "Brazil", "Eudes Figueredo": "Brazil", "Jarede Pereira": "Brazil", "Andreia Vasconcellos": "Brazil", "Jorge Baccaro": "Argentina", "Marcelo Rivarola": "Argentina", "Laura Zemp": "Argentina", "Fernando Pineda": "Chile", "Daniel Springmuller": "Chile", "Francisco Garay": "Chile", "Juan Pablo De Brahi": "Argentina", "Jorge Sandoval": "Chile", "Pablo Spaletra": "Argentina", "Luis Cressa": "Venezuela", "Victorio Lucini": "Argentina", "Jian Wang": "China", "Jesus María Damsky Barbosa": "Argentina", "Gian Manuel Jimenez": "Mexico", "Diego Villar": "Argentina", "Dirk Colpaert": "Belgium", "Duc Anh Nguyen": "Vietnam", "Nattaya Khanarsa": "Thailand", "Sultan Talab": "Saudi Arabia", "Reinhardt Becht": "Germany", "Jack Lips": "Netherlands", "Marjorie Michel": "France" };
+    const NATIONALITIES = {};
     
     // Official Proctors (Shielded in Finance Module)
-    const OFFICIAL_PROCTORS = ["Marcio Montenegro", "Edgard Quintella", "Pablo Lamelas", "Fernando Pineda", "Daniel Springmuller", "Marcelo Rivarola", "Victorio Lucini", "Pablo Spaletra", "Juan Pablo De Brahi", "Jorge Sandoval", "Gian Manuel Jimenez", "Luis Cressa", "Francisco Garay", "Jorge Baccaro", "Leonardo Dragone", "Pedro Echeverria"];
+    const OFFICIAL_PROCTORS = [];
 
-    const PROCTOR_DEFAULT_RATE_USD = 1800;
-    const GLOBAL_PROCTOR_DEFAULT_RATE_USD = 1500;
-    const GLOBAL_SINGLE_NAME_PROCTORS = new Set(['worakan', 'supaporn', 'pimpak']);
-    const PROCTOR_DAY_RATES_USD = {
-        "Marcio Montenegro": 2500,
-        "Daniel Springmuller": 2500,
-        "Francisco Garay": 2500,
-        "Marcelo Rivarola": 2500,
-        "Pedro Echeverria": 2500
-    };
+    let PROCTOR_DEFAULT_RATE_USD = 0;
+    let GLOBAL_PROCTOR_DEFAULT_RATE_USD = 0;
+    const GLOBAL_SINGLE_NAME_PROCTORS = new Set();
+    const PROCTOR_DAY_RATES_USD = {};
 
-    const PROCTOR_ALIASES = {
-        "marcio montenegro": "Marcio Montenegro", "márcio montenegro": "Marcio Montenegro",
-        "juan pablo de barhi": "Juan Pablo De Brahi", "juan pablo de brahi": "Juan Pablo De Brahi",
-        "edgard quintela": "Edgard Quintella", "edgard quitela": "Edgard Quintella", "dr edgard quintella": "Edgard Quintella",
-        "fernando pineda": "Fernando Pineda", "dr fernando pineda": "Fernando Pineda",
-        "pablo spaletra": "Pablo Spaletra", "spaletra pablo": "Pablo Spaletra",
-        "gian manuel jimenez": "Gian Manuel Jimenez", "gian manuel jiménez": "Gian Manuel Jimenez", "dr gian manuel jimenez": "Gian Manuel Jimenez",
-        "luis cressa": "Luis Cressa", "dr luis cressa": "Luis Cressa",
-        "francisco garay": "Francisco Garay", "dr francisco garay": "Francisco Garay",
-        "daniel springmuller": "Daniel Springmuller", "springmuller": "Daniel Springmuller",
-        "victorio lucini": "Victorio Lucini", "lucini victorio": "Victorio Lucini",
-        "diego villar": "Diego Villar", "villar diego": "Diego Villar",
-        "marcelo rivarola": "Marcelo Rivarola", "rivarola marcelo": "Marcelo Rivarola",
-        "jorge baccaro": "Jorge Baccaro", "baccaro jorge": "Jorge Baccaro",
-        "jorge sandoval": "Jorge Sandoval",
-        "leonardo dragone": "Leonardo Dragone", "dr leonardo dragone": "Leonardo Dragone",
-        "pedro echeverria": "Pedro Echeverria", "dr pedro echeverria": "Pedro Echeverria", "dr. pedro echeverria": "Pedro Echeverria"
-    };
-    const PROCTOR_ALIASES_KEYS = Object.keys(PROCTOR_ALIASES).sort((a, b) => b.length - a.length);
+    const PROCTOR_ALIASES = {};
+    const PROCTOR_ALIASES_KEYS = [];
     
     // Name Cleansing (Hidden Master Normalization - Rosetta Stone)
-    const PERSON_ALIASES = {
-        "stephanie bugueño": "Stephanie Bugeño Apablaza", "stephanie bugeno": "Stephanie Bugeño Apablaza", "stephanie bugeño": "Stephanie Bugeño Apablaza", "stephie": "Stephanie Bugeño Apablaza", "stephanie": "Stephanie Bugeño Apablaza",
-        "laura zemp": "Laura Zemp", "zemp laura": "Laura Zemp", "laura": "Laura Zemp",
-        "sonia grosso": "Sonia Grosso", "grosso sonia": "Sonia Grosso", "sonia groso": "Sonia Grosso", "sonia": "Sonia Grosso",
-        "mariana martinez": "Mariana Martinez", "mariana martínez": "Mariana Martinez", "martinez mariana": "Mariana Martinez", "mariana": "Mariana Martinez",
-        "francisco navarro": "Francisco Navarro", "feancisco": "Francisco (Unspecified)", "dr feancisco": "Francisco (Unspecified)",
-        "michelle altamirano": "Michelle Altamirano", "michelle": "Michelle Altamirano",
-        "alice moraes": "Alice Moraes", "alice maciel": "Alice Moraes", "alice": "Alice Moraes",
-        "ariane sanchez": "Ariane Sanchez", "ariane": "Ariane Sanchez",
-        "ricardo lisboa cardozo": "Ricardo Lisboa Cardozo", "ricardo lisboa": "Ricardo Lisboa Cardozo", "ricardo": "Ricardo Lisboa Cardozo",
-        "carlos magno": "Carlos Magno",
-        "maria julia": "Maria Julia (Sobrenome Não Informado)", "maria julia (sobrenome nao informado)": "Maria Julia (Sobrenome Não Informado)",
-        "leonardo andrade de godoy": "Leonardo Godoy", "leonardo godoy": "Leonardo Godoy",
-        "cesar roberto pintos": "Cesar Roberto Pintos", "cesar pintos": "Cesar Roberto Pintos", "césar pintos": "Cesar Roberto Pintos", "cesar a": "Cesar Roberto Pintos", "cesar": "Cesar Roberto Pintos",
-        "jessica picanco": "Jessica Picanço", "jessica picanço": "Jessica Picanço", "jessica": "Jessica Picanço",
-        "adeyanira hernandez": "Adeyanira Hernandez", "adeyanira hernández": "Adeyanira Hernandez", "ing. adeyanira hernández": "Adeyanira Hernandez", "adeyanira hernandez carrillo": "Adeyanira Hernandez", "adeyanira": "Adeyanira Hernandez",
-        "fernanda cisneros": "Fernanda Cisneros", "fernanda": "Fernanda Cisneros",
-        "luis gabriel loaiza": "Luis Gabriel Loaiza", "guillermo aristizabal": "Guillermo Aristizabal",
-        "marcelo rivarola": "Marcelo Rivarola", "rivarola marcelo": "Marcelo Rivarola", "rivarola": "Marcelo Rivarola",
-        "jorge baccaro": "Jorge Baccaro", "baccaro jorge": "Jorge Baccaro", "baccaro": "Jorge Baccaro",
-        "ignacio paganini": "Ignacio Paganini", "paganini ignacio": "Ignacio Paganini",
-        "juan pablo de brahi": "Juan Pablo De Brahi", "juan pablo de barhi": "Juan Pablo De Brahi",
-        "pablo spaletra": "Pablo Spaletra", "spaletra pablo": "Pablo Spaletra",
-        "martin hermida": "Martín Hermida", "martín hermida": "Martín Hermida", "hermida martín": "Martín Hermida",
-        "victorio lucini": "Victorio Lucini", "lucini victorio": "Victorio Lucini", "luccini victorio": "Victorio Lucini",
-        "diego villar": "Diego Villar", "villar diego": "Diego Villar",
-        "cesar lopardo": "Cesar Lopardo", "lopardo cesar": "Cesar Lopardo", "lopardo césar": "Cesar Lopardo",
-        "facundo peñaloza": "Facundo Peñaloza", "facundo peñolazo": "Facundo Peñaloza", "peñaloza facundo": "Facundo Peñaloza",
-        "edgard quintella": "Edgard Quintella", "edgard quintela": "Edgard Quintella", "edgar quintela": "Edgard Quintella", "edgar quintella": "Edgard Quintella", "edigar quitela": "Edgard Quintella",
-        "christian dauvergne": "Christian Dauvergne", "cristian dauvergne": "Christian Dauvergne", "cristhian dauvergne": "Christian Dauvergne",
-        "fernando kozak": "Fernando Kozak", "kozak fernando": "Fernando Kozak",
-        "horacio maffeo": "Horacio Maffeo", "maffeo horacio": "Horacio Maffeo",
-        "alejandro alvarez iorio": "Alejandro Alvarez Iorio", "alvarez iorio alejandro": "Alejandro Alvarez Iorio",
-        "francisco comas": "Francisco Comas", "comas francisco": "Francisco Comas",
-        "agustin hauqui": "Agustín Hauqui", "agustín hauqui": "Agustín Hauqui", "hauqui agustin": "Agustín Hauqui", "hauqui agustín": "Agustín Hauqui",
-        "rodrigo trufa": "Rodrigo Truffa", "rodrigo truffa": "Rodrigo Truffa",
-        "adriano augusto truffa": "Adriano Truffa", "adriano truffa": "Adriano Truffa", "adriano": "Adriano Truffa",
-        "marcio montenegro": "Marcio Montenegro", "márcio montenegro": "Marcio Montenegro", "márcio montegro": "Marcio Montenegro",
-        "andres g. sanchez": "Andres G. Sanchez", "andres sanchez": "Andres G. Sanchez",
-        "igor salles": "Igor Salles",
-        "glaucio werneck mozer": "Glaucio Werneck Mozer",
-        "leon macedo": "Leon Macedo",
-        "alexis vasiluk knebel": "Alexis Vasiluk Knebel", "alexis knebel": "Alexis Vasiluk Knebel", "alexia knebel": "Alexis Vasiluk Knebel", "alexis": "Alexis Vasiluk Knebel",
-        "gian manuel jimenez rodriguez": "Gian Manuel Jimenez", "gian manuel jimenez": "Gian Manuel Jimenez", "gian manuel jiménez rodríguez": "Gian Manuel Jimenez",
-        "jose antonio garcía montes": "Jose Antonio García Montes", "jose antonio garcia montes": "Jose Antonio García Montes", "jose antonio garcia valvula": "Jose Antonio García Montes", "josé antonio garcía valvula": "Jose Antonio García Montes", "garcia montes": "Jose Antonio García Montes", "garcía montes": "Jose Antonio García Montes", "gm": "Jose Antonio García Montes",
-        "armando juarez": "Armando Juarez",
-        "jose luis colin ortiz": "Jose Luis Colin Ortiz", "jose luis colin": "Jose Luis Colin Ortiz",
-        "carlos zabal": "Carlos Zabal", "zabal": "Carlos Zabal",
-        "fabio luciano da silva": "Fabio Silva", "fábio luciano da silva": "Fabio Silva", "fabio luciano": "Fabio Silva", "fábio luciano": "Fabio Silva",
-        "fabio silva": "Fabio Silva", "fábio silva": "Fabio Silva", "fabio da silva": "Fabio Silva", "fábio da silva": "Fabio Silva", "da silva fabio": "Fabio Silva", "fabio": "Fabio Silva", "fábio": "Fabio Silva",
-        "ariane sanchez nunes salles": "Ariane Sanchez", "ariane nunes salles": "Ariane Sanchez",
-        "jian wang": "Jian Wang", "jian": "Jian Wang",
-        "jose kleberth tenorio": "José Kleberth Tenório", "kleberth": "José Kleberth Tenório", 
-        "lucas esteves": "Lucas Estevão", "lucas estevao": "Lucas Estevão",
-        "andreia vasconcellos": "Andreia Vasconcellos", "andreia": "Andreia Vasconcellos",
-        "eudes figueredo": "Eudes Figueredo", "eudes": "Eudes Figueredo",
-        "jarede pereira": "Jarede Pereira", "jarede": "Jarede Pereira", "járede": "Jarede Pereira",
-        "gabriella duarte": "Gabriella Duarte", "gabriella": "Gabriella Duarte",
-        "henrique ribeiro": "Henrique Ribeiro",
-        "damsky barbosa": "Jesus María Damsky Barbosa", "damsky jesus": "Jesus María Damsky Barbosa", "damsky jesús": "Jesus María Damsky Barbosa", "dr. damsky": "Jesus María Damsky Barbosa", "damsky": "Jesus María Damsky Barbosa",
-        "frederico blanco": "Frederico Blanco", "frederico": "Frederico Blanco",
-        "job huiskamp": "Job Huiskamp", "huiskamp": "Job Huiskamp",
-        "rafael feldman": "Rafael Feldman", "feldman": "Rafael Feldman",
-        "daniel springmuller": "Daniel Springmuller", "springmuller": "Daniel Springmuller", "diego villar": "Diego Villar",
-        "francisco garay": "Francisco Garay", "garay": "Francisco Garay",
-        "humberto juárez": "Humberto Juárez", "humberto juarez": "Humberto Juárez",
-        "pedro echeverria": "Pedro Echeverria",
-        "jaime dutary": "Jaime Dutary",
-        "stephie, ariane": "Stephie, Sanchez Ariane",
-        "ariane, alice": "Sanchez Ariane, Alice Moraes",
-        "fabio silva, ariane": "Fabio Silva, Sanchez Ariane",
+    const PERSON_ALIASES = {};
+    const PERSON_ALIASES_KEYS = [];
 
-    };
-    const PERSON_ALIASES_KEYS = Object.keys(PERSON_ALIASES).sort((a, b) => b.length - a.length);
+    let CHILE_INT_HOSPITAL = '';
+    let SAN_GERONIMO_HOSPITAL = '';
 
-    const CHILE_INT_HOSPITAL = 'Instituto Nacional del Tórax (INT)';
-    const SAN_GERONIMO_HOSPITAL = 'Sanatorio San Gerónimo';
+    const HOSPITAL_ALIASES = {};
+    const HOSPITAL_ALIASES_KEYS = [];
 
-    const HOSPITAL_ALIASES = {
-        // CHILE — Instituto Nacional del Tórax (INT): único centro torácico; todas as grafias colapsam aqui
-        "instituto nacional del torax (int)": CHILE_INT_HOSPITAL,
-        "instituto nacional del tórax (int)": CHILE_INT_HOSPITAL,
-        "instituto nacional del torax": CHILE_INT_HOSPITAL,
-        "instituto nacional del tórax": CHILE_INT_HOSPITAL,
-        "hospital del torax": CHILE_INT_HOSPITAL,
-        "hospital del tórax": CHILE_INT_HOSPITAL,
-        "hospital el torax": CHILE_INT_HOSPITAL,
-        "hospital el tórax": CHILE_INT_HOSPITAL,
-        "hospital el troax": CHILE_INT_HOSPITAL,
-        "el torax": CHILE_INT_HOSPITAL,
-        "del torax": CHILE_INT_HOSPITAL,
-        "clinica santa maria": "Clínica Santa María",
-        "clinica isamedica": "Clínica Isamédica", "isamedica": "Clínica Isamédica",
-        "hemodinamica sao lucas": "Hemodinâmica São Lucas",
-        "hospital do coracao alagoano": "Hospital do Coração Alagoano",
-        "hospital do coração alagoano": "Hospital do Coração Alagoano",
-        "hospital do coracao": "Hospital do Coração",
-        "hospital ribeirao preto": "Hospital Ribeirão Preto",
-        "universidad catolica de chile": "Hospital Clínico Universidad Católica",
-        
-        // ARGENTINA
-        "funcacorr": "Instituto Cardiológico de Corrientes (FUNCACORR)", "funcacoor": "Instituto Cardiológico de Corrientes (FUNCACORR)", "instituto cardiologico de corrientes": "Instituto Cardiológico de Corrientes (FUNCACORR)", "instituto de cardiologia de corrientes": "Instituto Cardiológico de Corrientes (FUNCACORR)",
-        "hospital garraham": "Hospital de Pediatría Garrahan", "hospital garrahan": "Hospital de Pediatría Garrahan",
-        "hospital gutierrez": "Hospital de Niños Dr. Ricardo Gutiérrez", "hospital de ninos ricardo gutierrez": "Hospital de Niños Dr. Ricardo Gutiérrez", "Hospital de Niños Dr. Ricardo Gutiérrez": "Hospital de Niños Dr. Ricardo Gutiérrez",
-        "hospital de ninos dr gutierrez": "Hospital de Niños Dr. Ricardo Gutiérrez", "Hospital de Niños Dr. Ricardo Gutiérrez": "Hospital de Niños Dr. Ricardo Gutiérrez",
-        "sanatorio san geronimo": SAN_GERONIMO_HOSPITAL,
-        "sanatorio san gerónimo": SAN_GERONIMO_HOSPITAL,
-        "hospital san geronimo": SAN_GERONIMO_HOSPITAL,
-        "hospital san gerónimo": SAN_GERONIMO_HOSPITAL,
-        "fundacion favaloro": "Fundación Favaloro",
-        "hospital espanol de la plata": "Hospital Español de La Plata",
-        "instituto nacional de cardiologia ignacio chavez": "Instituto Nacional de Cardiología Ignacio Chávez",
-        "centro medico nacional de occidente": "Centro Médico Nacional de Occidente",
-        "clinica milenium": "Clinica MILENIUM",
-        "sanatorio de la mujer": "Sanatorio de la Mujer",
-        "sanatorio san jose": "Sanatorio San José",
-        "clinica modelo de lanus": "Clínica Modelo Lanús", "clinica modelo lanus": "Clínica Modelo Lanús",
-        "clinica sagrada familia": "Clínica Sagrada Familia", "clinica sagrado corazon": "Clínica Sagrado Corazón",
-        "fundacion medica de rio negro": "Fundación Médica de Río Negro",
-        "clinica bazterrica": "Centro Médico Bazterrica",
-        "instituto nacional de pediatria": "Instituto Nacional de Pediatría", "inp": "Instituto Nacional de Pediatría",
-        "panama case 01": "Ciudad de la Salud", "panama case": "Ciudad de la Salud",
-        "instituto diagnostico de la plata": "Instituto Diagnóstico de La Plata",
-        "fundacion cardiovascular de colombia": "Fundación Cardiovascular de Colombia",
-        "clinica somer incare": "Clínica Somer InCare", "clinicxa somer incare": "Clínica Somer InCare",
-        "sanatorio la entrerriana": "Sanatorio La Entrerriana", "la entrerriana": "Sanatorio La Entrerriana", "la entreriana": "Sanatorio La Entrerriana",
-        "sanatorio guemes": "Sanatorio Güemes",
-        "icba": "ICBA Instituto Cardiovascular",
-        "icr": "Instituto Cardiovascular de Rosario (ICR)",
-        "austral": "Hospital Universitario Austral", "hospital austral": "Hospital Universitario Austral", "hospital universitario austral": "Hospital Universitario Austral",
-        "sanatorio mit": "Sanatorio MIT",
-        "ipensa": "Sanatorio IPENSA La Plata",
-        "clinica suizo argentina": "Clinica Suizo Argentina", "clinica swizo": "Clinica Suizo Argentina",
-        "sanatorio mendez": "Sanatorio Julio Méndez",
-        
-        // BRAZIL
-        "sao bernardo hapvida": "Hospital São Bernardo (Hapvida)",
-        "sao bernardo": "Hospital São Bernardo (Hapvida)", "hapvida sao bernardo": "Hospital São Bernardo (Hapvida)",
-        "sao francisco de paula": "São Francisco de Paula",
-        "sao francisco": "Hospital São Francisco (Hapvida)",
-        "sao jose": "São José Hospital", "hospital sao jose": "São José Hospital",
-        "ic-fuc": "ICFUC", "ic fuc": "ICFUC", "ic- fuc": "ICFUC", "ic - fuc": "ICFUC", "icfuc": "ICFUC",
-        "dante pazzanese": "Instituto Dante Pazzanese", "pazzanese": "Instituto Dante Pazzanese",
-        "albert einstein": "Hospital Albert Einstein", "einstein": "Hospital Albert Einstein",
-        "sirio": "Hospital Sírio-Libanês", "sírio": "Hospital Sírio-Libanês",
-        "badim": "Hospital Badim", "memorial": "Hospital Memorial",
-        "paulo sacramento": "Hospital Paulo Sacramento", "ilha do leite": "Hospital Hapvida Ilha do Leite",
-        "antonio prudente": "Hospital Hapvida Antonio Prudente", "agamenom magalhaes": "Hospital Agamenom Magalhães",
-        "hospital agamenom magalhaes": "Hospital Agamenom Magalhães",
-        "belo horizonte": "Hospital Belo Horizonte",
-        "maceio": "Hospital Maceió - Hapvida", "hospital maceio": "Hospital Maceió - Hapvida",
-        "rio negro": "Hospital Hapvida Rio Negro",
-        "santa cruz": "Hospital Santa Cruz", "santa tereza": "Santa Tereza", "hci": "HCI",
-        "onco center": "Hospital Onco Center", "iecac": "IECAC",
-        "smh": "SMH Petrópolis", "smh petropolis": "SMH Petrópolis", "petropolis": "SMH Petrópolis", "angio": "Hospital Angiocor",
-        "salvalus": "Hospital Salvalus", "socor": "Hospital Socor", "prontocor": "Prontocor",
-        "cinecors": "Hospital Ernesto Dornelles", "huse": "HUSE", "hospital geral de palmas": "Hospital Geral de Palmas", "hspm": "HSPM",
-        
-        // MEXICO/OTHERS
-        "instituto nacional de cardiologia": "Instituto Nacional de Cardiología",
-        "instituto nacional de cardiología": "Instituto Nacional de Cardiología",
-        "incor de natal": "InCor Natal", "hospital incor de natal": "InCor Natal",
-        "incor de rondonia": "InCor Rondônia", "incor de rondônia": "InCor Rondônia", "hospital incor de rondonia": "InCor Rondônia",
-        "incor": "InCor Natal", "hospital incor": "InCor Natal",
-        "incor sp": "InCor SP", "hospital incor sp": "InCor SP", "instituto do coracao": "InCor SP"
-    };
-    const HOSPITAL_ALIASES_KEYS = Object.keys(HOSPITAL_ALIASES).sort((a, b) => b.length - a.length);
+    const HOSPITAL_CITY_MAP = {};
 
-    const HOSPITAL_CITY_MAP = {
-        "Hospital Hapvida São Bernardo": "São Bernardo do Campo", "Hospital Paulo Sacramento": "Jundiaí", "Hospital Salvalus": "São Paulo", "Hospital São Francisco": "Ribeirão Preto", "InCor SP": "São Paulo", "Instituto Dante Pazzanese": "São Paulo", "Hospital Albert Einstein": "São Paulo", "Hospital Sírio-Libanês": "São Paulo",
-        "IECAC": "Rio de Janeiro", "Hospital Badim": "Rio de Janeiro", "Hospital Memorial": "Rio de Janeiro", "SMH Petrópolis": "Petrópolis", "Santa Tereza": "Guarapuava", "Hospital São José": "Rio de Janeiro",
-        "ICFUC": "Porto Alegre", "Hospital Ernesto Dornelles": "Porto Alegre", "Hospital São Francisco de Paula": "Pelotas", "HCI": "Ijuí", "Hospital Santa Cruz": "Santa Cruz do Sul",
-        "Hospital Belo Horizonte": "Belo Horizonte", "Hospital Socor": "Belo Horizonte", "Prontocor": "Belo Horizonte",
-        "Hospital Hapvida Ilha do Leite": "Recife", "Hospital Agamenom Magalhães": "Recife",
-        "Hospital Angiocor": "Aracaju", "HUSE": "Aracaju", "Hospital Hapvida Rio Negro": "Manaus", "Hospital Hapvida Maceió": "Maceió",
-        "Hospital Hapvida Antonio Prudente": "Fortaleza", "InCor Natal": "Natal", "InCor Rondônia": "Porto Velho", "Hospital Onco Center": "Teresina",
-        "LUXEMBURGO": "Belo Horizonte", "HOSPITAL ONIX": "Curitiba", "HONPAR": "Arapongas", "HOSPITAL RIBEIRÃO PRETO": "Ribeirão Preto", "Hospital Ribeirão Preto": "Ribeirão Preto", "HOSPITAL BOM CLIMA": "Guarulhos", "SALVALUS": "São Paulo", "PAULO SACRAMENTO": "Jundiaí", "INCOR": "São Paulo", "HOSPITAL DO CORAÇAO": "São Paulo", "Hospital do Coração": "São Paulo", "Ana Costa": "Santos", "MERIDIONAL PRAIA DA COSTA": "Vila Velha", "HOSPITAL GERAL DE PALMAS": "Palmas", "Hospital Geral de Palmas": "Palmas", "HOSPITAL LESTE MINEIRO": "Ipatinga", "HCI - POUSO ALEGRE": "Pouso Alegre", "Hospital Unimed GV": "Governador Valadares", "UNIMED VALADARES": "Governador Valadares", "HOSP AROLDO TOURINHO": "Montes Claros", "HOSPITAL VAZ MONTEIRO": "Lavras", "HOSPITAL UNIMED RECIFE III": "Recife", "REAL HOSPITAL PORTUGUÊS": "Recife", "Hospital Rio Grande": "Natal", "HOSPITAL DO CORAÇÃO ALAGOANO": "Maceió", "Hospital do Coração Alagoano": "Maceió", "HOSPITAL RIO NEGRO (HAPVIDA)": "Manaus", "HOSPITAL AMECOR": "Cuiabá", "SANTA CASA DE MISERICORDIA DE ITABUNA": "Itabuna", "HEMOCOR": "Rio de Janeiro", "Cinecors": "Porto Alegre", "HUMANIZA": "Porto Alegre", "HRS": "São José", "SANTA MARTHA": "Niterói", "HEMODINÂMICA SÃO LUCAS": "Aracaju", "Hemodinâmica São Lucas": "Aracaju", "HOSPITAL METROPOLITANO DJMP": "Belém", "LACIC": "Vitória da Conquista", "HOSPITAL SANTA RITA": "Vitória"
-    };
+    const CITY_STATE_MAP = {};
 
-    const CITY_STATE_MAP = {
-        "São Paulo": "SP", "Ribeirão Preto": "SP", "Jundiaí": "SP", "São Bernardo do Campo": "SP", "Guarulhos": "SP", "Santos": "SP",
-        "Rio de Janeiro": "RJ", "Petrópolis": "RJ", "Niterói": "RJ", 
-        "Guarapuava": "PR", "Curitiba": "PR", "Arapongas": "PR",
-        "Criciúma": "SC", "São José": "SC",
-        "Porto Alegre": "RS", "Pelotas": "RS", "Ijuí": "RS", "Santa Cruz do Sul": "RS",
-        "Belo Horizonte": "MG", "Ipatinga": "MG", "Pouso Alegre": "MG", "Governador Valadares": "MG", "Montes Claros": "MG", "Lavras": "MG",
-        "Recife": "PE", "Aracaju": "SE", "Manaus": "AM", "Maceió": "AL", "Fortaleza": "CE", "Natal": "RN", "Porto Velho": "RO", "Teresina": "PI",
-        "Vila Velha": "ES", "Vitória": "ES", "Palmas": "TO", "Cuiabá": "MT", "Itabuna": "BA", "Vitória da Conquista": "BA", "Belém": "PA"
-    };
+    const BR_TERRITORIES = {};
 
-    const BR_TERRITORIES = {
-        "PR": "MKS Medical Technologies", "SC": "MKS Medical Technologies", "RS": "MKS Medical Technologies",
-        "MG": "VIP Medical", "RJ": "VIP Medical", "ES": "VIP Medical",
-        "SP": "Sellmed", "MS": "Sellmed", "MT": "Sellmed", "GO": "Sellmed", "DF": "Sellmed",
-        "BA": "Sellmed", "SE": "Sellmed", "AL": "Sellmed", "PE": "Sellmed", "PB": "Sellmed", "RN": "Sellmed",
-        "CE": "Sellmed", "PI": "Sellmed", "MA": "Sellmed", "TO": "Sellmed", "PA": "Sellmed", "AP": "Sellmed",
-        "RR": "Sellmed", "AM": "Sellmed", "AC": "Sellmed", "RO": "Sellmed"
-    };
-
-    const DISTRIBUTOR_BY_COUNTRY = {
-        "Mexico": "DDM",
-        "Argentina": "Medical World AS",
-        "Ecuador": "Meixomed",
-        "Colombia": "Medinistros",
-        "Venezuela": "GPM Medical",
-        "Panama": "GPM Medical",
-        "Chile": "Camir",
-        "Dominican Republic": "Venus Medtech"
-    };
+    const DISTRIBUTOR_BY_COUNTRY = {};
 
     const CITY_COORDS = { "São Paulo": [-23.5505, -46.6333], "Ribeirão Preto": [-21.1704, -47.8103], "Jundiaí": [-23.1857, -46.8978], "São Bernardo do Campo": [-23.6938, -46.5650], "Guarulhos": [-23.4628, -46.5333], "Santos": [-23.9618, -46.3322], "Rio de Janeiro": [-22.9068, -43.1729], "Petrópolis": [-22.5050, -43.1786], "Niterói": [-22.8833, -43.1036], "Guarapuava": [-25.3953, -51.4581], "Curitiba": [-25.4284, -49.2733], "Arapongas": [-23.4150, -51.4286], "Criciúma": [-28.6758, -49.3694], "São José": [-27.6136, -48.6276], "Porto Alegre": [-30.0346, -51.2177], "Pelotas": [-31.7654, -52.3376], "Ijuí": [-28.3869, -53.9116], "Santa Cruz do Sul": [-28.7156, -52.4281], "Belo Horizonte": [-19.9167, -43.9345], "Ipatinga": [-19.4689, -42.5353], "Pouso Alegre": [-22.2282, -45.9381], "Governador Valadares": [-18.8525, -41.9472], "Montes Claros": [-16.7350, -43.8617], "Lavras": [-21.2464, -45.0003], "Recife": [-8.0476, -34.8770], "Aracaju": [-10.9472, -37.0731], "Manaus": [-3.1190, -60.0217], "Maceió": [-9.6498, -35.7089], "Fortaleza": [-3.7172, -38.5433], "Natal": [-5.7945, -35.2110], "Porto Velho": [-8.7608, -63.8999], "Teresina": [-5.0892, -42.8016], "Vila Velha": [-20.3297, -40.2925], "Vitória": [-20.3155, -40.3128], "Palmas": [-10.2128, -48.3601], "Cuiabá": [-15.6010, -56.0974], "Itabuna": [-14.7892, -39.2811], "Vitória da Conquista": [-14.8661, -40.8394], "Belém": [-1.4550, -48.5024] };
     
@@ -1747,8 +1531,8 @@ if (typeof window !== "undefined") {
     let hybridPhysicians = new Set();
 
     // S&OP Engine Variables
-    let sopGlobalTargetUSD = 6000000;
-    let sopRegionTargetsUSD = { 'LATAM': 6000000 };
+    let sopGlobalTargetUSD = 0;
+    let sopRegionTargetsUSD = {};
     let sopLockedCountryUSD = {}; 
     let sopInventory = {}; 
     let activeSOPRegion = 'LATAM';
@@ -1786,7 +1570,7 @@ if (typeof window !== "undefined") {
         let implants26 = typeof BUILTIN_IMPLANTS_2026 !== 'undefined' ? BUILTIN_IMPLANTS_2026.length : 0;
         let problems = typeof BUILTIN_PROBLEM_CASES !== 'undefined' ? BUILTIN_PROBLEM_CASES.length : 0;
         let summary = document.getElementById('startup-baseline-summary');
-        if (summary) summary.textContent = `${implants25 + implants26} unique LATAM implant cases pre-loaded · ${problems} LATAM clinical problem cases`;
+        if (summary) summary.textContent = `${implants25 + implants26} authenticated LATAM implant cases · ${problems} LATAM clinical problem cases`;
         document.documentElement.dataset.appVersion = meta.version || '';
         document.documentElement.dataset.appBuild = meta.build || '';
     }
@@ -2052,7 +1836,7 @@ if (typeof window !== "undefined") {
             activeYears = [...(activeYearsByScope[analysisScopeMode] || [])];
             activeSOPRegion = analysisScopeMode;
             sopGlobalTargetUSD = sopRegionTargetsUSD[activeSOPRegion]
-                ?? (activeSOPRegion === 'LATAM' ? 6000000 : getSOPHistoricalRevenue(activeSOPRegion));
+                ?? (activeSOPRegion === 'LATAM' ? 0 : getSOPHistoricalRevenue(activeSOPRegion));
         }
         analysisScopeLabel = analysisScopeMode;
         let scopeMeta = ANALYSIS_SCOPE_META[analysisScopeLabel] || ANALYSIS_SCOPE_META.LATAM;
@@ -2079,7 +1863,7 @@ if (typeof window !== "undefined") {
         activeYears = [...(activeYearsByScope[scope] || [])];
         activeSOPRegion = scope;
         sopGlobalTargetUSD = sopRegionTargetsUSD[activeSOPRegion]
-            ?? (activeSOPRegion === 'LATAM' ? 6000000 : getSOPHistoricalRevenue(activeSOPRegion));
+            ?? (activeSOPRegion === 'LATAM' ? 0 : getSOPHistoricalRevenue(activeSOPRegion));
         sopRegionTargetsUSD[activeSOPRegion] = sopGlobalTargetUSD;
         activeCountryExpanded = null;
         activeProctorCountries.clear();
@@ -2108,7 +1892,7 @@ if (typeof window !== "undefined") {
         activeYears = [];
         activeYearsByScope = {};
         activeSOPRegion = 'LATAM';
-        sopGlobalTargetUSD = sopRegionTargetsUSD.LATAM ?? 6000000;
+        sopGlobalTargetUSD = sopRegionTargetsUSD.LATAM ?? 0;
         activeOpsSearchQuery = '';
         let searchInput = document.getElementById('ranking-search-input');
         if (searchInput) searchInput.value = '';
@@ -2125,7 +1909,7 @@ if (typeof window !== "undefined") {
         processData();
         let errAlert = document.getElementById('error-alert');
         if (errAlert) {
-            errAlert.innerText = `✅ Session procedure uploads cleared. The dashboard is back to the embedded LATAM baseline (${getBuiltinImplants2025().length + getBuiltinImplants2026().length} procedures).`;
+            errAlert.innerText = `✅ Session procedure uploads cleared. The dashboard is back to the authenticated LATAM baseline (${getBuiltinImplants2025().length + getBuiltinImplants2026().length} procedures).`;
             errAlert.style.display = 'block';
             errAlert.style.background = '#eff6ff';
             errAlert.style.borderColor = '#93c5fd';
@@ -2306,27 +2090,13 @@ if (typeof window !== "undefined") {
         return s;
     }
 
-    const CONGRESS_CASE_TAGS = {
-        '26a00000251482|02/03/2026': { eventName:'TCT Plus LATAM Valves 2026', eventType:'Recorded congress case (Live Case in a Box)', evidence:'Official program + internal case match', confidence:'High — hospital/serial inferred', icon:'🎬', sourceUrl:'https://tctpluslatam.com/program-at-a-glance/' },
-        '26a00000242627|30/07/2026': { eventName:'SOLACI & SBHCI 2026', eventType:'Live congress case — Venus A-Pro', evidence:'Official live-case program', confidence:'Very high', icon:'🔴', sourceUrl:'https://www.solacicongress.org/en/casos-en-vivo/' },
-        '30p25000250230|31/07/2026': { eventName:'SOLACI & SBHCI 2026', eventType:'Live congress case — Venus P', evidence:'Official AMBA pediatric live slot + user attendance', confidence:'High — hospital/serial inferred', icon:'🔴', sourceUrl:'https://www.solacicongress.org/en/casos-en-vivo/', addSpecialists:['Fabio Silva'] },
-        '29a00000250473|06/08/2025': { eventName:'SOLACI-SOCIME 2025', eventType:'Congress-day case at official live center', evidence:'Official INC live schedule + dataset', confidence:'Serial-to-slot not publicly identified', icon:'🎥', sourceUrl:'https://solaci.org/en/2025/08/07/solaci-socime-2025-day-1-highlights/' },
-        '30p25000240099|06/08/2025': { eventName:'SOLACI-SOCIME 2025', eventType:'Congress-day case at official live center', evidence:'Official INC live schedule + dataset', confidence:'Serial-to-slot not publicly identified', icon:'🎥', sourceUrl:'https://solaci.org/en/2025/08/07/solaci-socime-2025-day-1-highlights/' },
-        '26a00000250575|08/08/2025': { eventName:'SOLACI-SOCIME 2025', eventType:'Congress-period case support', evidence:'User attendance + event dates', confidence:'User confirmed; not labeled as live', icon:'🎥' },
-        'dsad1250401|08/08/2025': { eventName:'SOLACI-SOCIME 2025', eventType:'Official Chile PowerX live-case candidate', evidence:'Official center/device; two source serials', confidence:'Exact serial ambiguous', icon:'🔴' },
-        'dsad1250403|08/08/2025': { eventName:'SOLACI-SOCIME 2025', eventType:'Official Chile PowerX live-case candidate', evidence:'Official center/device; two source serials', confidence:'Exact serial ambiguous', icon:'🔴' },
-        '26ac1000250003|18/06/2025': { eventName:'CSI Frankfurt 2025', eventType:'Pre-congress clinical case support', evidence:'User-reported day-before sequence', confidence:'User confirmed', icon:'🎥' },
-        '26ac1000250006|19/06/2025': { eventName:'CSI Frankfurt 2025', eventType:'International live congress case — Venus Vitae', evidence:'Operator post + dataset match', confidence:'High; public post has a one-day date conflict', icon:'🔴', sourceUrl:'https://www.csi-congress.org/conferences-courses/conferences/csi-frankfurt' },
-        '26ac1000250019|03/06/2026': { eventName:'CSI Frankfurt 2026', eventType:'International live congress case — Venus Vitae (Chile)', evidence:'Official live-case center + dataset', confidence:'Very high', icon:'🔴', sourceUrl:'https://www.csi-congress.org/conferences-courses/conferences/csi-frankfurt' },
-        '26ab1000250220|04/06/2026': { eventName:'CSI Frankfurt 2026', eventType:'International live congress case — PowerX (Argentina)', evidence:'Official live-case center + dataset', confidence:'Very high', icon:'🔴', sourceUrl:'https://www.csi-congress.org/conferences-courses/conferences/csi-frankfurt' },
-        '29ac10000250147|03/06/2026': { eventName:'CSI Frankfurt 2026', eventType:'Congress support — user-reported attendance', evidence:'Fabio + Stephanie in dataset; official live center differs', confidence:'Needs event-role confirmation', icon:'🎥' },
-        '29ab1000240069|28/04/2025': { eventName:'Fabio onboarding milestone', eventType:'First Venus cases — PowerX with Jorge Sandoval', evidence:'User confirmed + dataset', confidence:'High', icon:'⭐', milestone:true },
-        '29ab1000240114|29/04/2025': { eventName:'Fabio onboarding milestone', eventType:'First Venus cases — PowerX with Jorge Sandoval', evidence:'User confirmed + dataset', confidence:'High', icon:'⭐', milestone:true },
-        '23ac1000240052|30/04/2025': { eventName:'Fabio onboarding milestone', eventType:'First Venus trip — Vitae', evidence:'User confirmed + dataset', confidence:'High', icon:'⭐', milestone:true }
-    };
+    const CONGRESS_CASE_TAGS = {};
 
-    const LAURA_2025_ARGENTINA_EXCEPTIONS = new Set(['29ab1000240069','29ab1000240114','23ac1000240052']);
-    const PEDRO_ECHEVERRIA_PANAMA_SERIALS = new Set(['26a00000242120','23a00000241065','26a00000240303']);
+    const ARGENTINA_2025_ATTENDANCE_SERIAL_EXCEPTIONS = new Set();
+    const PANAMA_2025_ATTENDANCE_SERIALS = new Set();
+    const ATTENDANCE_ENRICHMENT_PEOPLE = {};
+    const CONFIRMED_PROCEDURE_PROCTOR_RULES = [];
+    const PERSON_ROLE_CORRECTION_RULES = [];
 
     function normalizeEventSerialKey(raw) {
         let serial = normalizeSerialKey(raw);
@@ -2345,28 +2115,21 @@ if (typeof window !== "undefined") {
 
     function applyConfirmedProcedureProctorRules(caseObj) {
         if (!caseObj) return caseObj;
-        let country = cleanStr(anchorCountryFromHospital(caseObj.hospital, caseObj.country));
-        let hospital = cleanStr(caseObj.hospital);
-
-        // User-confirmed business rule: procedures at Chile's Instituto Nacional
-        // del Tórax are performed without a procedural proctor. Keep the source
-        // value privately for auditability, but never expose/count/pay it as a
-        // proctor in Operations, Clinical or Finance.
-        if (country === 'chile' && hospital === cleanStr(CHILE_INT_HOSPITAL)) {
-            let reported = normalizePersonList(caseObj.proctor);
-            if (reported !== 'N/A' && !caseObj._reportedProctor) caseObj._reportedProctor = reported;
-            caseObj.proctor = 'N/A';
-            caseObj._proctorRule = 'confirmed-no-proctor-chile-torax';
-            return caseObj;
-        }
-
-        // Explicit dual-role exception: at San Gerónimo, Juan Pablo De Brahi
-        // remains a valid proctor even when he is also documented as an operator.
-        if (country === 'argentina'
-            && hospital === cleanStr(SAN_GERONIMO_HOSPITAL)
-            && personFieldMatches(caseObj.implanter, 'Juan Pablo De Brahi')
-            && personFieldMatches(caseObj.proctor, 'Juan Pablo De Brahi')) {
-            caseObj._proctorRule = 'confirmed-dual-role-juan-pablo-de-brahi';
+        const country = cleanStr(anchorCountryFromHospital(caseObj.hospital, caseObj.country));
+        const hospital = cleanStr(caseObj.hospital);
+        for (const rule of CONFIRMED_PROCEDURE_PROCTOR_RULES) {
+            const match = rule?.match || {};
+            if (match.country && country !== cleanStr(match.country)) continue;
+            if (match.hospital && hospital !== cleanStr(match.hospital)) continue;
+            if (match.person && (match.requiredRoles || []).some(role => !personFieldMatches(caseObj[role], match.person))) continue;
+            if (rule.preservePreviousProctorIn) {
+                const reported = normalizePersonList(caseObj.proctor);
+                if (reported !== 'N/A' && !caseObj[rule.preservePreviousProctorIn]) {
+                    caseObj[rule.preservePreviousProctorIn] = reported;
+                }
+            }
+            Object.entries(rule.set || {}).forEach(([field, value]) => { caseObj[field] = value; });
+            if (rule.proctorRule) caseObj._proctorRule = rule.proctorRule;
         }
         return caseObj;
     }
@@ -2374,12 +2137,14 @@ if (typeof window !== "undefined") {
     function applyAttendanceEnrichmentRules(caseObj) {
         if (!caseObj) return caseObj;
         let serial = normalizeEventSerialKey(caseObj.serial);
-        let year = getCaseYear(caseObj);
-        if (year === 2025 && caseObj.country === 'Argentina' && ['Vitae','PowerX'].includes(caseObj.valveBase) && !LAURA_2025_ARGENTINA_EXCEPTIONS.has(serial)) {
-            caseObj.specialist = appendPersonValue(caseObj.specialist, 'Laura Zemp');
+        const year = getCaseYear(caseObj);
+        if (year === 2025 && caseObj.country === 'Argentina' && ['Vitae','PowerX'].includes(caseObj.valveBase) && !ARGENTINA_2025_ATTENDANCE_SERIAL_EXCEPTIONS.has(serial)) {
+            const person = ATTENDANCE_ENRICHMENT_PEOPLE.argentina2025Specialist;
+            if (person) caseObj.specialist = appendPersonValue(caseObj.specialist, person);
         }
-        if (year === 2025 && caseObj.country === 'Panama' && PEDRO_ECHEVERRIA_PANAMA_SERIALS.has(serial)) {
-            caseObj.proctor = appendPersonValue(caseObj.proctor, 'Pedro Echeverria');
+        if (year === 2025 && caseObj.country === 'Panama' && PANAMA_2025_ATTENDANCE_SERIALS.has(serial)) {
+            const person = ATTENDANCE_ENRICHMENT_PEOPLE.panama2025Proctor;
+            if (person) caseObj.proctor = appendPersonValue(caseObj.proctor, person);
         }
         let tag = CONGRESS_CASE_TAGS[serial + '|' + caseObj.date];
         if (tag) {
@@ -2418,12 +2183,7 @@ if (typeof window !== "undefined") {
         primary._mergedSources = [...new Set(entries)];
     }
 
-    const HOSPITAL_COUNTRY_ANCHORS = {
-        "incor sp": "Brazil", "incor natal": "Brazil", "incor rondonia": "Brazil", "incor rondônia": "Brazil", "hospital incor de natal": "Brazil",
-        "instituto nacional del torax": "Chile", "instituto nacional del tórax": "Chile",
-        "hospital del torax": "Chile", "(int)": "Chile",
-        "sanatorio mitre": "Argentina", "funcacorr": "Argentina", "instituto cardiologico de corrientes": "Argentina"
-    };
+    const HOSPITAL_COUNTRY_ANCHORS = {};
 
     function anchorCountryFromHospital(hospital, country) {
         let h = cleanStr(hospital);
@@ -2641,7 +2401,7 @@ if (typeof window !== "undefined") {
     function buildCaseFromBuiltin(raw) {
         let c = Object.assign({}, raw);
         c._region = 'LATAM';
-        c._sourceSheet = 'LATAM Problem Report';
+        c._sourceSheet = 'LATAM problem registry';
         c.implanter = normalizePersonList(c.implanter);
         c.specialist = normalizePersonList(c.specialist);
         c.proctor = normalizePersonList(c.proctor || 'N/A');
@@ -2749,27 +2509,7 @@ if (typeof window !== "undefined") {
     // Several historical HOMAC dates were typed as DD/MM/YY in a workbook that
     // stored some of them as US-style Excel dates. Correct by valve serial so
     // the embedded baseline and future uploads deduplicate to the same procedure.
-    const LEGACY_HOMAC_DATE_BY_SERIAL = Object.freeze({
-        '29a00000240713': '28/01/2026',
-        '26a00000241209': '28/01/2026',
-        '29a00000241104': '29/01/2026',
-        '32a00000250387': '05/02/2026',
-        '23a00000240658': '05/02/2026',
-        '23a00000240660': '05/02/2026',
-        '29a00000241072': '11/02/2026',
-        '26a00000241291': '24/02/2026',
-        '32a00000250386': '24/02/2026',
-        '29a00000241322': '05/03/2026',
-        '23a00000240640': '10/03/2026',
-        '26a00000241287': '11/03/2026',
-        '26a00000241303': '26/03/2026',
-        '32a00000250394': '27/03/2026',
-        '26a00000241285': '08/04/2026',
-        '26a00000241815': '08/04/2026',
-        '26a00000241942': '05/05/2026',
-        '26a00000241941': '10/06/2026',
-        '29a00000241117': '15/06/2026'
-    });
+    const LEGACY_HOMAC_DATE_BY_SERIAL = {};
 
     function applyLegacyHomacCaseRules(caseObj) {
         if (!caseObj) return;
@@ -2780,20 +2520,20 @@ if (typeof window !== "undefined") {
         caseObj.dist = 'HOMAC';
     }
 
-    // Confirmed source repair: LATAM row 161 has the delivery-system lot in the
-    // valve-serial column. Normalize on both embedded boot and future uploads so
-    // the same workbook remains idempotent.
+    const KNOWN_CASE_IDENTITY_CORRECTIONS = {};
+
+    // Normalize authenticated source repairs on both feed boot and future uploads.
     function applyKnownCaseIdentityCorrections(caseObj) {
         if (!caseObj) return;
-        let rawSerial = cleanStr(caseObj.serial).replace(/[^a-z0-9]/g, '');
-        if (rawSerial === 'dsab2240702' && String(caseObj.date || '').trim() === '13/07/2026') {
-            caseObj.serial = '26A00000242606';
-            caseObj._sourceSerialCorrection = 'Workbook serial/LOT fields swapped (LATAM row 161)';
-        }
+        const rawSerial = cleanStr(caseObj.serial).replace(/[^a-z0-9]/g, '');
+        const correction = KNOWN_CASE_IDENTITY_CORRECTIONS[rawSerial + '|' + String(caseObj.date || '').trim()];
+        if (!correction) return;
+        if (correction.serial) caseObj.serial = correction.serial;
+        if (correction.sourceCorrection) caseObj._sourceSerialCorrection = correction.sourceCorrection;
     }
 
-    const INCOR_SP_SERIALS = new Set(['26a00000251482']);
-    const INCOR_RONDONIA_SERIALS = new Set(['26a00000242604']);
+    const INCOR_SP_SERIALS = new Set();
+    const INCOR_RONDONIA_SERIALS = new Set();
 
     function applyInCorHospitalRule(caseObj) {
         if (!caseObj) return;
@@ -2908,8 +2648,7 @@ if (typeof window !== "undefined") {
             allCasesGlobal.push(c);
         };
 
-        // Fixed master registers contain LATAM only: 253 cases in 2025 and the
-        // reconciled 2026 LATAM master (including Forms ID 376). Other regions are session uploads.
+        // Authenticated master registers contain LATAM only. Other regions are session uploads.
         ensureBuiltinImplants2025().forEach(c => pushVolumeCase(c, BASELINE_2025_KEY));
         ensureBuiltinImplants2026().forEach(c => pushVolumeCase(c, BASELINE_2026_KEY));
 
@@ -3114,15 +2853,8 @@ if (typeof window !== "undefined") {
     }
 
     const PERSON_SPLIT_RE = /\s*[,;/&+]\s*|\r?\n+|\s+-\s+|\s+(?:y|e|and)\s+/i;
-    const GLOBAL_SPECIALIST_EXACT_ALIASES = {
-        "dirk": "Dirk Colpaert", "dirk colpaert": "Dirk Colpaert",
-        "duc": "Duc Anh Nguyen", "duc anh": "Duc Anh Nguyen", "duc anh nguyen": "Duc Anh Nguyen",
-        "nattaya": "Nattaya Khanarsa", "nattaya khanarsa": "Nattaya Khanarsa",
-        "sultan": "Sultan Talab", "sultan talab": "Sultan Talab",
-        "reinhardt": "Reinhardt Becht", "reinhardt becht": "Reinhardt Becht",
-        "jack": "Jack Lips", "jack lips": "Jack Lips",
-        "mm": "Marjorie Michel", "marjorie": "Marjorie Michel", "marjorie michel": "Marjorie Michel"
-    };
+    const GLOBAL_SPECIALIST_EXACT_ALIASES = {};
+    const VENUS_CORPORATE_STAFF = {};
     function isValidPersonName(x) {
         let raw = String(x ?? '').trim();
         if (!raw) return false;
@@ -3222,16 +2954,45 @@ if (typeof window !== "undefined") {
         });
     }
 
+    function applyPersonRoleCorrectionRules(country, roleLists) {
+        const lists = {
+            implanter: [...(roleLists.implanter || [])],
+            specialist: [...(roleLists.specialist || [])],
+            proctor: [...(roleLists.proctor || [])]
+        };
+        const hasPerson = (role, person) => (lists[role] || []).some(name => cleanStr(name) === cleanStr(person));
+        const removePerson = (role, person) => {
+            lists[role] = (lists[role] || []).filter(name => cleanStr(name) !== cleanStr(person));
+        };
+        const addPerson = (role, person) => {
+            if (person && !hasPerson(role, person)) lists[role].push(stdName(person));
+        };
+        for (const rule of PERSON_ROLE_CORRECTION_RULES) {
+            const match = rule?.match || {};
+            if (match.country && cleanStr(country) !== cleanStr(match.country)) continue;
+            if (!match.person) continue;
+            if (match.currentRole && !hasPerson(match.currentRole, match.person)) continue;
+            if (!match.currentRole && rule.removeFromRoles && !rule.removeFromRoles.some(role => hasPerson(role, match.person))) continue;
+            (rule.removeFromRoles || []).forEach(role => removePerson(role, match.person));
+            if (rule.moveToRole) {
+                if (match.currentRole) removePerson(match.currentRole, match.person);
+                addPerson(rule.moveToRole, match.person);
+            }
+            if (rule.addProctor) addPerson('proctor', rule.addProctor);
+        }
+        return lists;
+    }
+
     function renormalizeCasePersonFields(caseObj) {
         if (!caseObj) return;
-        caseObj.implanter = normalizePersonList(caseObj.implanter);
-        caseObj.specialist = normalizePersonList(caseObj.specialist);
-        caseObj.proctor = normalizePersonList(caseObj.proctor);
-        if (caseObj.country === 'Brazil') {
-            let stripNavarro = list => list.split(', ').filter(n => n && n !== 'Francisco Navarro').join(', ');
-            caseObj.implanter = stripNavarro(caseObj.implanter) || 'N/A';
-            caseObj.specialist = stripNavarro(caseObj.specialist) || 'N/A';
-        }
+        const corrected = applyPersonRoleCorrectionRules(caseObj.country, {
+            implanter: normalizePersonList(caseObj.implanter).split(', ').filter(name => name && name !== 'N/A'),
+            specialist: normalizePersonList(caseObj.specialist).split(', ').filter(name => name && name !== 'N/A'),
+            proctor: normalizePersonList(caseObj.proctor).split(', ').filter(name => name && name !== 'N/A')
+        });
+        caseObj.implanter = corrected.implanter.join(', ') || 'N/A';
+        caseObj.specialist = corrected.specialist.join(', ') || 'N/A';
+        caseObj.proctor = corrected.proctor.join(', ') || 'N/A';
         caseObj.hospital = stdHosp(caseObj.hospital, caseObj.implanter);
         applyInCorHospitalRule(caseObj);
         caseObj.country = anchorCountryFromHospital(caseObj.hospital, caseObj.country);
@@ -3393,12 +3154,7 @@ if (typeof window !== "undefined") {
         return result;
     }
 
-    const SOP_APPROVED_PRICES = Object.freeze({
-        'Venus A': 5000,
-        'Venus P': 15000,
-        'PowerX': 10000,
-        'Vitae': 10000
-    });
+    const SOP_APPROVED_PRICES = {};
 
     function applySOPApprovedPriceInputs() {
         const map = {
@@ -3493,7 +3249,7 @@ if (typeof window !== "undefined") {
         if (!getAvailableSOPRegions().includes(region)) return;
         sopRegionTargetsUSD[activeSOPRegion] = sopGlobalTargetUSD;
         activeSOPRegion = region;
-        sopGlobalTargetUSD = sopRegionTargetsUSD[region] ?? (region === 'LATAM' ? 6000000 : getSOPHistoricalRevenue(region));
+        sopGlobalTargetUSD = sopRegionTargetsUSD[region] ?? (region === 'LATAM' ? 0 : getSOPHistoricalRevenue(region));
         sopRegionTargetsUSD[region] = sopGlobalTargetUSD;
         activeSOPCountry = null;
         activeSOPDistributor = null;
@@ -4216,57 +3972,14 @@ if (typeof window !== "undefined") {
                             });
                         }
 
-                        // CHILE EXCEPTION
-                        if (country === 'Chile') {
-                            let filteredImp = [];
-                            for (let i = 0; i < impArr.length; i++) {
-                                if (impArr[i] === 'Francisco Navarro') {
-                                    if (!specArr.includes('Francisco Navarro')) specArr.push('Francisco Navarro');
-                                } else {
-                                    filteredImp.push(impArr[i]);
-                                }
-                            }
-                            impArr = filteredImp;
-                        }
-
-                        // FRANCISCO NAVARRO GLOBAL EXCEPTION (CAMIR — Chile only)
-                        if (country === 'Chile' && impArr.includes('Francisco Navarro')) {
-                            impArr = impArr.filter(name => name !== 'Francisco Navarro');
-                            if (!specArr.includes('Francisco Navarro')) {
-                                specArr.push('Francisco Navarro');
-                            }
-                        }
-
-                        // Francisco Navarro never operates in Brazil — strip mis-assigned aliases
-                        if (country === 'Brazil') {
-                            impArr = impArr.filter(name => name !== 'Francisco Navarro');
-                            specArr = specArr.filter(name => name !== 'Francisco Navarro');
-                        }
-
-                        // ARGENTINA/BRAZIL EXCEPTION 
-                        let filteredProc = [];
-                        for (let i = 0; i < procArr.length; i++) {
-                            if (procArr[i] === 'Rafael Feldman') {
-                                if (!impArr.includes('Rafael Feldman')) impArr.push('Rafael Feldman');
-                                if (!filteredProc.includes('Pablo Spaletra')) filteredProc.push('Pablo Spaletra');
-                            } else {
-                                filteredProc.push(procArr[i]);
-                            }
-                        }
-                        procArr = filteredProc;
-
-                        // COLOMBIA EXCEPTION
-                        if (country === 'Colombia') {
-                            let filteredImp = [];
-                            for (let i = 0; i < impArr.length; i++) {
-                                if (impArr[i] === 'Luis Gabriel Loaiza') {
-                                    if (!specArr.includes('Luis Gabriel Loaiza')) specArr.push('Luis Gabriel Loaiza');
-                                } else {
-                                    filteredImp.push(impArr[i]);
-                                }
-                            }
-                            impArr = filteredImp;
-                        }
+                        const correctedRoles = applyPersonRoleCorrectionRules(country, {
+                            implanter: impArr,
+                            specialist: specArr,
+                            proctor: procArr
+                        });
+                        impArr = correctedRoles.implanter;
+                        specArr = correctedRoles.specialist;
+                        procArr = correctedRoles.proctor;
 
                         // An explicit Boolean/string False in Clinical Specialist is authoritative:
                         // do not infer or add anyone to the specialist ranking for that case.
@@ -4329,7 +4042,7 @@ if (typeof window !== "undefined") {
                 if (isCasesLatam && before > filtered.length) {
                     let skipped = before - filtered.length;
                     if (volumeCtx.hasBaseline2025 || volumeCtx.hasBaseline2026) {
-                        csvSkipNote = `ℹ️ Cases LATAM summary CSV ignored (${before} rows) — master baselines embedded (${getBuiltinImplants2025().length} for 2025, ${getBuiltinImplants2026().length} for 2026).`;
+                        csvSkipNote = `ℹ️ Cases LATAM summary CSV ignored (${before} rows) — authenticated master baselines active (${getBuiltinImplants2025().length} for 2025, ${getBuiltinImplants2026().length} for 2026).`;
                     } else {
                         csvSkipNote = `ℹ️ Cases LATAM CSV: ${skipped} row(s) with year 2026 ignored (partial export). Use Implant Data + Procedures xlsx or latam_master_cases for 2026.`;
                     }
@@ -4470,8 +4183,21 @@ if (typeof window !== "undefined") {
         processData();
     }
 
+    function normalizeEntitySearchQuery(query) {
+        let normalizedQuery = cleanStr(query).replace(/^(dr|dra|prof|ing)\.?\s+/, '').trim();
+        for (const alias of PERSON_ALIASES_KEYS) {
+            const normalizedAlias = cleanStr(alias);
+            const normalizedCanonical = cleanStr(PERSON_ALIASES[alias]);
+            if (!normalizedAlias || !normalizedCanonical) continue;
+            if (normalizedQuery === normalizedAlias) return normalizedCanonical;
+            const escapedAlias = normalizedAlias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            normalizedQuery = normalizedQuery.replace(new RegExp(`\\b${escapedAlias}\\b`, 'g'), normalizedCanonical);
+        }
+        return normalizedQuery.trim();
+    }
+
     function caseMatchesOperationsQuery(caseObj, query = activeOpsSearchQuery) {
-        let normalizedQuery = cleanStr(query).replace(/^(dr|dra|prof|ing)\.?\s+/, '').replace(/\bmaricio\b/g, 'marcio').trim();
+        let normalizedQuery = normalizeEntitySearchQuery(query);
         if (!normalizedQuery) return true;
         let tokens = normalizedQuery.split(/\s+/).filter(Boolean);
         let city = HOSPITAL_CITY_MAP[caseObj.hospital || caseObj.hosp] || '';
@@ -4489,7 +4215,7 @@ if (typeof window !== "undefined") {
 
     function getMatchingOperationsPersons() {
         if (!activeOpsSearchQuery) return [];
-        let q = cleanStr(activeOpsSearchQuery).replace(/^(dr|dra|prof|ing)\.?\s+/, '').replace(/\bmaricio\b/g, 'marcio').trim();
+        let q = normalizeEntitySearchQuery(activeOpsSearchQuery);
         let tokens = q.split(/\s+/).filter(Boolean);
         let names = new Set();
         opsScopedData.forEach(c => {
@@ -6227,9 +5953,10 @@ if (typeof window !== "undefined") {
         let affiliation = "";
         let nClean = cleanStr(name);
         
-        let globalVenusSpecialists = new Set(Object.values(GLOBAL_SPECIALIST_EXACT_ALIASES).map(cleanStr));
-        if (nClean.includes("fabio silva") || nClean.includes("stephanie bugeno") || nClean.includes("ariane sanchez") || nClean.includes("jian wang") || nClean.includes("jian") || globalVenusSpecialists.has(nClean)) {
-            affiliation = "VENUS MEDTECH";
+        const explicitCorporateTokens = VENUS_CORPORATE_STAFF.explicitNormalizedIncludes || [];
+        const globalVenusSpecialists = new Set((VENUS_CORPORATE_STAFF.globalSpecialistCanonicalNames || []).map(cleanStr));
+        if (explicitCorporateTokens.some(token => nClean.includes(cleanStr(token))) || globalVenusSpecialists.has(nClean)) {
+            affiliation = VENUS_CORPORATE_STAFF.affiliation || '';
         } else if (role === 'Specialist') {
             let distCounts = {};
             casesList.forEach(c => { distCounts[c.dist] = (distCounts[c.dist] || 0) + 1; });
@@ -7046,7 +6773,7 @@ if (typeof window !== "undefined") {
             return { rate: null, total: 0, adverse: 0, l1: 0, l2: 0, l3: 0, adverseCases: [], cleanCases: [] };
         }
         let l1 = 0, l2 = 0, l3 = 0;
-        // Resolve through the linked Problem Report view so cases whose event
+        // Resolve through the linked authenticated problem registry so cases whose event
         // metadata was not copied onto the raw implant master still count.
         let eventItems = getClinicalProblemLog(cases ?? []);
         let uniqueEvents = new Map();
@@ -7168,7 +6895,7 @@ if (typeof window !== "undefined") {
     }
 
     function normalizeClinicalSearchQuery(query) {
-        let q = cleanStr(query).replace(/^(dr|dra|prof|ing)\.?\s+/, '').replace(/\bmaricio\b/g, 'marcio').trim();
+        let q = normalizeEntitySearchQuery(query);
         return q;
     }
 
@@ -7214,9 +6941,9 @@ if (typeof window !== "undefined") {
 
     function getClinicalEntityCohort(base, query = activeClinicalQuery) {
         if (!query) return base;
-        // Some historical Problem Report rows contain a team member omitted from
+        // Some historical problem-registry rows contain a team member omitted from
         // the implant master. Let that linked event identity bring its master case
-        // into the cohort (e.g. Francisco Navarro) without changing volume count.
+        // into the cohort without changing volume count.
         let reportMatchKeys = new Set(getEmbeddedProblemCases()
             .filter(c => caseMatchesClinicalEntityQuery(c, query))
             .map(clinicalScopeKey));
@@ -7271,9 +6998,7 @@ if (typeof window !== "undefined") {
         renderClinical();
     }
 
-    const CLINICAL_MASTER_OVERRIDES = {
-        'INC-2025-03': '29ac1000240106|13/10/2025'
-    };
+    const CLINICAL_MASTER_OVERRIDES = {};
 
     function serialTokenSet(raw) {
         let matches = String(raw ?? '').match(/[A-Za-z0-9]{8,}/g) || [];
@@ -7354,7 +7079,7 @@ if (typeof window !== "undefined") {
             if (level > 0) rows.push({ c, level });
         };
 
-        // Authoritative embedded Problem Report, linked to the exact filtered
+        // Authoritative authenticated problem registry, linked to the exact filtered
         // implant cohort so numerator and denominator always share one scope.
         getEmbeddedProblemCases().forEach(c => {
             if (!shouldSurfaceEmbeddedClinicalCase(c)) return;
@@ -7466,7 +7191,7 @@ if (typeof window !== "undefined") {
             `;
         });
 
-        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events for the selected filters. Enable the matching year(s) in <strong>Time Travel</strong> — the embedded Problem Report has <strong>${(typeof BUILTIN_PROBLEM_CASES !== 'undefined' ? BUILTIN_PROBLEM_CASES.length : 40)} cases</strong> always available.</td></tr>`;
+        tBody.innerHTML = rowsHtml || `<tr id="clinical-empty-row"><td colspan="9" style="text-align:center; color:var(--v-text-mutated); padding:30px;">No adverse events for the selected filters. Enable the matching year(s) in <strong>Time Travel</strong>. Authenticated problem registry: <strong>${(typeof BUILTIN_PROBLEM_CASES !== 'undefined' && Array.isArray(BUILTIN_PROBLEM_CASES) ? BUILTIN_PROBLEM_CASES.length : 0)} case(s)</strong> in the active dataset.</td></tr>`;
         updateClinicalSortIcons();
         updateClinicalCounter();
     }
@@ -7570,7 +7295,7 @@ if (typeof window !== "undefined") {
         let mRole = document.getElementById('modal-person-role');
         if (mName) mName.innerHTML = `<span style="font-size:24px;">🩺</span> Clinical Case · ${escapeHtml(c.hospital)}`;
         if (mRole) mRole.innerHTML = `${escapeHtml(c.date)} · ${FLAGS[c.country] || '🌍'} ${escapeHtml(c.country)} · Level ${item.level} · ${escapeHtml(c.valve)} · SN ${escapeHtml(c.serial)}`;
-        document.getElementById('modal-yoy-stats').innerHTML = `<div style="font-size:11px; margin-top:8px; color:var(--v-text-mutated); font-weight:700;">Complete linked procedure team: implanter, all clinical specialists and proctor(s). The adverse-event narrative remains sourced from the Problem Report.</div>`;
+        document.getElementById('modal-yoy-stats').innerHTML = `<div style="font-size:11px; margin-top:8px; color:var(--v-text-mutated); font-weight:700;">Complete linked procedure team: implanter, all clinical specialists and proctor(s). The adverse-event narrative remains sourced from the authenticated problem registry.</div>`;
         document.getElementById('modal-portfolio-mix').innerHTML = '';
         currentDrilldownProfile = null;
         buildModalContent([c], { clinicalMode:true });
@@ -7839,7 +7564,7 @@ if (typeof window !== "undefined") {
     // =====================================================================
     // TAB 06: LATAM PROCEDURAL OUTCOMES ENGINE
     // This registry is intentionally isolated from `comment`, `clusterIssue`
-    // and the Problem Report classifier used by Tab 05.
+    // and the authenticated problem-registry classifier used by Tab 05.
     // =====================================================================
 
     function outcomePathValue(obj, path) {
@@ -8942,7 +8667,7 @@ if (typeof window !== "undefined") {
         XLSX.utils.book_append_sheet(wb, gapWs, 'Missing & Legacy');
 
         let dictionaryRows = [
-            { Field:'Procedural Outcome', Definition:'Derived from explicit structured success, implant, patient and complication evidence; never inferred from the absence of a Problem Report.' },
+            { Field:'Procedural Outcome', Definition:'Derived from explicit structured success, implant, patient and complication evidence; never inferred from the absence of a documented event.' },
             { Field:'Procedural success', Definition:'Completed intended implant with documented technical success and no documented complication.' },
             { Field:'Success with observations', Definition:'Completed intended implant with a documented observation, complication or structured Level 1–3 finding.' },
             { Field:'Unsuccessful / aborted', Definition:'Explicit unsuccessful/aborted procedure or no completed intended implant.' },
@@ -8953,7 +8678,7 @@ if (typeof window !== "undefined") {
             { Field:'Level 3', Definition:'Death/fatal outcome.' },
             { Field:'Baseline Permanent PPM', Definition:'Permanent pacemaker present on room entry; never counted as a new post-procedure PPM.' },
             { Field:'New Permanent PPM', Definition:'Derived only from explicit post-procedure narrative evidence. “No new PPM reported” is not equivalent to adjudicated follow-up.' },
-            { Field:'Legacy unavailable', Definition:'Qualitative outcome fields were not collected for the 19 HOMAC cases; no values are imputed.' },
+            { Field:'Legacy unavailable', Definition:'Qualitative outcome fields were not collected for records marked legacy unavailable; no values are imputed.' },
             { Field:'PVL', Definition:'Structured outcome using combined None/Trace, Mild, Moderate, Severe, or Not assessed/Unknown. PVL alone does not create a device-problem report.' },
             { Field:'Gradient bucket', Definition:'Post mean gradient rounded to whole mmHg: 1–5, 6–10, 11–15, 16–20, >20, or Not available.' },
             { Field:'EOA flagged', Definition:'Numeric EOA retained with its source data-quality flag rather than silently removed.' },
@@ -9796,7 +9521,7 @@ if (typeof window !== "undefined") {
             ['New',preview.newRecords],['Duplicate groups',preview.duplicateGroups.length],['Conflicts',preview.conflicts],['Rejected',preview.rejected.length]
         ];
         let notes = [];
-        if (preview.exactBaseline) notes.push('This is the same approved 2026 baseline already embedded in the app. Nothing will be duplicated.');
+        if (preview.exactBaseline) notes.push('This is the same approved 2026 baseline already active from the authenticated source. Nothing will be duplicated.');
         if (preview.possibleDuplicates.length) notes.push(`${preview.possibleDuplicates.length} valve-lot/date group(s) include a missing delivery-system lot and were left for review rather than auto-merged.`);
         if (preview.rejected.length) notes.push(...preview.rejected.slice(0,8).map(item => `Row ${item.row}: ${item.reason}`));
         let canApply = preview.updated + preview.newRecords > 0;
@@ -9855,7 +9580,7 @@ if (typeof window !== "undefined") {
 
     async function v12ClearImportedOutcomes() {
         if (!(v12OutcomePersistentState.overlayRecords || []).length && !(v12OutcomePersistentState.audit || []).length) return;
-        if (!confirm('Clear imported outcome updates and return to the embedded v1.2.0 baseline? You can undo this once.')) return;
+        if (!confirm('Clear imported outcome updates and return to the authenticated baseline? You can undo this once.')) return;
         let prior = v12DeepClone(Object.assign({},v12OutcomePersistentState,{lastUndo:null}));
         v12OutcomePersistentState = {schema:2,overlayRecords:[],masterRows:[],contacts:[],patientHashes:{},importFingerprints:{},audit:[],lastUndo:prior,updatedAt:new Date().toISOString()};
         await v12PersistAndRefreshOutcomes();
@@ -9884,7 +9609,8 @@ if (typeof window !== "undefined") {
         let clearBtn = document.getElementById('outcomes-clear-import');
         if (undoBtn) undoBtn.disabled = !v12OutcomePersistentState.lastUndo;
         if (clearBtn) clearBtn.disabled = !overlays && !imports;
-        el.textContent = overlays ? `${overlays} imported update/new record(s) active · ${imports} import(s) in audit · cutoff ${v12GetEffectiveOutcomeCutoff()}` : `Embedded registry active · 194 structured outcomes + 19 legacy unavailable · cutoff ${APP_META.latamDataCutoff}`;
+        let authenticatedRecords = typeof BUILTIN_LATAM_OUTCOMES_2026 !== 'undefined' && Array.isArray(BUILTIN_LATAM_OUTCOMES_2026) ? BUILTIN_LATAM_OUTCOMES_2026.length : 0;
+        el.textContent = overlays ? `${overlays} imported update/new record(s) active · ${imports} import(s) in audit · cutoff ${v12GetEffectiveOutcomeCutoff()}` : `Authenticated registry active · ${authenticatedRecords} outcome record(s) · cutoff ${APP_META.latamDataCutoff}`;
     }
 
     async function v12LookupPatientCase() {
@@ -10490,7 +10216,7 @@ if (typeof window !== "undefined") {
             {Field:'Baseline permanent PPM',Definition:'Permanent pacemaker already present on room entry; never counted as a new implantation.'},
             {Field:'New permanent PPM',Definition:'Only explicit post-procedure evidence; denominator is baseline PPM = No with a classifiable Yes/No-new-PPM status. Unresolved follow-up is excluded.'},
             {Field:'Device size and lot completeness',Definition:'Denominator is completed intended implants only.'},
-            {Field:'Legacy unavailable',Definition:'Qualitative fields were not collected for the 19 HOMAC cases; no values are imputed.'},
+            {Field:'Legacy unavailable',Definition:'Qualitative fields were not collected for records marked legacy unavailable; no values are imputed.'},
             {Field:'Source comment',Definition:'Placeholder tokens such as NA, N/A, None, Unknown and Not available are reported as missing, never offered as clinical narrative.'},
             {Field:'Privacy',Definition:'Patient names, patient lookup hashes, professional emails, internal audit notes and internal UIDs are excluded from this HQ package.'}
         ];let dictWs=XLSX.utils.json_to_sheet(dict);dictWs['!cols']=[{wch:34},{wch:120}];v12BrandWorksheet(dictWs,{headerRows:[0],freeze:{ySplit:1,topLeftCell:'A2'}});XLSX.utils.book_append_sheet(wb,dictWs,'Data Dictionary');
@@ -11902,7 +11628,7 @@ if (typeof window !== "undefined") {
         let maxPages = Math.min(pdf.numPages,V13_REPORT_MAX_OCR_PAGES);
         try {
             if (typeof Tesseract.createWorker === 'function') {
-                worker = await Tesseract.createWorker('eng+por+spa',1,{logger:message => {
+                worker = await Tesseract.createWorker('eng+por+spa',1,{workerPath:'./vendor/tesseract-worker.min.js',logger:message => {
                     if (message?.status === 'recognizing text') onProgress(`OCR · ${Math.round((message.progress || 0)*100)}%`);
                 }});
             }
@@ -11932,7 +11658,7 @@ if (typeof window !== "undefined") {
     async function v13ReadPdfText(file,onProgress=()=>{}) {
         if (!window.pdfjsLib?.getDocument) throw new Error('PDF reader is unavailable. Check the network and reload the app.');
         if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
         }
         let buffer = await file.arrayBuffer();
         let sha256 = await v12Sha256Buffer(buffer);
@@ -14768,7 +14494,7 @@ if (typeof window !== "undefined") {
         v13ReadPdfText = async function(file,onProgress=()=>{}) {
             if (!window.pdfjsLib?.getDocument) throw new Error('PDF reader is unavailable. Check the network and reload the app.');
             if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
             }
             let loadingTask = null, pdf = null;
             try {
@@ -15258,7 +14984,7 @@ if (typeof window !== "undefined") {
             let matchFilter=document.getElementById('reports-match-filter');
             if(matchFilter){let unmatched=[...matchFilter.options].find(option=>option.value==='unmatched');if(unmatched)unmatched.textContent='No current procedure candidate';let pending=[...matchFilter.options].find(option=>option.value==='pending_review');if(pending)pending.textContent='Strong suggestion · confirm';}
             let status=document.getElementById('reports-procedure-status');
-            if(status&&/Embedded 2026/.test(status.textContent||''))status.textContent=`PDF ready · ${v14CaseIndex.length || v13LatamCases().length} current procedures · private aliases active`;
+            if(status&&/Authenticated procedure identity is loading/.test(status.textContent||''))status.textContent=`PDF ready · ${v14CaseIndex.length || v13LatamCases().length} current procedures · private aliases active`;
         }
 
         document.addEventListener('DOMContentLoaded',()=>{
@@ -15909,33 +15635,43 @@ if (typeof window !== "undefined") {
     }
 
     /**
-     * Ephemeral console self-test. Patient names are deliberately not embedded.
-     * Usage after loading the app and this module:
-     *
-     *   await v15RunMatchingSelfTest({
-     *     exactName: '<transient Vitale PDF name>',
-     *     oneTokenDeltaName: '<transient Vera PDF name>'
-     *   })
+     * Isolated console self-test. Every identity and procedure below is synthetic;
+     * it never reads the authenticated patient lookup or the live case index.
      */
-    async function v15RunMatchingSelfTest({exactName='',oneTokenDeltaName=''}={}) {
-        if(!exactName||!oneTokenDeltaName)return {ok:false,reason:'Pass both transient names; readable patient names are not embedded or persisted by this module.'};
-        const vectors=[
+    async function v15RunMatchingSelfTest() {
+        const syntheticIdentities=[
             {
-                label:'exact',name:exactName,expectedCaseKey:'forms:316',
-                evidence:{reportDate:'2026-06-22',country:'Argentina',countryConfidence:'document',hospital:'Sanatorio San Gerónimo',professionals:[],professionalEmails:[],deviceCandidates:[{product:'Venus Vitae',size:'26'}]}
+                key:'synthetic:exact',caseObj:{_synthetic:true},displayId:'SYN-EXACT',officialCaseId:'',sourceCaseId:'',formsIds:[],
+                procedureDate:'2099-01-20',serial:'',deliverySerial:'',country:'Testland',hospital:'Synthetic Heart Center',distributor:'Demo Distributor',
+                product:'Venus Vitae',size:'26',professionals:['Demo Operator'],professionalEmails:['operator@example.invalid']
             },
             {
-                label:'one_token_delta',name:oneTokenDeltaName,expectedCaseKey:'forms:233',
-                evidence:{reportDate:'2026-03-16',country:'Chile',countryConfidence:'document',hospital:'TORAX',professionals:['Christian Dauvergne'],professionalEmails:[],deviceCandidates:[{product:'Venus Vitae',size:'26'}]}
+                key:'synthetic:delta',caseObj:{_synthetic:true},displayId:'SYN-DELTA',officialCaseId:'',sourceCaseId:'',formsIds:[],
+                procedureDate:'2099-02-25',serial:'',deliverySerial:'',country:'Example Republic',hospital:'Example Cardiac Institute',distributor:'Sample Distributor',
+                product:'Venus PowerX',size:'29',professionals:['Sample Clinician'],professionalEmails:['clinician@example.invalid']
             }
         ];
-        const results=[];
-        for(const vector of vectors) {
-            const probes=await v15PatientProbeRecords(vector.name);
-            const ranked=v15RankReportCandidates(vector.evidence,v15CasesFromPatientProbes(probes));
-            results.push({label:vector.label,expectedCaseKey:vector.expectedCaseKey,classification:ranked.classification,suggestedCaseKey:ranked.suggestedCaseKey,leadingCandidateKey:ranked.leadingCandidateKey,score:ranked.proposal.score,ok:ranked.suggestedCaseKey===vector.expectedCaseKey});
-        }
-        return {ok:results.every(result=>result.ok),results};
+        const vectors=[
+            {
+                label:'exact',expectedCaseKey:'synthetic:exact',patientEvidence:{quality:1,relation:'exact_token_set'},
+                evidence:{reportDate:'2099-01-15',country:'Testland',countryConfidence:'document',hospital:'Synthetic Heart Center',professionals:['Demo Operator'],professionalEmails:[],deviceCandidates:[{product:'Venus Vitae',size:'26'}]}
+            },
+            {
+                label:'one_token_delta',expectedCaseKey:'synthetic:delta',patientEvidence:{quality:.8,relation:'one_token_delta'},
+                evidence:{reportDate:'2099-02-20',country:'Example Republic',countryConfidence:'document',hospital:'Example Cardiac Institute',professionals:['Sample Clinician'],professionalEmails:[],deviceCandidates:[{product:'Venus PowerX',size:'29'}]}
+            }
+        ];
+        const probeChecks=await Promise.all([
+            v15PatientProbeRecords('Sample Patient Alpha'),
+            v15PatientProbeRecords('Sample Patient Beta Gamma')
+        ]);
+        const results=vectors.map(vector=>{
+            const patientByCase=new Map([[vector.expectedCaseKey,vector.patientEvidence]]);
+            const ranked=v15RankReportCandidates(vector.evidence,patientByCase,syntheticIdentities);
+            return {label:vector.label,expectedCaseKey:vector.expectedCaseKey,classification:ranked.classification,suggestedCaseKey:ranked.suggestedCaseKey,leadingCandidateKey:ranked.leadingCandidateKey,score:ranked.proposal.score,ok:ranked.suggestedCaseKey===vector.expectedCaseKey};
+        });
+        const probesOk=probeChecks[0].some(probe=>probe.relation==='exact_token_set')&&probeChecks[1].some(probe=>probe.relation==='one_token_delta');
+        return {ok:probesOk&&results.every(result=>result.ok),probesOk,results};
     }
 
     root.V15_MATCH_VERSION=V15_MATCH_VERSION;
@@ -16766,11 +16502,11 @@ if (typeof window !== "undefined") {
         const assert = (condition, message) => { if (!condition) throw new Error(message); };
         const sample = [
             'Report Details',
-            'Creation Date: 2026/6/22 Physician: Abud Marcelo',
-            'Received Date: 2026/2/19 Hospital: Sanatorio San Geronimo',
-            'Reviewed Date: 2026/2/22 Country: Argentina',
+            'Creation Date: 2099/6/22 Physician: Demo Operator',
+            'Received Date: 2099/2/19 Hospital: Synthetic Heart Center',
+            'Reviewed Date: 2099/2/22 Country: Mexico',
             'Patient Information',
-            'Name: VITALE MIRTA Height: 1.65 m',
+            'Name: TEST PATIENT ALPHA Height: 1.65 m',
             'Comments:',
             'For PowerX, recommend PowerX26, PowerX29 as backup. Pre-dilation with 20/22 can be considered.',
             'For Vitae,',
@@ -16779,30 +16515,30 @@ if (typeof window !== "undefined") {
             'Aortic Valve',
             'Page 1 of 18 3mensio Structural Heart 10.2 SP1'
         ].join('\n');
-        const parsed = enhanceParsed({ transient: {}, recommendation: {}, extraction: { warnings: [] } }, sample, { fileName: 'VITALE MIRTA.pdf' });
-        assert(parsed.transient.patientName === 'VITALE MIRTA', 'document patient name was not extracted');
+        const parsed = enhanceParsed({ transient: {}, recommendation: {}, extraction: { warnings: [] } }, sample, { fileName: 'TEST PATIENT ALPHA.pdf' });
+        assert(parsed.transient.patientName === 'TEST PATIENT ALPHA', 'document patient name was not extracted');
         assert(parsed.transient.patientNameHint === '', 'filename hint must not replace a document name');
-        assert(parsed.reportDate === '2026-02-22', 'review date must be the primary planning episode date');
-        assert(parsed.identityContext.country === 'Argentina', 'country normalization failed');
-        assert(parsed.identityContext.hospital === 'Sanatorio San Geronimo', 'hospital normalization failed');
+        assert(parsed.reportDate === '2099-02-22', 'review date must be the primary planning episode date');
+        assert(parsed.identityContext.country === 'Mexico', 'country normalization failed');
+        assert(parsed.identityContext.hospital === 'Synthetic Heart Center', 'hospital normalization failed');
         assert(parsed.recommendation.options.join('|') === 'PowerX26|PowerX29|AB23|AB26', 'multiple recommendation options were not preserved');
         assert(parsed.recommendation.backupOptions.includes('PowerX29') && parsed.recommendation.backupOptions.includes('AB26'), 'backup/Option 2 roles were not preserved');
         assert(parsed.recommendation.alternatives.length === 2, 'family alternatives were not grouped');
 
-        const noPatient = enhanceParsed({ transient: {}, recommendation: {}, extraction: { warnings: [] } }, 'PRE-IMPLANTATION PLANNING\nCASE ID Venus-P_ARGENTINA_MR_SOLACI livecase x\nSuitable case for Venus-P 24 or 26-25.', { fileName: 'Venus-P_ARGENTINA_MR_SOLACI livecase x V1.pdf' });
-        assert(!noPatient.transient.patientNameHint, 'generic SOLACI filename must not become a patient name');
+        const noPatient = enhanceParsed({ transient: {}, recommendation: {}, extraction: { warnings: [] } }, 'PRE-IMPLANTATION PLANNING\nCASE ID DEMO-P_TESTLAND_TEMPLATE X\nSuitable case for Venus-P 24 or 26-25.', { fileName: 'DEMO PLANNING TEMPLATE V1.pdf' });
+        assert(!noPatient.transient.patientNameHint, 'generic planning filename must not become a patient name');
 
         const baseDoc = {
-            documentId: 'report-old', type: '3mensio_planning', reportDate: '2026-03-16',
+            documentId: 'report-old', type: '3mensio_planning', reportDate: '2099-03-16',
             patientToken: 'private-hash', patientIdentityTokens: [{ hash: 'private-hash', quality: 1, kind: 'canonical' }],
-            source: { fileSha256: 'a'.repeat(64) }, identityContext: { country: 'Chile', hospital: 'TORAX' },
-            extraction: { structuredFields: { reportDates: { creationDate: '2026-03-16', receivedDate: '2026-03-16', reviewedDate: '2026-03-16' } } },
+            source: { fileSha256: 'a'.repeat(64) }, identityContext: { country: 'Mexico', hospital: 'Synthetic Heart Center' },
+            extraction: { structuredFields: { reportDates: { creationDate: '2099-03-16', receivedDate: '2099-03-16', reviewedDate: '2099-03-16' } } },
             recommendation: { options: ['PowerX26', 'AB26'] }
         };
         const revisionDoc = clone(baseDoc);
         revisionDoc.documentId = 'report-new';
         revisionDoc.source.fileSha256 = 'b'.repeat(64);
-        revisionDoc.extraction.structuredFields.reportDates.creationDate = '2026-03-18';
+        revisionDoc.extraction.structuredFields.reportDates.creationDate = '2099-03-18';
         revisionDoc.recommendation.options = ['PowerX29', 'AB26'];
         annotateRevisionDocuments([baseDoc, revisionDoc]);
         assert(baseDoc.revision && revisionDoc.revision, 'revision group was not detected');
@@ -16835,7 +16571,7 @@ if (typeof window !== "undefined") {
             pdfjsLib: { getDocument() { return { promise: Promise.resolve(fakePdf) }; } },
             sha256Buffer: async () => 'c'.repeat(64)
         };
-        const fakeFile = { name: 'VITALE MIRTA.pdf', async arrayBuffer() { return new Uint8Array([1, 2, 3]).buffer; } };
+        const fakeFile = { name: 'TEST PATIENT ALPHA.pdf', async arrayBuffer() { return new Uint8Array([1, 2, 3]).buffer; } };
         const read = await readPdfText(fakeFile, function noop() {}, fakeRuntime);
         assert(read.targetedRead && pagesRequested === 1, '3mensio reader should index page 1 only when identity and recommendation are complete');
         assert(destroyed === 1 && cleaned === 1, 'PDF/page resources were not always released');
