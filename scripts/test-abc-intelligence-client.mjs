@@ -83,6 +83,21 @@ assert.equal(client.resolveApiBase('fblucciano.github.io'), 'https://procedures-
 assert.equal(client.isoCutoffFromAppMeta(feed.appMeta), '2026-09-01');
 assert.equal(client.normalizeRemoteRegion('Europe'), 'EU');
 assert.equal(client.normalizeRemoteRegion('Middle East'), 'ME');
+const authoritativeCaseA = {
+    _authoritativeOperationsUpload: true,
+    _sourceCaseId: 'procedures-case-a'
+};
+const authoritativeCaseB = {
+    _authoritativeOperationsUpload: true,
+    _sourceCaseId: 'procedures-case-b'
+};
+assert.equal(client.authoritativeSourceCaseId(authoritativeCaseA), 'procedures case a');
+assert.equal(client.hasDistinctAuthoritativeSourceIdentity(authoritativeCaseA, authoritativeCaseB), true);
+assert.equal(client.hasDistinctAuthoritativeSourceIdentity(authoritativeCaseA, { ...authoritativeCaseA }), false);
+assert.equal(client.hasDistinctAuthoritativeSourceIdentity(authoritativeCaseA, {
+    ...authoritativeCaseB,
+    _authoritativeOperationsUpload: false
+}), false);
 
 const prepared = client.prepareFeed(feed, {
     implants2025: [{ id: 'case-25', date: '2025-01-01', comment: 'Preserved 2025 comment' }],
@@ -120,6 +135,9 @@ assert.match(html, /const V14_BUILTIN_PATIENT_ALIAS_LOOKUP = \{\};/);
 assert.match(html, /let V12_BASELINE_BINARY_SHA256 = '';/);
 assert.match(html, /let V12_BASELINE_LOGICAL_SHA256 = '';/);
 assert.match(html, /let V12_BASELINE_ROW_FINGERPRINTS = \{\};/);
+assert.match(html, /if \(hasDistinctAuthoritativeSourceIdentity\(a, b\)\) return false;/);
+assert.match(html, /if \(hasDistinctAuthoritativeSourceIdentity\(primary, c\)\)/);
+assert.match(html, /return dedupeClinicalNearDuplicates\(cases\);/);
 assert.doesNotMatch(html, /using the embedded verified snapshot/i);
 const scriptSources = [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"[^>]*><\/script>/gi)].map(match => match[1]);
 assert.ok(scriptSources.length >= 6);
@@ -278,4 +296,4 @@ await context.logoutAccessGate();
 assert.equal(classNames.has('gate-locked'), true);
 assert.equal(storage.has(client.TOKEN_STORAGE_KEY), false);
 
-process.stdout.write(JSON.stringify({ ok: true, tests: 55, schemaVersion: client.SCHEMA_VERSION }) + '\n');
+process.stdout.write(JSON.stringify({ ok: true, tests: 62, schemaVersion: client.SCHEMA_VERSION }) + '\n');
