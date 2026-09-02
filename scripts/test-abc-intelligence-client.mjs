@@ -123,22 +123,22 @@ assert.match(html, /let V12_BASELINE_ROW_FINGERPRINTS = \{\};/);
 assert.doesNotMatch(html, /using the embedded verified snapshot/i);
 const scriptSources = [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"[^>]*><\/script>/gi)].map(match => match[1]);
 assert.ok(scriptSources.length >= 6);
-assert.ok(scriptSources.every(source => !/^https?:/i.test(source)), 'executable libraries must be local and pinned');
-
-const vendorHashes = {
-    'vendor/xlsx.full.min.js': 'c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99',
-    'vendor/pdf.min.js': '5b5799e6f8c680663207ac5b42ee14eed2a406fa7af48f50c154f0c0b1566946',
-    'vendor/pdf.worker.min.js': 'feabdf309770ed24bba31a5467836cdc8cf639c705af27d52b585b041bb8527b',
-    'vendor/tesseract.min.js': 'a8e29918d098b2b06e1012bdaeffb4aec0445c5d5654709023e0bd1f442a80e8',
-    'vendor/tesseract-worker.min.js': 'aca1229639fc9907d86f96e825955a2b7c5716d17f3bc3acd71f9c7ab66181fc',
-    'vendor/apexcharts.min.js': 'a1d36da20df56252b36af22b7c6663e26780b20739bbc6e98306462816543f44',
-    'vendor/leaflet/leaflet.js': 'db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a',
-    'vendor/leaflet/leaflet.css': 'a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6'
-};
-for (const [relativePath, expectedHash] of Object.entries(vendorHashes)) {
-    const bytes = await readFile(path.join(rootDir, relativePath));
-    assert.equal(createHash('sha256').update(bytes).digest('hex'), expectedHash, relativePath);
-}
+const firstPartyScripts = new Set([
+    'abc-intelligence-client.js',
+    'latam-builtin-implants-2025.js',
+    'latam-builtin-implants-2026.js',
+    'latam-builtin-problems.js'
+]);
+const pinnedLibraryScripts = new Set([
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+    'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+    'https://cdn.jsdelivr.net/npm/apexcharts@3.49.0/dist/apexcharts.min.js',
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+]);
+assert.ok(scriptSources.every(source => firstPartyScripts.has(source) || pinnedLibraryScripts.has(source)), 'executable libraries must be exact-version pinned');
+assert.match(html, /https:\/\/cdn\.jsdelivr\.net\/npm\/tesseract\.js@5\.1\.1\/dist\/worker\.min\.js/);
+assert.equal((html.match(/https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js\/3\.11\.174\/pdf\.worker\.min\.js/g) || []).length, 2);
 
 const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
     .map(match => match[1])
