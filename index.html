@@ -2369,7 +2369,18 @@ if (typeof window !== "undefined") {
         return 'fp:' + buildClinicalFingerprint(c);
     }
 
+    function hasDistinctAuthoritativeSourceIdentity(a, b) {
+        return Boolean(
+            typeof ABCIntelligenceIntegration !== 'undefined' &&
+            ABCIntelligenceIntegration?.hasDistinctAuthoritativeSourceIdentity?.(a, b)
+        );
+    }
+
     function isClinicalNearDuplicate(a, b) {
+        // The authenticated Procedures feed is already canonical. Two rows with
+        // different source case IDs remain separate procedures even when an
+        // upstream serial/date entry happens to be repeated.
+        if (hasDistinctAuthoritativeSourceIdentity(a, b)) return false;
         let snA = normalizeSerialKey(a?.serial), snB = normalizeSerialKey(b?.serial);
         let sameDate = cleanStr(a?.date) && cleanStr(a?.date) === cleanStr(b?.date);
         // PDF reconciliation: primary match is date + serial — never merge same serial on different dates
@@ -2640,6 +2651,10 @@ if (typeof window !== "undefined") {
             }
             if (dedupMap.has(c.dedupKey)) {
                 let primary = dedupMap.get(c.dedupKey);
+                if (hasDistinctAuthoritativeSourceIdentity(primary, c)) {
+                    allCasesGlobal.push(c);
+                    return;
+                }
                 if (c._authoritativeOperationsUpload) mergeAuthoritativeOperationsUpload(primary, c, sourceName);
                 else mergeClinicalMetadata(primary, c);
                 return;
@@ -2683,37 +2698,10 @@ if (typeof window !== "undefined") {
         return s;
     }
 
-    // Merge cross-source rows that share the same valve serial AND procedure date (PDF reconciliation rule).
-    // Never collapse the same serial on different dates — those remain separate master cases.
+    // Merge only genuine cross-source duplicates. Authenticated Procedures rows
+    // with distinct source case IDs are canonical and must remain separate.
     function consolidateClinicalBySerial(cases) {
-        let bySerialDate = new Map();
-        cases.forEach((c, idx) => {
-            let sn = normalizeSerialKey(c.serial);
-            if (!sn) return;
-            let key = sn + '|' + cleanStr(c.date);
-            if (!bySerialDate.has(key)) bySerialDate.set(key, []);
-            bySerialDate.get(key).push(idx);
-        });
-
-        let dropIdx = new Set();
-        bySerialDate.forEach(idxs => {
-            if (idxs.length < 2) return;
-            let primaryIdx = idxs.find(i => !isBuiltinClinicalRow(cases[i])) ?? idxs[0];
-            idxs.forEach(i => {
-                if (i === primaryIdx) return;
-                if (isBuiltinClinicalRow(cases[primaryIdx]) && !isBuiltinClinicalRow(cases[i])) {
-                    cases[primaryIdx] = preferImplantRecordOverBuiltin(cases[i], cases[primaryIdx]);
-                    dropIdx.add(i);
-                } else if (!isBuiltinClinicalRow(cases[primaryIdx]) && isBuiltinClinicalRow(cases[i])) {
-                    cases[primaryIdx] = preferImplantRecordOverBuiltin(cases[primaryIdx], cases[i]);
-                    dropIdx.add(i);
-                } else {
-                    mergeClinicalMetadata(cases[primaryIdx], cases[i]);
-                    dropIdx.add(i);
-                }
-            });
-        });
-        return cases.filter((_, idx) => !dropIdx.has(idx));
+        return dedupeClinicalNearDuplicates(cases);
     }
     
     // --- ROBUST FUZZY COLUMN MATCHER ---

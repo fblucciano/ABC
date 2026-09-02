@@ -108,6 +108,17 @@
         return [...keys];
     }
 
+    function authoritativeSourceCaseId(record) {
+        if (!isPlainObject(record) || record._authoritativeOperationsUpload !== true) return '';
+        return normalized(record._sourceCaseId);
+    }
+
+    function hasDistinctAuthoritativeSourceIdentity(left, right) {
+        const leftId = authoritativeSourceCaseId(left);
+        const rightId = authoritativeSourceCaseId(right);
+        return Boolean(leftId && rightId && leftId !== rightId);
+    }
+
     function mergeCollectionPreservingComments(existingCollection, incomingCollection) {
         const existing = Array.isArray(existingCollection) ? existingCollection : [];
         const incoming = Array.isArray(incomingCollection) ? incomingCollection : [];
@@ -723,6 +734,8 @@
         ABCRequestError,
         deepClone,
         identityKeys,
+        authoritativeSourceCaseId,
+        hasDistinctAuthoritativeSourceIdentity,
         preserveNonEmptyComments,
         mergeCollectionPreservingComments,
         validateFeed,
